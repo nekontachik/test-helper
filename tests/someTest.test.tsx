@@ -1,0 +1,3 @@
+import { MockResizeObserver } from '../jest.setup';
+
+// Test code...

@@ -1,0 +1,53 @@
+{
+  "extends": [
+    "next",
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": ["@typescript-eslint"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["./tsconfig.json", "./tsconfig.test.json"]
+  },
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "react/no-unescaped-entities": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "parserOptions": {
+        "project": ["./tsconfig.json", "./tsconfig.test.json"]
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.tsx"
+      ],
+      "env": {
+        "jest": true
+      },
+      "extends": ["plugin:testing-library/react"]
+    },
+    {
+      "files": ["*.js", "*.jsx", "*.mjs"],
+      "parser": "espree",
+      "parserOptions": {
+        "ecmaVersion": 2020
+      }
+    }
+  ],
+  "ignorePatterns": ["**/node_modules/*", "utils/errorLogger.js"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

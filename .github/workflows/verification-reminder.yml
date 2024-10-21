@@ -1,0 +1,22 @@
+name: Daily Verification Reminder
+
+on:
+  schedule:
+    - cron: '0 9 * * 1-5'  # Run at 9 AM UTC, Monday to Friday
+
+jobs:
+  create-reminder-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Daily Functionality Verification Checkpoint',
+              body: 'It\'s time for our daily functionality verification. Please review the PROJECT_PLAN.md for the current checkpoint and update the results.',
+              labels: ['verification', 'daily-check']
+            })

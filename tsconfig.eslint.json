@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.mjs",
+    ".eslintrc.js",
+    "jest.config.js",
+    "jest.setup.js",
+    "next.config.js",
+    "verify-env.js"
+  ]
+}

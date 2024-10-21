@@ -1,0 +1,16 @@
+/node_modules
+/dist
+/build
+/public
+/coverage
+/logs
+/tmp
+/tmp-cache
+/tmp-debug
+/tmp-debug-cache
+/tmp-debug-cache-2
+/tmp-debug-cache-3
+/tmp-debug-cache-4
+/tmp-debug-cache-5
+.vscode
+.cursorignore

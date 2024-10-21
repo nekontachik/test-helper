@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  name      String
+  email     String    @unique
+  password  String
+  role      String    @default("user")
+  projects  Project[]
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  testCases   TestCase[]
+  testRuns    TestRun[]
+  testSuites  TestSuite[]
+  testReports TestReport[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model TestCase {
+  id             String            @id @default(cuid())
+  title          String
+  description    String
+  expectedResult String
+  status         String
+  priority       String
+  projectId      String
+  version        Int               @default(1)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  project        Project           @relation(fields: [projectId], references: [id])
+  versions       TestCaseVersion[]
+  testRuns       TestRun[]
+  testSuites     TestSuite[]
+  testResults    TestCaseResult[]
+}
+
+model TestRun {
+  id              String           @id @default(cuid())
+  name            String
+  status          String
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id])
+  testCases       TestCase[]
+  testCaseResults TestCaseResult[]
+  testReport      TestReport?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model TestSuite {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id])
+  testCases   TestCase[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model TestCaseResult {
+  id         String   @id @default(cuid())
+  status     String
+  notes      String?
+  testCaseId String
+  testCase   TestCase @relation(fields: [testCaseId], references: [id])
+  testRunId  String
+  testRun    TestRun  @relation(fields: [testRunId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TestReport {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  testRunId String   @unique
+  testRun   TestRun  @relation(fields: [testRunId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TestCaseVersion {
+  id             String   @id @default(cuid())
+  testCaseId     String
+  versionNumber  Int
+  title          String
+  description    String
+  expectedResult String
+  status         String
+  priority       String
+  createdAt      DateTime @default(now())
+  testCase       TestCase @relation(fields: [testCaseId], references: [id])
+}
