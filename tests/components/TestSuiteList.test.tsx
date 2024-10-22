@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TestSuiteList } from '@/components/TestSuiteList';
-import { useTestSuites } from '../../hooks/useTestSuites';
-import { useErrorHandler } from '../../hooks/useErrorHandler';
+import { useTestSuites } from '@/hooks/useTestSuites';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ChakraProvider } from '@chakra-ui/react';
-import { TestSuite } from '../../models/types';
+import { TestSuite } from '@/models/types'; // Import from the correct location
 
-jest.mock('../../hooks/useTestSuites');
-jest.mock('../../hooks/useErrorHandler');
+jest.mock('@/hooks/useTestSuites');
+jest.mock('@/hooks/useErrorHandler');
 jest.mock('next/link', () => {
   return ({ children }: { children: React.ReactNode }) => children;
 });
@@ -18,16 +18,16 @@ const mockTestSuites: TestSuite[] = [
     name: 'Test Suite 1',
     description: 'Description 1',
     projectId: '1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(), // Convert to ISO string
+    updatedAt: new Date().toISOString(), // Convert to ISO string
   },
   {
     id: '2',
     name: 'Test Suite 2',
     description: 'Description 2',
     projectId: '1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(), // Convert to ISO string
+    updatedAt: new Date().toISOString(), // Convert to ISO string
   },
 ];
 

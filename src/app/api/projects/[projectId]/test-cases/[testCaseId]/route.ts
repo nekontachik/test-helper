@@ -1,15 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { AppError, NotFoundError, ValidationError } from '@/lib/errors';
+import { AppError, ValidationError } from '@/lib/errors';
 import logger from '@/lib/logger';
+import { Prisma } from '@prisma/client';
+import { TestCaseFormData, TestCaseStatus, TestCasePriority } from '@/types';
 
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string; testCaseId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
@@ -17,20 +20,15 @@ export async function GET(
     const { projectId, testCaseId } = params;
 
     const testCase = await prisma.testCase.findUnique({
-      where: { id: testCaseId },
+      where: { id: testCaseId, projectId },
     });
 
     if (!testCase) {
-      throw new NotFoundError('Test case not found');
+      throw new AppError('Test case not found', 404);
     }
 
-    if (testCase.projectId !== projectId) {
-      throw new AppError('Test case does not belong to the specified project', 400);
-    }
-
-    logger.info(`Retrieved test case: ${testCaseId}`, { projectId, testCaseId });
     return NextResponse.json(testCase);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AppError) {
       logger.warn(`AppError in GET test case: ${error.message}`, { statusCode: error.statusCode });
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
@@ -41,20 +39,30 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { projectId: string; testCaseId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
     const { projectId, testCaseId } = params;
-    const body = await request.json();
+    const body: Partial<TestCaseFormData> = await request.json();
 
-    if (!body.title || !body.description) {
-      throw new ValidationError('Title and description are required');
+    // Input validation
+    if (body.title !== undefined && body.title.trim().length === 0) {
+      throw new ValidationError('Title cannot be empty');
+    }
+    if (body.description !== undefined && body.description.trim().length === 0) {
+      throw new ValidationError('Description cannot be empty');
+    }
+    if (body.status !== undefined && !Object.values(TestCaseStatus).includes(body.status)) {
+      throw new ValidationError('Invalid status');
+    }
+    if (body.priority !== undefined && !Object.values(TestCasePriority).includes(body.priority)) {
+      throw new ValidationError('Invalid priority');
     }
 
     const existingTestCase = await prisma.testCase.findUnique({
@@ -62,39 +70,49 @@ export async function PUT(
     });
 
     if (!existingTestCase) {
-      throw new NotFoundError('Test case not found');
+      throw new AppError('Test case not found', 404);
     }
 
     if (existingTestCase.projectId !== projectId) {
       throw new AppError('Test case does not belong to the specified project', 400);
     }
 
-    const updatedTestCase = await prisma.testCase.update({
-      where: { id: testCaseId },
-      data: {
-        ...body,
-        version: { increment: 1 },
-      },
+    const updatedTestCase = await prisma.$transaction(async (prisma) => {
+      // Create a new version
+      await prisma.testCaseVersion.create({
+        data: {
+          testCaseId: existingTestCase.id,
+          versionNumber: existingTestCase.version,
+          title: existingTestCase.title,
+          description: existingTestCase.description,
+          steps: existingTestCase.steps,
+          expectedResult: existingTestCase.expectedResult,
+          actualResult: existingTestCase.actualResult,
+          status: existingTestCase.status,
+          priority: existingTestCase.priority,
+        },
+      });
+
+      // Update the test case
+      return prisma.testCase.update({
+        where: { id: testCaseId },
+        data: {
+          ...body,
+          version: { increment: 1 },
+        },
+      });
     });
 
-    await prisma.testCaseVersion.create({
-      data: {
-        testCaseId: updatedTestCase.id,
-        versionNumber: updatedTestCase.version,
-        title: updatedTestCase.title,
-        description: updatedTestCase.description,
-        status: updatedTestCase.status,
-        priority: updatedTestCase.priority,
-        expectedResult: updatedTestCase.expectedResult,
-      },
-    });
-
-    logger.info(`Updated test case: ${testCaseId}`, { projectId, testCaseId });
+    logger.info(`Updated test case ${testCaseId} for project ${projectId}`);
     return NextResponse.json(updatedTestCase);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AppError) {
       logger.warn(`AppError in PUT test case: ${error.message}`, { statusCode: error.statusCode });
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      logger.warn(`Test case not found: ${params.testCaseId}`);
+      return NextResponse.json({ error: 'Test case not found' }, { status: 404 });
     }
     logger.error('Unexpected error in PUT test case:', error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
@@ -106,7 +124,7 @@ export async function DELETE(
   { params }: { params: { projectId: string; testCaseId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
@@ -118,7 +136,7 @@ export async function DELETE(
     });
 
     if (!existingTestCase) {
-      throw new NotFoundError('Test case not found');
+      throw new AppError('Test case not found', 404);
     }
 
     if (existingTestCase.projectId !== projectId) {

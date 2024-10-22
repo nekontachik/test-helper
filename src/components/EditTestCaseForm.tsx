@@ -8,7 +8,6 @@ import {
   Textarea,
   Select,
   VStack,
-  Text,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
 import {
@@ -21,13 +20,11 @@ import {
 interface EditTestCaseFormProps {
   testCase: TestCase;
   onSubmit: (data: TestCaseFormData) => void;
-  onCancel: () => void;
 }
 
 export function EditTestCaseForm({
   testCase,
   onSubmit,
-  onCancel,
 }: EditTestCaseFormProps) {
   const {
     register,
@@ -40,36 +37,40 @@ export function EditTestCaseForm({
       expectedResult: testCase.expectedResult,
       status: testCase.status,
       priority: testCase.priority,
+      projectId: testCase.projectId,
+      steps: testCase.steps,
+      actualResult: testCase.actualResult,
     },
   });
 
-  const onSubmitForm = (data: TestCaseFormData) => {
-    onSubmit({ ...data, projectId: testCase.projectId });
-  };
-
   return (
-    <Box as="form" onSubmit={handleSubmit(onSubmitForm)}>
+    <Box as="form" onSubmit={handleSubmit(onSubmit)}>
       <VStack spacing={4} align="stretch">
-        <Text>Editing Version: {testCase.version}</Text>
         <FormControl isInvalid={!!errors.title}>
           <FormLabel>Title</FormLabel>
           <Input {...register('title', { required: 'Title is required' })} />
         </FormControl>
-        <FormControl isInvalid={!!errors.description}>
+        <FormControl>
           <FormLabel>Description</FormLabel>
-          <Textarea {...register('description', { required: 'Description is required' })} />
+          <Textarea {...register('description')} />
         </FormControl>
-        <FormControl isInvalid={!!errors.expectedResult}>
+        <FormControl>
+          <FormLabel>Steps</FormLabel>
+          <Textarea {...register('steps')} />
+        </FormControl>
+        <FormControl>
           <FormLabel>Expected Result</FormLabel>
-          <Textarea {...register('expectedResult', { required: 'Expected result is required' })} />
+          <Textarea {...register('expectedResult')} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Actual Result</FormLabel>
+          <Textarea {...register('actualResult')} />
         </FormControl>
         <FormControl>
           <FormLabel>Status</FormLabel>
           <Select {...register('status')}>
             {Object.values(TestCaseStatus).map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
+              <option key={status} value={status}>{status}</option>
             ))}
           </Select>
         </FormControl>
@@ -77,18 +78,11 @@ export function EditTestCaseForm({
           <FormLabel>Priority</FormLabel>
           <Select {...register('priority')}>
             {Object.values(TestCasePriority).map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
-              </option>
+              <option key={priority} value={priority}>{priority}</option>
             ))}
           </Select>
         </FormControl>
-        <Button type="submit" colorScheme="blue">
-          Update Test Case (Create New Version)
-        </Button>
-        <Button onClick={onCancel} colorScheme="gray">
-          Cancel
-        </Button>
+        <Button type="submit" colorScheme="blue">Update Test Case</Button>
       </VStack>
     </Box>
   );

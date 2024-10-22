@@ -48,9 +48,10 @@ export interface User {
 export interface Project {
   id: string;
   name: string;
-  description?: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string; // Add this line
   // ... other properties
 }
 
@@ -58,14 +59,15 @@ export interface TestCase {
   id: string;
   title: string;
   description: string;
+  steps: string; // Add this line
   expectedResult: string;
+  actualResult: string;
   status: TestCaseStatus;
   priority: TestCasePriority;
   projectId: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   version: number;
-  createdAt: string;
-  updatedAt: string;
-  // ... other properties
 }
 
 export interface TestRun {
@@ -91,12 +93,11 @@ export interface TestSuite {
 
 export interface TestCaseResult {
   id: string;
-  testCaseId: string;
-  testRunId: string;
   status: TestCaseResultStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  testCase?: TestCase;
+  testCaseId: string;
+  notes?: string;
+  createdAt: string; // Add this line
+  updatedAt: string; // Add this line
 }
 
 export interface TestReport {
@@ -112,9 +113,11 @@ export interface TestReport {
 export interface TestCaseFormData {
   title: string;
   description: string;
+  steps: string; // Add this line if it's not already present
+  expectedResult: string;
+  actualResult: string;
   status: TestCaseStatus;
   priority: TestCasePriority;
-  expectedResult: string;
   projectId: string;
 }
 

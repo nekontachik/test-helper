@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { TestCaseItem } from './TestCaseItem';
-import { TestCase } from '../models/testCase';
+import { TestCaseItem } from '@/components/TestCaseItem';
+import { TestCase } from '@/models/testCase';
 
 describe('TestCaseItem', () => {
   const testCase: TestCase = {

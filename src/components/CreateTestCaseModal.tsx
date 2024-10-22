@@ -23,14 +23,14 @@ import { TestCaseFormData, TestCaseStatus, TestCasePriority } from '@/types';
 interface CreateTestCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: TestCaseFormData) => void;
+  onCreateTestCase: (data: TestCaseFormData) => void;
   projectId: string;
 }
 
 export function CreateTestCaseModal({
   isOpen,
   onClose,
-  onSubmit,
+  onCreateTestCase,
   projectId,
 }: CreateTestCaseModalProps) {
   const {
@@ -39,8 +39,8 @@ export function CreateTestCaseModal({
     formState: { errors },
   } = useForm<TestCaseFormData>();
 
-  const onSubmitForm = (data: TestCaseFormData) => {
-    onSubmit({ ...data, projectId });
+  const onSubmit = (data: TestCaseFormData) => {
+    onCreateTestCase({ ...data, projectId });
     onClose();
   };
 
@@ -48,32 +48,26 @@ export function CreateTestCaseModal({
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <form onSubmit={handleSubmit(onSubmitForm)}>
-          <ModalHeader>Create New Test Case</ModalHeader>
-          <ModalCloseButton />
+        <ModalHeader>Create New Test Case</ModalHeader>
+        <ModalCloseButton />
+        <form onSubmit={handleSubmit(onSubmit)}>
           <ModalBody>
             <VStack spacing={4}>
               <FormControl isInvalid={!!errors.title}>
                 <FormLabel>Title</FormLabel>
-                <Input
-                  {...register('title', { required: 'Title is required' })}
-                />
+                <Input {...register('title', { required: 'Title is required' })} />
               </FormControl>
-              <FormControl isInvalid={!!errors.description}>
+              <FormControl>
                 <FormLabel>Description</FormLabel>
-                <Textarea
-                  {...register('description', {
-                    required: 'Description is required',
-                  })}
-                />
+                <Textarea {...register('description')} />
               </FormControl>
-              <FormControl isInvalid={!!errors.expectedResult}>
+              <FormControl>
+                <FormLabel>Steps</FormLabel>
+                <Textarea {...register('steps')} />
+              </FormControl>
+              <FormControl>
                 <FormLabel>Expected Result</FormLabel>
-                <Textarea
-                  {...register('expectedResult', {
-                    required: 'Expected result is required',
-                  })}
-                />
+                <Textarea {...register('expectedResult')} />
               </FormControl>
               <FormControl>
                 <FormLabel>Status</FormLabel>

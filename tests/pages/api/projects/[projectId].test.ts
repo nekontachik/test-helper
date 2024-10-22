@@ -1,10 +1,10 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '../../../../pages/api/projects/[projectId]';
-import { apiClient } from '../../../../lib/apiClient';
-import { rateLimiter } from '../../../../lib/rateLimiter';
+import projectHandler from '@/pages/api/projects/[projectId]';
+import apiClient from '@/lib/apiClient';
+import rateLimiter from '@/lib/rateLimiter';
 
-jest.mock('../../../../lib/apiClient');
-jest.mock('../../../../lib/rateLimiter');
+jest.mock('@/lib/apiClient');
+jest.mock('@/lib/rateLimiter');
 
 describe('/api/projects/[projectId]', () => {
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe('/api/projects/[projectId]', () => {
       description: 'Test Description',
     });
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(200);
     expect(JSON.parse(res._getData())).toEqual({
@@ -48,13 +48,13 @@ describe('/api/projects/[projectId]', () => {
     });
 
     (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.updateProject as jest.Mock).mockResolvedValue({
+    (apiClient.put as jest.Mock).mockResolvedValue({
       id: '1',
       name: 'Updated Project',
       description: 'Updated Description',
     });
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(200);
     expect(JSON.parse(res._getData())).toEqual({
@@ -74,22 +74,14 @@ describe('/api/projects/[projectId]', () => {
     });
 
     (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.deleteProject as jest.Mock).mockResolvedValue({
-      id: '1',
-      name: 'Deleted Project',
-      description: 'Deleted Description',
-    });
+    (apiClient.delete as jest.Mock).mockResolvedValue(undefined);
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(200);
     expect(JSON.parse(res._getData())).toEqual({
       success: true,
-      data: {
-        id: '1',
-        name: 'Deleted Project',
-        description: 'Deleted Description',
-      },
+      message: 'Project deleted successfully',
     });
   });
 
@@ -102,7 +94,7 @@ describe('/api/projects/[projectId]', () => {
     (rateLimiter as jest.Mock).mockResolvedValue(undefined);
     (apiClient.getProject as jest.Mock).mockResolvedValue(null);
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(404);
     expect(JSON.parse(res._getData())).toEqual({
@@ -122,7 +114,7 @@ describe('/api/projects/[projectId]', () => {
 
     (rateLimiter as jest.Mock).mockResolvedValue(undefined);
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(400);
     expect(JSON.parse(res._getData())).toEqual({
@@ -141,7 +133,7 @@ describe('/api/projects/[projectId]', () => {
       new Error('Too Many Requests')
     );
 
-    await handler(req as any, res as any);
+    await projectHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(429);
     expect(JSON.parse(res._getData())).toEqual({

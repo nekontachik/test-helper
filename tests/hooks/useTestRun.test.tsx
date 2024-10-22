@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTestRun } from '../../hooks/useTestRun';
-import { apiClient } from '../../lib/apiClient';
-import { TestRunStatus } from '../../models/types';
+import { useTestRun } from '@/hooks/useTestRun';
+import apiClient from '@/lib/apiClient';
+import { TestRunStatus } from '@/types';
 
 jest.mock('../../lib/apiClient');
 
@@ -54,5 +54,6 @@ describe('useTestRun', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toBeUndefined();
+    expect(apiClient.getTestRun).not.toHaveBeenCalled();
   });
 });

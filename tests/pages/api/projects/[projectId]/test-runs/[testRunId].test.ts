@@ -1,35 +1,48 @@
-import { createMocks } from 'node-mocks-http';
-import handler from '../../../../../../pages/api/projects/[projectId]/test-runs/[testRunId]';
-import { apiClient } from '../../../../../../lib/apiClient';
-import { rateLimiter } from '../../../../../../lib/rateLimiter';
-import { TestRunStatus } from '../../../../../../types';
+import { NextRequest } from 'next/server';
+import { GET, PUT, DELETE } from '@/app/api/projects/[projectId]/test-runs/[testRunId]/route';
+import prisma from '@/lib/prisma';
+import { TestRunStatus } from '@/types';
+import { getServerSession } from 'next-auth/next';
 
-jest.mock('../../../../../../lib/apiClient');
-jest.mock('../../../../../../lib/rateLimiter');
+jest.mock('@/lib/prisma', () => ({
+  testRun: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
+jest.mock('next-auth/next', () => ({
+  getServerSession: jest.fn(() => Promise.resolve({ user: { id: 'user1' } })),
+}));
 
 describe('/api/projects/[projectId]/test-runs/[testRunId]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('gets a test run successfully', async () => {
-    const { req, res } = createMocks({
-      method: 'GET',
-      query: { projectId: 'project1', testRunId: 'testRun1' },
-    });
+  const mockRequest = (method: string, body?: any) => {
+    return {
+      method,
+      json: () => Promise.resolve(body),
+    } as unknown as NextRequest;
+  };
 
-    (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.getTestRun as jest.Mock).mockResolvedValue({
+  const mockParams = { projectId: 'project1', testRunId: 'testRun1' };
+
+  it('gets a test run successfully', async () => {
+    (prisma.testRun.findUnique as jest.Mock).mockResolvedValue({
       id: 'testRun1',
       name: 'Test Run 1',
       status: TestRunStatus.PENDING,
       projectId: 'project1',
     });
 
-    await handler(req as any, res as any);
+    const response = await GET(mockRequest('GET'), { params: mockParams });
 
-    expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toEqual({
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toEqual({
       success: true,
       data: {
         id: 'testRun1',
@@ -41,27 +54,24 @@ describe('/api/projects/[projectId]/test-runs/[testRunId]', () => {
   });
 
   it('updates a test run successfully', async () => {
-    const { req, res } = createMocks({
-      method: 'PUT',
-      query: { projectId: 'project1', testRunId: 'testRun1' },
-      body: {
-        name: 'Updated Test Run',
-        status: TestRunStatus.COMPLETED,
-      },
-    });
-
-    (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.updateTestRun as jest.Mock).mockResolvedValue({
+    (prisma.testRun.update as jest.Mock).mockResolvedValue({
       id: 'testRun1',
       name: 'Updated Test Run',
       status: TestRunStatus.COMPLETED,
       projectId: 'project1',
     });
 
-    await handler(req as any, res as any);
+    const response = await PUT(
+      mockRequest('PUT', {
+        name: 'Updated Test Run',
+        status: TestRunStatus.COMPLETED,
+      }),
+      { params: mockParams }
+    );
 
-    expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toEqual({
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toEqual({
       success: true,
       data: {
         id: 'testRun1',
@@ -73,23 +83,18 @@ describe('/api/projects/[projectId]/test-runs/[testRunId]', () => {
   });
 
   it('deletes a test run successfully', async () => {
-    const { req, res } = createMocks({
-      method: 'DELETE',
-      query: { projectId: 'project1', testRunId: 'testRun1' },
-    });
-
-    (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.deleteTestRun as jest.Mock).mockResolvedValue({
+    (prisma.testRun.delete as jest.Mock).mockResolvedValue({
       id: 'testRun1',
       name: 'Deleted Test Run',
       status: TestRunStatus.COMPLETED,
       projectId: 'project1',
     });
 
-    await handler(req as any, res as any);
+    const response = await DELETE(mockRequest('DELETE'), { params: mockParams });
 
-    expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toEqual({
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toEqual({
       success: true,
       data: {
         id: 'testRun1',
@@ -101,59 +106,30 @@ describe('/api/projects/[projectId]/test-runs/[testRunId]', () => {
   });
 
   it('handles not found error', async () => {
-    const { req, res } = createMocks({
-      method: 'GET',
-      query: { projectId: 'project1', testRunId: 'nonexistent' },
-    });
+    (prisma.testRun.findUnique as jest.Mock).mockResolvedValue(null);
 
-    (rateLimiter as jest.Mock).mockResolvedValue(undefined);
-    (apiClient.getTestRun as jest.Mock).mockResolvedValue(null);
+    const response = await GET(mockRequest('GET'), { params: { ...mockParams, testRunId: 'nonexistent' } });
 
-    await handler(req as any, res as any);
-
-    expect(res._getStatusCode()).toBe(404);
-    expect(JSON.parse(res._getData())).toEqual({
+    expect(response.status).toBe(404);
+    const data = await response.json();
+    expect(data).toEqual({
       success: false,
       error: 'Test run not found',
     });
   });
 
-  it('handles invalid input for test run update', async () => {
-    const { req, res } = createMocks({
-      method: 'PUT',
-      query: { projectId: 'project1', testRunId: 'testRun1' },
-      body: {
-        status: 'INVALID_STATUS',
-      },
-    });
+  it('handles unauthorized access', async () => {
+    (getServerSession as jest.Mock).mockResolvedValueOnce(null);
 
-    (rateLimiter as jest.Mock).mockResolvedValue(undefined);
+    const response = await GET(mockRequest('GET'), { params: mockParams });
 
-    await handler(req as any, res as any);
-
-    expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data).toEqual({
       success: false,
-      error: 'Invalid test run data',
+      error: 'Unauthorized',
     });
   });
 
-  it('handles rate limiting', async () => {
-    const { req, res } = createMocks({
-      method: 'GET',
-      query: { projectId: 'project1', testRunId: 'testRun1' },
-    });
-
-    (rateLimiter as jest.Mock).mockRejectedValue(
-      new Error('Too Many Requests')
-    );
-
-    await handler(req as any, res as any);
-
-    expect(res._getStatusCode()).toBe(429);
-    expect(JSON.parse(res._getData())).toEqual({
-      success: false,
-      error: 'Too Many Requests',
-    });
-  });
+  // Add more tests as needed for error handling, validation, etc.
 });

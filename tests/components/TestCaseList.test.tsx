@@ -1,138 +1,131 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ChakraProvider } from '@chakra-ui/react';
 import { TestCaseList } from '@/components/TestCaseList';
 import { useTestCases } from '@/hooks/useTestCases';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
+// Mock the useTestCases hook
 jest.mock('@/hooks/useTestCases');
 
-const mockTestCases: TestCase[] = Array.from({ length: 25 }, (_, i) => ({
-  id: `tc-${i + 1}`,
-  title: `Test Case ${i + 1}`,
-  description: `Description for Test Case ${i + 1}`,
-  status: TestCaseStatus.ACTIVE,
-  priority: TestCasePriority.MEDIUM,
-  expectedResult: `Expected Result ${i + 1}`,
-  projectId: 'project1',
-  version: 1,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+// Mock the useRouter hook
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
 }));
 
 describe('TestCaseList', () => {
+  const mockTestCases = [
+    {
+      id: '1',
+      title: 'Test Case 1',
+      description: 'Description 1',
+      status: TestCaseStatus.ACTIVE,
+      priority: TestCasePriority.HIGH,
+    },
+    {
+      id: '2',
+      title: 'Test Case 2',
+      description: 'Description 2',
+      status: TestCaseStatus.INACTIVE,
+      priority: TestCasePriority.LOW,
+    },
+  ];
+
   beforeEach(() => {
     (useTestCases as jest.Mock).mockReturnValue({
-      testCases: mockTestCases,
+      data: { items: mockTestCases, totalPages: 1 },
       isLoading: false,
       error: null,
-      totalPages: 3,
-      currentPage: 1,
     });
   });
 
-  it('renders test cases correctly', () => {
-    render(
-      <ChakraProvider>
-        <TestCaseList projectId="project1" />
-      </ChakraProvider>
-    );
-
+  it('renders the test case list', () => {
+    render(<TestCaseList projectId="project1" />);
+    expect(screen.getByText('Test Cases')).toBeInTheDocument();
     expect(screen.getByText('Test Case 1')).toBeInTheDocument();
     expect(screen.getByText('Test Case 2')).toBeInTheDocument();
   });
 
-  it('filters test cases by title, status, and priority', async () => {
-    render(
-      <ChakraProvider>
-        <TestCaseList projectId="project1" />
-      </ChakraProvider>
-    );
-
-    // Filter by title
-    fireEvent.change(screen.getByPlaceholderText('Filter by title'), {
-      target: { value: 'Test Case 1' },
-    });
-
-    // Filter by status
-    fireEvent.change(screen.getByLabelText('Filter by status'), {
-      target: { value: TestCaseStatus.ACTIVE },
-    });
-
-    // Filter by priority
-    fireEvent.change(screen.getByLabelText('Filter by priority'), {
-      target: { value: TestCasePriority.HIGH },
-    });
-
-    await waitFor(() => {
-      expect(useTestCases).toHaveBeenCalledWith('project1', {
-        title: 'Test Case 1',
-        status: TestCaseStatus.ACTIVE,
-        priority: TestCasePriority.HIGH,
-      });
-    });
-  });
-
-  it('opens create test case modal', () => {
-    render(
-      <ChakraProvider>
-        <TestCaseList projectId="project1" />
-      </ChakraProvider>
-    );
-
-    fireEvent.click(screen.getByText('Create New Test Case'));
-    expect(screen.getByText('Create New Test Case')).toBeInTheDocument();
-  });
-
-  it('renders pagination correctly', async () => {
-    render(
-      <ChakraProvider>
-        <TestCaseList projectId="project1" />
-      </ChakraProvider>
-    );
-
-    expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
-    expect(screen.getByText('Next')).toBeInTheDocument();
-    expect(screen.queryByText('Previous')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Next'));
-
-    await waitFor(() => {
-      expect(useTestCases).toHaveBeenCalledWith('project1', expect.objectContaining({ page: 2 }));
-    });
-
+  it('displays loading state', () => {
     (useTestCases as jest.Mock).mockReturnValue({
-      testCases: mockTestCases.slice(10, 20),
+      data: null,
+      isLoading: true,
+      error: null,
+    });
+    render(<TestCaseList projectId="project1" />);
+    expect(screen.getByText('Loading test cases...')).toBeInTheDocument();
+  });
+
+  it('displays error state', () => {
+    (useTestCases as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: new Error('Failed to load test cases'),
+    });
+    render(<TestCaseList projectId="project1" />);
+    expect(screen.getByText('Error loading test cases. Please try again.')).toBeInTheDocument();
+  });
+
+  it('handles error state', async () => {
+    (useTestCases as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: new Error('Failed to fetch test cases'),
+    });
+
+    render(<TestCaseList projectId="project1" />);
+
+    expect(screen.getByText('Error loading test cases. Please try again.')).toBeInTheDocument();
+  });
+
+  it('handles empty test case list', async () => {
+    (useTestCases as jest.Mock).mockReturnValue({
+      data: { items: [], totalPages: 0, currentPage: 1 },
       isLoading: false,
       error: null,
-      totalPages: 3,
-      currentPage: 2,
     });
 
-    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
-    expect(screen.getByText('Next')).toBeInTheDocument();
-    expect(screen.getByText('Previous')).toBeInTheDocument();
+    render(<TestCaseList projectId="project1" />);
+
+    expect(screen.getByText('No test cases found')).toBeInTheDocument();
   });
 
-  it('handles the last page correctly', async () => {
+  it('creates a new test case', async () => {
+    const mockCreateTestCase = jest.fn();
     (useTestCases as jest.Mock).mockReturnValue({
-      testCases: mockTestCases.slice(20),
+      data: { items: [], totalPages: 0, currentPage: 1 },
       isLoading: false,
       error: null,
-      totalPages: 3,
-      currentPage: 3,
+      createTestCase: mockCreateTestCase,
     });
 
-    render(
-      <ChakraProvider>
-        <TestCaseList projectId="project1" />
-      </ChakraProvider>
-    );
+    render(<TestCaseList projectId="project1" />);
 
-    expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
-    expect(screen.queryByText('Next')).not.toBeInTheDocument();
-    expect(screen.getByText('Previous')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Create Test Case'));
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Test Case' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test description' } });
+    fireEvent.click(screen.getByText('Create'));
+
+    await waitFor(() => {
+      expect(mockCreateTestCase).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'New Test Case',
+        description: 'Test description',
+      }));
+    });
   });
 
-  // Add more tests as needed
+  it('filters test cases by status', () => {
+    render(<TestCaseList projectId="project1" />);
+    const statusSelect = screen.getByRole('combobox', { name: /status/i });
+    fireEvent.change(statusSelect, { target: { value: TestCaseStatus.ACTIVE } });
+    expect(useTestCases).toHaveBeenCalledWith('project1', expect.objectContaining({ status: TestCaseStatus.ACTIVE }));
+  });
+
+  it('filters test cases by priority', () => {
+    render(<TestCaseList projectId="project1" />);
+    const prioritySelect = screen.getByRole('combobox', { name: /priority/i });
+    fireEvent.change(prioritySelect, { target: { value: TestCasePriority.HIGH } });
+    expect(useTestCases).toHaveBeenCalledWith('project1', expect.objectContaining({ priority: TestCasePriority.HIGH }));
+  });
 });

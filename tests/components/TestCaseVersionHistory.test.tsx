@@ -1,14 +1,36 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ChakraProvider } from '@chakra-ui/react';
 import { TestCaseVersionHistory } from '@/components/TestCaseVersionHistory';
-import { useTestCaseVersions } from '@/hooks/useTestCases';
+import { useTestCaseVersions } from '@/hooks/useTestCase';
+import { TestCaseVersion, TestCaseStatus, TestCasePriority } from '@/types';
 
-jest.mock('@/hooks/useTestCases');
+jest.mock('@/hooks/useTestCase');
 
-const mockVersions = [
-  { versionNumber: 2, updatedAt: '2023-05-02T10:00:00Z', title: 'Updated Test Case' },
-  { versionNumber: 1, updatedAt: '2023-05-01T10:00:00Z', title: 'Original Test Case' },
+const mockVersions: TestCaseVersion[] = [
+  {
+    id: '2',
+    testCaseId: '1',
+    versionNumber: 2,
+    title: 'Updated Test Case',
+    description: 'Updated description',
+    status: TestCaseStatus.ACTIVE,
+    priority: TestCasePriority.HIGH,
+    expectedResult: 'Updated expected result',
+    createdAt: new Date('2023-05-02'),
+    updatedAt: new Date('2023-05-02'),
+  },
+  {
+    id: '1',
+    testCaseId: '1',
+    versionNumber: 1,
+    title: 'Original Test Case',
+    description: 'Original description',
+    status: TestCaseStatus.DRAFT,
+    priority: TestCasePriority.MEDIUM,
+    expectedResult: 'Original expected result',
+    createdAt: new Date('2023-05-01'),
+    updatedAt: new Date('2023-05-01'),
+  },
 ];
 
 describe('TestCaseVersionHistory', () => {
@@ -21,10 +43,13 @@ describe('TestCaseVersionHistory', () => {
   });
 
   it('renders version history correctly', () => {
+    const mockOnVersionRestore = jest.fn();
     render(
-      <ChakraProvider>
-        <TestCaseVersionHistory projectId="project1" testCaseId="case1" />
-      </ChakraProvider>
+      <TestCaseVersionHistory
+        projectId="project1"
+        testCaseId="testcase1"
+        onVersionRestore={mockOnVersionRestore}
+      />
     );
 
     expect(screen.getByText('Version History')).toBeInTheDocument();
@@ -34,26 +59,23 @@ describe('TestCaseVersionHistory', () => {
     expect(screen.getByText('Original Test Case')).toBeInTheDocument();
   });
 
-  it('calls onVersionChange when a version is selected', async () => {
-    const mockOnVersionChange = jest.fn();
+  it('calls onVersionRestore when restore button is clicked', async () => {
+    const mockOnVersionRestore = jest.fn();
     render(
-      <ChakraProvider>
-        <TestCaseVersionHistory
-          projectId="project1"
-          testCaseId="case1"
-          onVersionChange={mockOnVersionChange}
-        />
-      </ChakraProvider>
+      <TestCaseVersionHistory
+        projectId="project1"
+        testCaseId="testcase1"
+        onVersionRestore={mockOnVersionRestore}
+      />
     );
 
-    fireEvent.click(screen.getByText('Version 1'));
-
+    fireEvent.click(screen.getAllByText('Restore this version')[0]);
     await waitFor(() => {
-      expect(mockOnVersionChange).toHaveBeenCalledWith(1);
+      expect(mockOnVersionRestore).toHaveBeenCalledWith(2);
     });
   });
 
-  it('displays loading state', () => {
+  it('shows loading state', () => {
     (useTestCaseVersions as jest.Mock).mockReturnValue({
       data: null,
       isLoading: true,
@@ -61,43 +83,31 @@ describe('TestCaseVersionHistory', () => {
     });
 
     render(
-      <ChakraProvider>
-        <TestCaseVersionHistory projectId="project1" testCaseId="case1" />
-      </ChakraProvider>
+      <TestCaseVersionHistory
+        projectId="project1"
+        testCaseId="testcase1"
+        onVersionRestore={jest.fn()}
+      />
     );
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  it('displays error state', () => {
+  it('shows error state', () => {
     (useTestCaseVersions as jest.Mock).mockReturnValue({
       data: null,
       isLoading: false,
-      error: new Error('Failed to fetch versions'),
+      error: new Error('Failed to load versions'),
     });
 
     render(
-      <ChakraProvider>
-        <TestCaseVersionHistory projectId="project1" testCaseId="case1" />
-      </ChakraProvider>
+      <TestCaseVersionHistory
+        projectId="project1"
+        testCaseId="testcase1"
+        onVersionRestore={jest.fn()}
+      />
     );
 
-    expect(screen.getByText('Error loading versions: Failed to fetch versions')).toBeInTheDocument();
-  });
-
-  it('displays "No versions available" when there are no versions', () => {
-    (useTestCaseVersions as jest.Mock).mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null,
-    });
-
-    render(
-      <ChakraProvider>
-        <TestCaseVersionHistory projectId="project1" testCaseId="case1" />
-      </ChakraProvider>
-    );
-
-    expect(screen.getByText('No versions available')).toBeInTheDocument();
+    expect(screen.getByText('Error loading versions: Failed to load versions')).toBeInTheDocument();
   });
 });

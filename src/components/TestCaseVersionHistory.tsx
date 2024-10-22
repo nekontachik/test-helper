@@ -1,15 +1,16 @@
 import React from 'react';
-import { Box, VStack, Text, Heading, Spinner } from '@chakra-ui/react';
-import { useTestCaseVersions } from '@/hooks/useTestCase'; // Updated import
+import { Box, VStack, Text, Heading, Spinner, Button } from '@chakra-ui/react';
+import { useTestCaseVersions } from '@/hooks/useTestCase';
 import { TestCaseVersion } from '@/types';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface TestCaseVersionHistoryProps {
   projectId: string;
   testCaseId: string;
-  onVersionChange?: (version: number) => void;
+  onVersionRestore: (version: number) => void;
 }
 
-export function TestCaseVersionHistory({ projectId, testCaseId, onVersionChange }: TestCaseVersionHistoryProps) {
+export function TestCaseVersionHistory({ projectId, testCaseId, onVersionRestore }: TestCaseVersionHistoryProps) {
   const { data: versions, isLoading, error } = useTestCaseVersions(projectId, testCaseId);
 
   if (isLoading) return <Spinner />;
@@ -19,24 +20,33 @@ export function TestCaseVersionHistory({ projectId, testCaseId, onVersionChange 
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   return (
-    <Box>
-      <Heading size="md" mb={4}>Version History</Heading>
-      <VStack align="stretch" spacing={4}>
-        {sortedVersions.map((version: TestCaseVersion) => (
-          <Box 
-            key={version.versionNumber} 
-            p={4} 
-            borderWidth={1} 
-            borderRadius="md" 
-            cursor="pointer"
-            onClick={() => onVersionChange && onVersionChange(version.versionNumber)}
-          >
-            <Text fontWeight="bold">Version {version.versionNumber}</Text>
-            <Text>{version.title}</Text>
-            <Text fontSize="sm">{new Date(version.updatedAt).toLocaleString()}</Text>
-          </Box>
-        ))}
-      </VStack>
-    </Box>
+    <ErrorBoundary>
+      <Box>
+        <Heading size="md" mb={4}>Version History</Heading>
+        <VStack align="stretch" spacing={4}>
+          {sortedVersions.map((version: TestCaseVersion) => (
+            <Box 
+              key={version.versionNumber} 
+              p={4} 
+              borderWidth={1} 
+              borderRadius="md" 
+              boxShadow="sm"
+            >
+              <Text fontWeight="bold">Version {version.versionNumber}</Text>
+              <Text>{version.title}</Text>
+              <Text fontSize="sm" color="gray.500">{new Date(version.createdAt).toLocaleString()}</Text>
+              <Button 
+                size="sm" 
+                mt={2} 
+                colorScheme="blue"
+                onClick={() => onVersionRestore(version.versionNumber)}
+              >
+                Restore this version
+              </Button>
+            </Box>
+          ))}
+        </VStack>
+      </Box>
+    </ErrorBoundary>
   );
 }

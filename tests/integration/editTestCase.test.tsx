@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TestCaseDetails } from '@/components/TestCaseDetails';
-import { apiClient } from '@/lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
 jest.mock('@/lib/apiClient');
@@ -19,8 +19,8 @@ const mockTestCase: TestCase = {
   priority: TestCasePriority.HIGH,
   projectId: 'project1',
   version: 1,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: '2023-01-01T00:00:00Z', // Use ISO string format
+  updatedAt: '2023-01-01T00:00:00Z', // Use ISO string format
 };
 
 describe('Edit Test Case Flow', () => {
@@ -34,7 +34,7 @@ describe('Edit Test Case Flow', () => {
     render(
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
-          <TestCaseDetails testCase={mockTestCase} onClose={() => {}} />
+          <TestCaseDetails testCase={mockTestCase} projectId="project1" />
         </QueryClientProvider>
       </ChakraProvider>
     );

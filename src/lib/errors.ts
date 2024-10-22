@@ -1,13 +1,7 @@
 export class AppError extends Error {
-  constructor(
-    public message: string,
-    public statusCode: number = 500,
-    public isOperational: boolean = true
-  ) {
+  constructor(message: string, public statusCode: number) {
     super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-    this.name = Error.name;
-    Error.captureStackTrace(this);
+    this.name = 'AppError';
   }
 }
 
@@ -25,9 +19,9 @@ export class DatabaseError extends Error {
   }
 }
 
-export class ValidationError extends Error {
+export class ValidationError extends AppError {
   constructor(message: string) {
-    super(message);
+    super(message, 400);
     this.name = 'ValidationError';
   }
 }

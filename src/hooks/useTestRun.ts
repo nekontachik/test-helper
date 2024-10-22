@@ -1,27 +1,13 @@
-import { useState, useEffect } from 'react';
-import { TestRun } from '@/models/testRun';
-import { getTestRun } from '@/lib/api/testRuns';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/lib/apiClient';
 
-export function useTestRun(projectId: string, testRunId: string) {
-  const [testRun, setTestRun] = useState<TestRun | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchTestRun() {
-      try {
-        const fetchedTestRun = await getTestRun(projectId, testRunId);
-        setTestRun(fetchedTestRun);
-      } catch (error) {
-        console.error('Failed to fetch test run:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (projectId && testRunId) {
-      fetchTestRun();
-    }
-  }, [projectId, testRunId]);
-
-  return { testRun, isLoading };
+export function useTestRun(projectId?: string, testRunId?: string) {
+  return useQuery({
+    queryKey: ['testRun', projectId, testRunId],
+    queryFn: () => 
+      projectId && testRunId 
+        ? apiClient.getTestRun(projectId, testRunId)
+        : Promise.resolve(undefined),
+    enabled: !!projectId && !!testRunId,
+  });
 }

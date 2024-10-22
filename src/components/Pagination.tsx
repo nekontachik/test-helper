@@ -7,11 +7,11 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({
+export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
-}: PaginationProps) {
+}) => {
   return (
     <Flex justify="center" mt={4}>
       <Button
@@ -40,4 +40,4 @@ export function Pagination({
       </Button>
     </Flex>
   );
-}
+};

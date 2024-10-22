@@ -15,10 +15,9 @@ const mockTestCases: TestCase[] = [
     status: TestCaseStatus.ACTIVE,
     priority: TestCasePriority.HIGH,
     projectId: 'project1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: '2023-01-01T00:00:00Z',
+    updatedAt: '2023-01-01T00:00:00Z',
     expectedResult: 'Expected Result 1',
-    testSuiteId: '1',
     version: 1,
   },
   {
@@ -28,10 +27,9 @@ const mockTestCases: TestCase[] = [
     status: TestCaseStatus.DRAFT,
     priority: TestCasePriority.MEDIUM,
     projectId: 'project1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: '2023-01-01T00:00:00Z',
+    updatedAt: '2023-01-01T00:00:00Z',
     expectedResult: 'Expected Result 2',
-    testSuiteId: '1',
     version: 1,
   },
 ];
@@ -41,8 +39,8 @@ const mockTestSuite: TestSuite = {
   name: 'Test Suite 1',
   description: 'Description of Test Suite 1',
   projectId: 'project1',
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date('2023-01-01T00:00:00Z'),
+  updatedAt: new Date('2023-01-02T00:00:00Z'),
 };
 
 describe('TestSuiteDetails', () => {

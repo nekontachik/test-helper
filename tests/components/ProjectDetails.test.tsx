@@ -12,11 +12,16 @@ const mockProject = {
   updatedAt: new Date(),
 };
 
+// Mock the useProject hook
+jest.mock('../../src/hooks/useProject', () => ({
+  useProject: jest.fn(() => ({ project: mockProject, isLoading: false, error: null }))
+}));
+
 describe('ProjectDetails', () => {
   it('renders project details correctly', () => {
     render(
       <ChakraProvider>
-        <ProjectDetails project={mockProject} />
+        <ProjectDetails projectId={mockProject.id} />
       </ChakraProvider>
     );
 

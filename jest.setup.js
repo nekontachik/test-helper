@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { server } from './tests/mocks/server';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -21,3 +22,7 @@ jest.mock('@chakra-ui/react', () => {
 });
 
 require('jest-fetch-mock').enableMocks()
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());

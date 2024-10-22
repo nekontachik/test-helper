@@ -1,35 +1,55 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Heading, Text } from '@chakra-ui/react';
+import React, { ErrorInfo, ReactNode } from 'react';
+import { Box, Heading, Text, Button, VStack } from '@chakra-ui/react';
 
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.setState({ errorInfo });
+    // You can log the error to an error reporting service here
+    console.error('Uncaught error:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <Box p={4} borderWidth={1} borderRadius="md" borderColor="red.500" bg="red.50">
-          <Heading size="md" color="red.500">Something went wrong</Heading>
-          <Text mt={2}>{this.state.error?.message || 'An unexpected error occurred.'}</Text>
+        <Box textAlign="center" py={10} px={6}>
+          <VStack spacing={4}>
+            <Heading as="h2" size="xl" color="red.500">
+              Oops! Something went wrong.
+            </Heading>
+            <Text fontSize="lg">
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </Text>
+            {this.state.errorInfo && (
+              <Text fontSize="sm" color="gray.500">
+                {this.state.errorInfo.componentStack}
+              </Text>
+            )}
+            <Button
+              colorScheme="blue"
+              onClick={() => window.location.reload()}
+            >
+              Refresh Page
+            </Button>
+          </VStack>
         </Box>
       );
     }
@@ -37,3 +57,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;

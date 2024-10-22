@@ -45,14 +45,13 @@ export const TestRunDetails: React.FC<TestRunDetailsProps> = ({ testRun }) => {
         {testCaseResults.map((testCaseResult: TestCaseResult) => (
           <Box key={testCaseResult.id} p={4} borderWidth={1} borderRadius="md">
             <Heading as="h3" size="md" mb={2}>
-              {testCaseResult.testCase?.title || 'Unknown Test Case'}
+              {testCaseResult.testCaseId}
             </Heading>
-            <Badge colorScheme={getStatusColor(testCaseResult.status)}>
+            <Badge colorScheme={getStatusColor(testCaseResult.status as TestCaseResultStatus)}>
               {testCaseResult.status}
             </Badge>
             <Text mt={2}>
-              {testCaseResult.testCase?.description ||
-                'No description available'}
+              {testCaseResult.notes || 'No notes available'}
             </Text>
           </Box>
         ))}

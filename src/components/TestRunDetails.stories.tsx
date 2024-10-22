@@ -24,9 +24,11 @@ const mockTestCase: TestCase = {
   id: 'tc1',
   title: 'Test Case 1',
   description: 'Description for Test Case 1',
+  steps: 'Step 1\nStep 2\nStep 3',
+  expectedResult: 'Expected Result 1',
+  actualResult: 'Actual Result 1',
   status: TestCaseStatus.ACTIVE,
   priority: TestCasePriority.HIGH,
-  expectedResult: 'Expected Result 1',
   projectId: 'project1',
   version: 1,
   createdAt: '2023-01-01T00:00:00Z',
@@ -37,10 +39,9 @@ const mockTestCaseResult: TestCaseResult = {
   id: '1',
   status: TestCaseResultStatus.PASSED,
   testCaseId: 'tc1',
-  testRunId: '1',
-  createdAt: new Date('2023-01-01T00:00:00Z'),
-  updatedAt: new Date('2023-01-01T00:00:00Z'),
-  testCase: mockTestCase,
+  createdAt: '2023-01-01T00:00:00Z',
+  updatedAt: '2023-01-01T00:00:00Z',
+  notes: 'Test passed successfully',
 };
 
 const mockTestRun: TestRun = {
@@ -50,6 +51,7 @@ const mockTestRun: TestRun = {
   projectId: 'project1',
   createdAt: new Date('2023-01-01T00:00:00Z'),
   updatedAt: new Date('2023-01-02T00:00:00Z'),
+  testCases: [mockTestCase],
   testCaseResults: [mockTestCaseResult],
 };
 

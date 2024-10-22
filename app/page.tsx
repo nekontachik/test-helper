@@ -5,7 +5,7 @@ import { Box, Heading, Text, VStack, Button, Flex } from '@chakra-ui/react';
 import ProjectList from '@/components/ProjectList';
 import { CreateProjectButton } from '@/components/CreateProjectButton';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary'; // Change this line
 import { useSession } from 'next-auth/react';
 import { useProjects } from '@/hooks/useProjects';
 import { redirect } from 'next/navigation';

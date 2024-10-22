@@ -9,13 +9,15 @@ export interface TestCase {
   id: string;
   title: string;
   description: string;
+  steps: string;
+  expectedResult: string;
+  actualResult: string;
   status: TestCaseStatus;
   priority: TestCasePriority;
   projectId: string;
-  version: number;
   createdAt: Date;
   updatedAt: Date;
-  expectedResult: string;
+  version: number;
 }
 
 export interface TestCaseVersion {
@@ -49,9 +51,12 @@ export enum TestCasePriority {
 export interface TestCaseFormData {
   title: string;
   description: string;
+  steps: string;
+  expectedResult: string;
+  actualResult: string;
   status: TestCaseStatus;
   priority: TestCasePriority;
-  expectedResult: string;
+  projectId: string;
 }
 
 export interface ProjectFormData {

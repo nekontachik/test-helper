@@ -5,8 +5,30 @@ import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
 describe('TestRunForm', () => {
   const mockTestCases: TestCase[] = [
-    { id: '1', title: 'Test Case 1', status: TestCaseStatus.ACTIVE, priority: TestCasePriority.HIGH, projectId: 'project1', description: 'Description 1', expectedResult: 'Expected 1', version: 1, createdAt: new Date(), updatedAt: new Date() },
-    { id: '2', title: 'Test Case 2', status: TestCaseStatus.ACTIVE, priority: TestCasePriority.MEDIUM, projectId: 'project1', description: 'Description 2', expectedResult: 'Expected 2', version: 1, createdAt: new Date(), updatedAt: new Date() },
+    { 
+      id: '1', 
+      title: 'Test Case 1', 
+      status: TestCaseStatus.ACTIVE, 
+      priority: TestCasePriority.HIGH, 
+      projectId: 'project1', 
+      description: 'Description 1', 
+      expectedResult: 'Expected 1', 
+      version: 1, 
+      createdAt: '2023-01-01T00:00:00Z', 
+      updatedAt: '2023-01-01T00:00:00Z' 
+    },
+    { 
+      id: '2', 
+      title: 'Test Case 2', 
+      status: TestCaseStatus.ACTIVE, 
+      priority: TestCasePriority.MEDIUM, 
+      projectId: 'project1', 
+      description: 'Description 2', 
+      expectedResult: 'Expected 2', 
+      version: 1, 
+      createdAt: '2023-01-02T00:00:00Z', 
+      updatedAt: '2023-01-02T00:00:00Z' 
+    },
   ];
 
   const mockOnSubmit = jest.fn();

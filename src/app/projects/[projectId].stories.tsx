@@ -1,6 +1,6 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import ProjectPage from '../../app/projects/[projectId]/page'; // Updated import path
+import ProjectPage from '../../app/projects/[projectId]/page';
 
 export default {
   title: 'Pages/ProjectPage',

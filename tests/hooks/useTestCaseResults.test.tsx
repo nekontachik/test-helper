@@ -1,9 +1,9 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTestCaseResults } from '../../hooks/useTestCaseResults';
-import { apiClient } from '../../lib/apiClient';
+import { useTestCaseResults } from '@/hooks/useTestCaseResults';
+import apiClient from '@/lib/apiClient';
 
-jest.mock('../../lib/apiClient');
+jest.mock('@/lib/apiClient');
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -23,7 +23,7 @@ describe('useTestCaseResults', () => {
       { wrapper }
     );
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await result.current.refetch();
 
     expect(result.current.data).toEqual(mockResults);
   });
@@ -37,7 +37,7 @@ describe('useTestCaseResults', () => {
       { wrapper }
     );
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await result.current.refetch();
 
     expect(result.current.error).toEqual(error);
   });

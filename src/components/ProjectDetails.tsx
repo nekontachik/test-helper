@@ -1,29 +1,23 @@
 import React from 'react';
-import { Box, Text, Spinner } from '@chakra-ui/react';
-import { useProject } from '@/hooks/useProject';
+import { useProject } from '../hooks/useProject';
 
 interface ProjectDetailsProps {
   projectId: string;
 }
 
 const ProjectDetails: React.FC<ProjectDetailsProps> = ({ projectId }) => {
-  const { data: project, isLoading, error } = useProject(projectId);
+  const { project, isLoading, error } = useProject(projectId);
 
-  if (isLoading) return <Spinner />;
-  if (error)
-    return (
-      <Text color="red.500">
-        Error loading project details: {error.message}
-      </Text>
-    );
-  if (!project) return <Text>Project not found.</Text>;
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!project) return <div>Project not found</div>;
 
   return (
-    <Box>
-      <Text>Name: {project.name}</Text>
-      <Text>Description: {project.description}</Text>
+    <div>
+      <h1>{project.name}</h1>
+      <p>{project.description}</p>
       {/* Add more project details as needed */}
-    </Box>
+    </div>
   );
 };
 

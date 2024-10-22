@@ -1,6 +1,14 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import { getSession } from 'next-auth/react';
-import { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData } from '@/types';
+import { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
+
+// Custom error class for API errors
+class ApiError extends Error {
+  constructor(message: string, public statusCode: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 const api: AxiosInstance = axios.create({
   baseURL: '/api',
@@ -14,15 +22,40 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+const handleApiError = (error: unknown): never => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ error?: string }>;
+    throw new ApiError(axiosError.response?.data?.error || 'An unexpected error occurred', axiosError.response?.status || 500);
+  }
+  throw new ApiError('An unexpected error occurred', 500);
+};
+
 const apiClient = {
-  async createProject(data: ProjectFormData): Promise<Project> {
-    const response = await api.post<Project>('/projects', data);
+  async get<T>(url: string, params?: any): Promise<T> {
+    const response = await api.get<T>(url, { params });
     return response.data;
   },
 
-  async getProjects(): Promise<PaginatedResponse<Project>> {
-    const response = await api.get<PaginatedResponse<Project>>('/projects');
+  async post<T>(url: string, data: any): Promise<T> {
+    const response = await api.post<T>(url, data);
     return response.data;
+  },
+
+  async put<T>(url: string, data: any): Promise<T> {
+    const response = await api.put<T>(url, data);
+    return response.data;
+  },
+
+  async delete(url: string): Promise<void> {
+    await api.delete(url);
+  },
+
+  async createProject(data: ProjectFormData): Promise<Project> {
+    return this.post<Project>('/projects', data);
+  },
+
+  async getProjects(): Promise<PaginatedResponse<Project>> {
+    return this.get<PaginatedResponse<Project>>('/projects');
   },
 
   async getTestCases(
@@ -35,127 +68,113 @@ const apiClient = {
       search?: string;
     }
   ): Promise<PaginatedResponse<TestCase>> {
-    const response = await api.get<PaginatedResponse<TestCase>>(`/projects/${projectId}/test-cases`, { 
-      params: {
-        ...params,
-        status: params.status || undefined,
-        priority: params.priority || undefined,
-      }
-    });
-    return response.data;
+    try {
+      const response = await this.get<PaginatedResponse<TestCase>>(`/projects/${projectId}/test-cases`, params);
+      return response;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
 
   async getTestRuns(projectId: string, params: { page: number; limit: number; sort?: string; filter?: string }): Promise<PaginatedResponse<TestRun>> {
-    const response = await api.get<PaginatedResponse<TestRun>>(`/projects/${projectId}/test-runs`, { params });
-    return response.data;
+    return this.get<PaginatedResponse<TestRun>>(`/projects/${projectId}/test-runs`, params);
   },
 
   async createTestCase(projectId: string, data: TestCaseFormData): Promise<TestCase> {
-    const response = await api.post<TestCase>(`/api/projects/${projectId}/test-cases`, data);
-    return response.data;
+    try {
+      const response = await this.post<TestCase>(`/projects/${projectId}/test-cases`, data);
+      return response;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
 
   async getTestReports(projectId: string): Promise<TestReport[]> {
-    const response = await api.get<TestReport[]>(`/projects/${projectId}/test-reports`);
-    return response.data;
+    return this.get<TestReport[]>(`/projects/${projectId}/test-reports`);
   },
 
   async getTestCaseVersions(projectId: string, testCaseId: string): Promise<TestCaseVersion[]> {
-    const response = await api.get<TestCaseVersion[]>(`/projects/${projectId}/test-cases/${testCaseId}/versions`);
-    return response.data;
+    try {
+      const response = await api.get(`/projects/${projectId}/test-cases/${testCaseId}/versions`);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
 
   async getTestCaseVersion(projectId: string, testCaseId: string, version: number): Promise<TestCase> {
-    const response = await api.get<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}/versions/${version}`);
-    return response.data;
+    return this.get<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}/versions/${version}`);
   },
 
   async createTestRun(projectId: string, data: TestRunFormData): Promise<TestRun> {
-    const response = await api.post<TestRun>(`/projects/${projectId}/test-runs`, data);
-    return response.data;
+    return this.post<TestRun>(`/projects/${projectId}/test-runs`, data);
   },
 
   async updateTestRun(projectId: string, testRunId: string, data: Partial<TestRun>): Promise<TestRun> {
-    const response = await api.put<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`, data);
-    return response.data;
+    return this.put<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`, data);
   },
 
   async createTestReport(projectId: string, data: TestReportFormData): Promise<TestReport> {
-    const response = await api.post<TestReport>(`/projects/${projectId}/test-reports`, data);
-    return response.data;
+    return this.post<TestReport>(`/projects/${projectId}/test-reports`, data);
   },
 
   async getTestCase(projectId: string, testCaseId: string): Promise<TestCase> {
-    const response = await api.get<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}`);
+    const response = await axios.get(`/api/projects/${projectId}/test-cases/${testCaseId}`);
     return response.data;
   },
 
   async updateTestCase(projectId: string, testCaseId: string, data: Partial<TestCaseFormData>): Promise<TestCase> {
-    const response = await api.put<TestCase>(`/api/projects/${projectId}/test-cases/${testCaseId}`, data);
+    const response = await axios.put(`/api/projects/${projectId}/test-cases/${testCaseId}`, data);
     return response.data;
   },
 
   async deleteTestCase(projectId: string, testCaseId: string): Promise<void> {
-    await api.delete(`/api/projects/${projectId}/test-cases/${testCaseId}`);
+    return this.delete(`/projects/${projectId}/test-cases/${testCaseId}`);
   },
 
   async restoreTestCaseVersion(projectId: string, testCaseId: string, versionNumber: number): Promise<TestCase> {
-    const response = await api.post<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}/restore`, { versionNumber });
-    return response.data;
+    try {
+      const response = await api.post(`/projects/${projectId}/test-cases/${testCaseId}/restore`, { versionNumber });
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
 
   async register(data: { name: string; email: string; password: string }): Promise<void> {
-    await api.post('/auth/register', data);
-  },
-
-  async put<T>(url: string, data: any): Promise<T> {
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+    return this.post('/auth/register', data);
   },
 
   async getProject(projectId: string): Promise<Project> {
-    const response = await api.get<Project>(`/projects/${projectId}`);
-    return response.data;
+    return this.get<Project>(`/projects/${projectId}`);
   },
 
   async getTestRun(projectId: string, testRunId: string): Promise<TestRun> {
-    const response = await api.get<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`);
-    return response.data;
+    return this.get<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`);
   },
 
   async deleteTestRun(projectId: string, testRunId: string): Promise<void> {
-    await api.delete(`/projects/${projectId}/test-runs/${testRunId}`);
+    return this.delete(`/projects/${projectId}/test-runs/${testRunId}`);
   },
 
   async getTestSuite(projectId: string, suiteId: string): Promise<TestSuite> {
-    const response = await api.get<TestSuite>(`/projects/${projectId}/test-suites/${suiteId}`);
-    return response.data;
+    return this.get<TestSuite>(`/projects/${projectId}/test-suites/${suiteId}`);
   },
 
   async updateTestSuite(projectId: string, suiteId: string, data: Partial<TestSuite>): Promise<TestSuite> {
-    const response = await api.put<TestSuite>(`/projects/${projectId}/test-suites/${suiteId}`, data);
-    return response.data;
+    return this.put<TestSuite>(`/projects/${projectId}/test-suites/${suiteId}`, data);
   },
 
   async getTestSuites(projectId: string): Promise<TestSuite[]> {
-    const response = await api.get<TestSuite[]>(`/projects/${projectId}/test-suites`);
-    return response.data;
+    return this.get<TestSuite[]>(`/projects/${projectId}/test-suites`);
   },
 
   async createTestSuite(projectId: string, data: TestSuiteFormData): Promise<TestSuite> {
-    const response = await api.post<TestSuite>(`/projects/${projectId}/test-suites`, data);
-    return response.data;
+    return this.post<TestSuite>(`/projects/${projectId}/test-suites`, data);
+  },
+
+  async getTestCaseResults(projectId: string, testRunId: string): Promise<TestCaseResult[]> {
+    return this.get<TestCaseResult[]>(`/projects/${projectId}/test-runs/${testRunId}/results`);
   },
 
   // Add other methods as needed

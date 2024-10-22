@@ -1,11 +1,11 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '../../../../../../pages/api/projects/[projectId]/test-runs';
-import { apiClient } from '../../../../../../lib/apiClient';
-import { rateLimiter } from '../../../../../../lib/rateLimiter';
-import { TestRunStatus } from '../../../../../../types';
+import testRunsHandler from '@/pages/api/projects/[projectId]/test-runs';
+import apiClient from '@/lib/apiClient';
+import rateLimiter from '@/lib/rateLimiter';
+import { TestRunStatus } from '@/types';
 
-jest.mock('../../../../../../lib/apiClient');
-jest.mock('../../../../../../lib/rateLimiter');
+jest.mock('@/lib/apiClient');
+jest.mock('@/lib/rateLimiter');
 
 describe('/api/projects/[projectId]/test-runs', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('/api/projects/[projectId]/test-runs', () => {
       updatedAt: new Date().toISOString(),
     });
 
-    await handler(req as any, res as any);
+    await testRunsHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(201);
     expect(JSON.parse(res._getData())).toEqual({
@@ -63,7 +63,7 @@ describe('/api/projects/[projectId]/test-runs', () => {
       totalCount: 15,
     });
 
-    await handler(req as any, res as any);
+    await testRunsHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(200);
     expect(JSON.parse(res._getData())).toEqual({
@@ -89,7 +89,7 @@ describe('/api/projects/[projectId]/test-runs', () => {
 
     (rateLimiter as jest.Mock).mockResolvedValue(undefined);
 
-    await handler(req as any, res as any);
+    await testRunsHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(400);
     expect(JSON.parse(res._getData())).toEqual({
@@ -108,7 +108,7 @@ describe('/api/projects/[projectId]/test-runs', () => {
       new Error('Too Many Requests')
     );
 
-    await handler(req as any, res as any);
+    await testRunsHandler(req as any, res as any);
 
     expect(res._getStatusCode()).toBe(429);
     expect(JSON.parse(res._getData())).toEqual({

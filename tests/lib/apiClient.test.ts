@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiClient } from '@/lib/apiClient';
+import  apiClient  from '@/lib/apiClient';
 import {
   Project,
   TestCase,
@@ -56,22 +56,22 @@ describe('apiClient', () => {
           priority: TestCasePriority.HIGH,
           projectId: '1',
           version: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2023-01-01T00:00:00Z',
         },
       ];
       mockedAxios.get.mockResolvedValueOnce({
         data: { data: mockTestCases, totalPages: 1, currentPage: 1 },
       });
 
-      const result = await apiClient.getTestCases('1');
+      const result = await apiClient.getTestCases('1', { page: 1, limit: 10 });
       expect(result).toEqual({
         data: mockTestCases,
         totalPages: 1,
         currentPage: 1,
       });
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        '/api/projects/1/test-cases'
+        '/api/projects/1/test-cases?page=1&limit=10'
       );
     });
 
@@ -86,22 +86,22 @@ describe('apiClient', () => {
           name: 'Test Run 1',
           status: TestRunStatus.IN_PROGRESS,
           projectId: '1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date('2023-01-01T00:00:00Z'),
+          updatedAt: new Date('2023-01-01T00:00:00Z'),
         },
       ];
       mockedAxios.get.mockResolvedValueOnce({
         data: { data: mockTestRuns, totalPages: 1, currentPage: 1 },
       });
 
-      const result = await apiClient.getTestRuns('1');
+      const result = await apiClient.getTestRuns('1', { page: 1, limit: 10 });
       expect(result).toEqual({
         data: mockTestRuns,
         totalPages: 1,
         currentPage: 1,
       });
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        '/api/projects/1/test-runs'
+        '/api/projects/1/test-runs?page=1&limit=10'
       );
     });
 
@@ -117,8 +117,8 @@ describe('apiClient', () => {
           description: 'Test Report Description',
           projectId: '1',
           testRunId: '1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date('2023-01-01T00:00:00Z'),
+          updatedAt: new Date('2023-01-01T00:00:00Z'),
         },
       ];
       mockedAxios.get.mockResolvedValueOnce({ data: mockTestReports });
@@ -151,8 +151,8 @@ describe('apiClient', () => {
         expectedResult: 'Updated expected result',
         projectId: 'project1',
         version: 2,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: '2023-01-01T00:00:00Z',
+        updatedAt: '2023-01-01T00:00:00Z',
       };
       mockedAxios.get.mockResolvedValueOnce({ data: mockTestCaseVersion });
 

@@ -1,11 +1,13 @@
 import { getSession } from 'next-auth/react';
+import { TestCaseStatus, TestCasePriority, TestCase, TestRun, PaginatedResponse } from '@/types';
 
 const apiClient = {
-  async get<T>(url: string): Promise<T> {
+  async get<T>(url: string, params?: Record<string, any>): Promise<T> {
     const session = await getSession();
-    const response = await fetch(url, {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
+    const response = await fetch(`${url}${queryString}`, {
       headers: {
-        'Authorization': `Bearer ${session?.accessToken}`,
+        'Authorization': session ? `Bearer ${session.user.email}` : '',
       },
     });
     if (!response.ok) {
@@ -20,7 +22,7 @@ const apiClient = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.accessToken}`,
+        'Authorization': session ? `Bearer ${session.user.email}` : '',
       },
       body: JSON.stringify(data),
     });
@@ -31,6 +33,25 @@ const apiClient = {
   },
 
   // Add other methods (post, delete) as needed
-}
 
-export default apiClient
+  async getTestCases(projectId: string, params: {
+    page: number;
+    limit: number;
+    status?: TestCaseStatus | null;
+    priority?: TestCasePriority | null;
+    search?: string;
+  }): Promise<PaginatedResponse<TestCase>> {
+    return this.get<PaginatedResponse<TestCase>>(`/api/projects/${projectId}/test-cases`, params);
+  },
+
+  async getTestRuns(projectId: string, params: {
+    page: number;
+    limit: number;
+    sort?: string;
+    filter?: string;
+  }): Promise<PaginatedResponse<TestRun>> {
+    return this.get<PaginatedResponse<TestRun>>(`/api/projects/${projectId}/test-runs`, params);
+  }
+};
+
+export default apiClient;

@@ -1,88 +1,52 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
 const mockTestCase: TestCase = {
   id: '1',
   title: 'Test Case 1',
-  description: 'Test case description',
-  expectedResult: 'Expected result',
+  description: 'Description 1',
+  steps: 'Step 1\nStep 2\nStep 3',
+  expectedResult: 'Expected Result 1',
+  actualResult: 'Actual Result 1',
   status: TestCaseStatus.ACTIVE,
   priority: TestCasePriority.HIGH,
   projectId: 'project1',
+  createdAt: new Date(),
+  updatedAt: new Date(),
   version: 1,
-  createdAt: '2023-01-01T00:00:00Z',
-  updatedAt: '2023-01-01T00:00:00Z',
 };
 
 describe('EditTestCaseForm', () => {
-  const mockOnSubmit = jest.fn();
-  const mockOnCancel = jest.fn();
+  it('renders form with pre-filled values', () => {
+    const mockOnSubmit = jest.fn();
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+    expect(screen.getByDisplayValue('Test Case 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Description 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Step 1\nStep 2\nStep 3')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Expected Result 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Actual Result 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(TestCaseStatus.ACTIVE)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(TestCasePriority.HIGH)).toBeInTheDocument();
   });
 
-  it('renders the form with pre-populated data', () => {
-    render(
-      <ChakraProvider>
-        <EditTestCaseForm
-          testCase={mockTestCase}
-          onSubmit={mockOnSubmit}
-          onCancel={mockOnCancel}
-        />
-      </ChakraProvider>
-    );
+  it('calls onSubmit with updated data when form is submitted', () => {
+    const mockOnSubmit = jest.fn();
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
 
-    expect(screen.getByLabelText('Title')).toHaveValue('Test Case 1');
-    expect(screen.getByLabelText('Description')).toHaveValue('Test case description');
-    expect(screen.getByLabelText('Expected Result')).toHaveValue('Expected result');
-    expect(screen.getByLabelText('Status')).toHaveValue(TestCaseStatus.ACTIVE);
-    expect(screen.getByLabelText('Priority')).toHaveValue(TestCasePriority.HIGH);
-  });
+    fireEvent.change(screen.getByDisplayValue('Test Case 1'), { target: { value: 'Updated Test Case' } });
+    fireEvent.click(screen.getByText('Update Test Case'));
 
-  it('calls onSubmit with updated data when form is submitted', async () => {
-    render(
-      <ChakraProvider>
-        <EditTestCaseForm
-          testCase={mockTestCase}
-          onSubmit={mockOnSubmit}
-          onCancel={mockOnCancel}
-        />
-      </ChakraProvider>
-    );
-
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated Test Case' } });
-    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated Description' } });
-    fireEvent.change(screen.getByLabelText('Expected Result'), { target: { value: 'Updated Expected Result' } });
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: TestCaseStatus.DRAFT } });
-    fireEvent.change(screen.getByLabelText('Priority'), { target: { value: TestCasePriority.MEDIUM } });
-
-    fireEvent.click(screen.getByText('Save Changes'));
-
-    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith({
+    expect(mockOnSubmit).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Updated Test Case',
-      description: 'Updated Description',
-      expectedResult: 'Updated Expected Result',
-      status: TestCaseStatus.DRAFT,
-      priority: TestCasePriority.MEDIUM,
+      description: 'Description 1',
+      steps: 'Step 1\nStep 2\nStep 3',
+      expectedResult: 'Expected Result 1',
+      actualResult: 'Actual Result 1',
+      status: TestCaseStatus.ACTIVE,
+      priority: TestCasePriority.HIGH,
     }));
-  });
-
-  it('calls onCancel when Cancel button is clicked', () => {
-    render(
-      <ChakraProvider>
-        <EditTestCaseForm
-          testCase={mockTestCase}
-          onSubmit={mockOnSubmit}
-          onCancel={mockOnCancel}
-        />
-      </ChakraProvider>
-    );
-
-    fireEvent.click(screen.getByText('Cancel'));
-    expect(mockOnCancel).toHaveBeenCalled();
   });
 });
