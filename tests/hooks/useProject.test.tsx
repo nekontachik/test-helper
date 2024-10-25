@@ -1,10 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useProject } from './useProject';
+import { useProject } from '@/hooks/useProject';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import React from 'react';
 
-jest.mock('../lib/apiClient');
+jest.mock('@/lib/apiClient');
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -39,7 +39,13 @@ describe('useProject', () => {
   });
 
   it('does not fetch when projectId is undefined', () => {
-    const { result } = renderHook(() => useProject(undefined), { wrapper });
+    const { result } = renderHook(() => useProject(null), { wrapper });
+
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('handles empty projectId', () => {
+    const { result } = renderHook(() => useProject(''), { wrapper });
 
     expect(result.current.isLoading).toBe(false);
   });

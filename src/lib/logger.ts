@@ -1,17 +1,7 @@
-import winston from 'winston';
-
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'test-management-app' },
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
-});
+const logger = {
+  info: (message: string, meta?: any) => console.log(message, meta),
+  warn: (message: string, meta?: any) => console.warn(message, meta),
+  error: (message: string, meta?: any) => console.error(message, meta),
+};
 
 export default logger;

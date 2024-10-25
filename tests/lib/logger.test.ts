@@ -1,12 +1,11 @@
 import winston from 'winston';
-import logger from '../../lib/logger';
+import logger from '@/lib/logger';
 
 jest.mock('winston', () => ({
   createLogger: jest.fn(() => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn(),
   })),
   format: {
     combine: jest.fn(),
@@ -31,10 +30,23 @@ describe('logger', () => {
     );
   });
 
-  it('should have info, error, warn, and debug methods', () => {
+  it('should have info, error, and warn methods', () => {
     expect(logger.info).toBeDefined();
     expect(logger.error).toBeDefined();
     expect(logger.warn).toBeDefined();
-    expect(logger.debug).toBeDefined();
+  });
+
+  it('logs messages with correct methods', () => {
+    const testMessage = 'Test message';
+    const testMeta = { key: 'value' };
+
+    logger.info(testMessage, testMeta);
+    logger.error(testMessage, testMeta);
+    logger.warn(testMessage, testMeta);
+
+    const mockLogger = winston.createLogger();
+    expect(mockLogger.info).toHaveBeenCalledWith(testMessage, testMeta);
+    expect(mockLogger.error).toHaveBeenCalledWith(testMessage, testMeta);
+    expect(mockLogger.warn).toHaveBeenCalledWith(testMessage, testMeta);
   });
 });

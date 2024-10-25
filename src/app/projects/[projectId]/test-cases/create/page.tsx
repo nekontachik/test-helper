@@ -11,20 +11,25 @@ export default function CreateTestCasePage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params?.projectId as string;
-  const { mutate: createTestCase, isLoading } = useCreateTestCase(projectId);
+  const { mutateAsync: createTestCase, isLoading } = useCreateTestCase(projectId);
 
-  const handleSubmit = (data: TestCaseFormData) => {
-    createTestCase(data, {
-      onSuccess: () => {
-        router.push(`/projects/${projectId}/test-cases`);
-      },
-    });
+  const handleSubmit = async (data: TestCaseFormData) => {
+    try {
+      await createTestCase(data);
+      router.push(`/projects/${projectId}/test-cases`);
+    } catch (error) {
+      console.error('Failed to create test case:', error);
+    }
   };
 
   return (
     <Box>
       <Heading mb={6}>Create Test Case</Heading>
-      <TestCaseForm onSubmit={handleSubmit} isLoading={isLoading} />
+      <TestCaseForm 
+        projectId={projectId}
+        onSubmit={handleSubmit} 
+        isLoading={isLoading} 
+      />
     </Box>
   );
 }

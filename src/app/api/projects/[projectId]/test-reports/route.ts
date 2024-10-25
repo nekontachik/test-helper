@@ -1,44 +1,40 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma';
-import { AppError, NotFoundError, ValidationError } from '@/lib/errors';
+import { authOptions } from '@/lib/auth';
 import logger from '@/lib/logger';
+import { AppError, ValidationError } from '@/lib/errors';
+
+interface TestReportInput {
+  title: string;
+  content: string;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
     const { projectId } = params;
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const skip = (page - 1) * limit;
 
-    const [testReports, totalCount] = await Promise.all([
-      prisma.testReport.findMany({
-        where: { projectId },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.testReport.count({ where: { projectId } }),
-    ]);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    logger.info(`Retrieved test reports for project ${projectId}`, { page, limit });
-    return NextResponse.json({
-      items: testReports,
-      currentPage: page,
-      totalPages,
-      totalCount,
+    const testReports = await prisma.testReport.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
+
+    logger.info(`Retrieved test reports for project ${projectId}`);
+    return NextResponse.json(testReports);
   } catch (error) {
     if (error instanceof AppError) {
       logger.warn(`AppError in GET test reports: ${error.message}`, { statusCode: error.statusCode });
@@ -54,26 +50,35 @@ export async function POST(
   { params }: { params: { projectId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
     const { projectId } = params;
-    const body = await request.json();
+    const body = await request.json() as TestReportInput;
 
-    if (!body.name || !body.testRunId) {
-      throw new ValidationError('Name and testRunId are required');
+    if (!body.title) {
+      throw new ValidationError('Title is required');
     }
 
     const newTestReport = await prisma.testReport.create({
       data: {
-        ...body,
-        projectId,
+        title: body.title,
+        content: body.content,
+        project: {
+          connect: { id: projectId }
+        }
+      },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
-    logger.info(`Created new test report for project ${projectId}`, { testReportId: newTestReport.id });
+    logger.info(`Created test report for project ${projectId}`, { reportId: newTestReport.id });
     return NextResponse.json(newTestReport, { status: 201 });
   } catch (error) {
     if (error instanceof AppError) {

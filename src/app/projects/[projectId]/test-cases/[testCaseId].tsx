@@ -6,7 +6,7 @@ import { useToast } from '@chakra-ui/toast';
 import { Layout } from '@/components/Layout';
 import { TestCaseFormData, TestCase } from '@/types';
 import { useTestCase } from '@/hooks/useTestCase';
-import { useUpdateTestCase } from '@/hooks/useUpdateTestCase'; // Import from the correct location
+import { useUpdateTestCase } from '@/hooks/useUpdateTestCase';
 
 const DynamicTestCaseForm = dynamic(
   () => import('@/components/TestCaseForm').then((mod) => mod.TestCaseForm),
@@ -35,30 +35,35 @@ const TestCasePage: React.FC = () => {
 
   if (!testCase) return <Box>Test case not found</Box>;
 
-  const handleSubmit = (data: TestCaseFormData) => {
-    updateTestCase.mutate(
-      { testCaseId, data },
-      {
-        onSuccess: () => {
-          toast({
-            title: 'Test case updated',
-            status: 'success',
-            duration: 3000,
-            isClosable: true,
-          });
-          router.push(`/projects/${projectId}/test-cases`);
-        },
-        onError: (error: Error) => {
-          toast({
-            title: 'Failed to update test case',
-            description: error.message,
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-          });
-        },
-      }
-    );
+  const handleSubmit = async (data: TestCaseFormData): Promise<void> => {
+    try {
+      await updateTestCase.mutateAsync(
+        { testCaseId, data },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Test case updated',
+              status: 'success',
+              duration: 3000,
+              isClosable: true,
+            });
+            router.push(`/projects/${projectId}/test-cases`);
+          },
+          onError: (error: Error) => {
+            toast({
+              title: 'Failed to update test case',
+              description: error.message,
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          },
+        }
+      );
+    } catch (error) {
+      // Error will be handled by onError callback above
+      console.error('Error updating test case:', error);
+    }
   };
 
   return (
@@ -69,7 +74,8 @@ const TestCasePage: React.FC = () => {
       <Suspense fallback={<Spinner />}>
         <DynamicTestCaseForm
           onSubmit={handleSubmit}
-          initialData={testCase}
+          testCase={testCase}
+          projectId={projectId}
           isLoading={updateTestCase.isLoading}
         />
       </Suspense>

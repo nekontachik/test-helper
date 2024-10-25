@@ -13,19 +13,20 @@ describe('EditTestCaseForm', () => {
     priority: TestCasePriority.HIGH,
     projectId: 'project1',
     version: 1,
-    createdAt: '2023-01-01T00:00:00Z', // Use ISO string format
-    updatedAt: '2023-01-01T00:00:00Z', // Use ISO string format
+    createdAt: '2023-01-01T00:00:00Z',
+    updatedAt: '2023-01-01T00:00:00Z',
+    steps: 'Step 1\nStep 2',  // Added missing required field
+    actualResult: 'Actual result'  // Added missing required field
   };
 
   const mockOnSubmit = jest.fn();
-  const mockOnCancel = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders the form with pre-populated data', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByLabelText('Title')).toHaveValue('Test Case 1');
     expect(screen.getByLabelText('Description')).toHaveValue('Test case description');
@@ -35,7 +36,7 @@ describe('EditTestCaseForm', () => {
   });
 
   it('calls onSubmit with updated data when form is submitted', async () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated Test Case' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated description' } });
@@ -57,20 +58,13 @@ describe('EditTestCaseForm', () => {
     });
   });
 
-  it('calls onCancel when Cancel button is clicked', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
-
-    fireEvent.click(screen.getByText('Cancel'));
-    expect(mockOnCancel).toHaveBeenCalled();
-  });
-
   it('displays the correct version number', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
     expect(screen.getByText('Editing Version: 1')).toBeInTheDocument();
   });
 
   it('displays the correct button text', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
     expect(screen.getByText('Update Test Case (Create New Version)')).toBeInTheDocument();
   });
 });

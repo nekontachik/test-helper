@@ -1,31 +1,31 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { TestCaseDetails } from './TestCaseDetails';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { Meta, StoryObj } from '@storybook/react';
+import TestCaseDetails from './TestCaseDetails';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
-export default {
+const meta: Meta<typeof TestCaseDetails> = {
   title: 'Components/TestCaseDetails',
   component: TestCaseDetails,
-} as Meta<typeof TestCaseDetails>;
-
-const Template: StoryFn<typeof TestCaseDetails> = (args) => (
-  <TestCaseDetails {...args} />
-);
-
-const mockTestCase: TestCase = {
-  id: '1',
-  title: 'Test Case 1',
-  description: 'This is a test case',
-  status: TestCaseStatus.ACTIVE,
-  priority: TestCasePriority.HIGH,
-  expectedResult: 'Expected result',
-  projectId: 'project1',
-  version: 1,
-  createdAt: '2023-01-01T00:00:00Z', // Changed to ISO string format
-  updatedAt: '2023-01-02T00:00:00Z', // Changed to ISO string format
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
 };
 
-export const Default = Template.bind({});
-Default.args = {
-  testCase: mockTestCase,
+export default meta;
+
+type Story = StoryObj<typeof TestCaseDetails>;
+
+export const Default: Story = {
+  args: {
+    testCaseId: '1',
+    projectId: 'project1',
+  },
+};
+
+export const WithDifferentStatus: Story = {
+  args: {
+    testCaseId: '2',
+    projectId: 'project1',
+  },
 };

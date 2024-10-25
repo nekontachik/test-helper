@@ -2,24 +2,27 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import TestCasePage from '../../../../pages/projects/[projectId]/test-cases/[testCaseId]';
+import TestCasePage from '@/app/projects/[projectId]/test-cases/[testCaseId]/page';
 import { useRouter } from 'next/router';
-import { useTestCase } from '../../../../hooks/useTestCase';
+import { useTestCase } from '@/hooks/useTestCase';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('../../../../hooks/useTestCase', () => ({
-  useTestCase: jest.fn(),
-}));
+jest.mock('@/hooks/useTestCase');
 
 const queryClient = new QueryClient();
 
 describe('TestCasePage', () => {
+  const mockParams = {
+    projectId: 'project1',
+    testCaseId: 'testCase1'
+  };
+
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({
-      query: { projectId: 'project1', testCaseId: 'testCase1' },
+      query: mockParams,
     });
   });
 
@@ -33,7 +36,7 @@ describe('TestCasePage', () => {
     render(
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
-          <TestCasePage />
+          <TestCasePage params={mockParams} />
         </QueryClientProvider>
       </ChakraProvider>
     );
@@ -51,7 +54,7 @@ describe('TestCasePage', () => {
     render(
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
-          <TestCasePage />
+          <TestCasePage params={mockParams} />
         </QueryClientProvider>
       </ChakraProvider>
     );
@@ -77,7 +80,7 @@ describe('TestCasePage', () => {
     render(
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
-          <TestCasePage />
+          <TestCasePage params={mockParams} />
         </QueryClientProvider>
       </ChakraProvider>
     );

@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { AppError, ValidationError } from '@/lib/errors';
 import logger from '@/lib/logger';
 import { Prisma } from '@prisma/client';
@@ -43,63 +43,45 @@ export async function PUT(
   { params }: { params: { projectId: string; testCaseId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new AppError('Unauthorized', 401);
-    }
-
     const { projectId, testCaseId } = params;
-    const body: Partial<TestCaseFormData> = await request.json();
-
-    // Input validation
-    if (body.title !== undefined && body.title.trim().length === 0) {
-      throw new ValidationError('Title cannot be empty');
-    }
-    if (body.description !== undefined && body.description.trim().length === 0) {
-      throw new ValidationError('Description cannot be empty');
-    }
-    if (body.status !== undefined && !Object.values(TestCaseStatus).includes(body.status)) {
-      throw new ValidationError('Invalid status');
-    }
-    if (body.priority !== undefined && !Object.values(TestCasePriority).includes(body.priority)) {
-      throw new ValidationError('Invalid priority');
-    }
+    const body = await request.json();
 
     const existingTestCase = await prisma.testCase.findUnique({
       where: { id: testCaseId },
+      include: { versions: true },
     });
 
     if (!existingTestCase) {
       throw new AppError('Test case not found', 404);
     }
 
-    if (existingTestCase.projectId !== projectId) {
-      throw new AppError('Test case does not belong to the specified project', 400);
-    }
-
-    const updatedTestCase = await prisma.$transaction(async (prisma) => {
-      // Create a new version
-      await prisma.testCaseVersion.create({
+    const updatedTestCase = await prisma.$transaction(async (tx) => {
+      // Create a new version with current state
+      await tx.version.create({
         data: {
           testCaseId: existingTestCase.id,
-          versionNumber: existingTestCase.version,
+          versionNumber: existingTestCase.versions.length + 1,
           title: existingTestCase.title,
           description: existingTestCase.description,
-          steps: existingTestCase.steps,
           expectedResult: existingTestCase.expectedResult,
-          actualResult: existingTestCase.actualResult,
           status: existingTestCase.status,
           priority: existingTestCase.priority,
+          steps: existingTestCase.steps || '', // Add default value
         },
       });
 
       // Update the test case
-      return prisma.testCase.update({
+      return tx.testCase.update({
         where: { id: testCaseId },
         data: {
-          ...body,
-          version: { increment: 1 },
+          title: body.title,
+          description: body.description,
+          expectedResult: body.expectedResult,
+          status: body.status,
+          priority: body.priority,
+          steps: body.steps || '', // Add default value
         },
+        include: { versions: true },
       });
     });
 

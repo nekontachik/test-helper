@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';  // Changed from default import to named import
 import { AppError, NotFoundError, ValidationError } from '@/lib/errors';
 import logger from '@/lib/logger';
+import type { TestRun } from '@prisma/client';
+
+interface UpdateTestRunInput {
+  name?: string;
+  status?: string;
+}
 
 export async function GET(
   request: Request,
@@ -51,22 +57,18 @@ export async function PUT(
       throw new AppError('Unauthorized', 401);
     }
 
+    const body = await request.json() as UpdateTestRunInput;
     const { projectId, testRunId } = params;
-    const body = await request.json();
 
-    if (!body.name) {
-      throw new ValidationError('Name is required');
-    }
-
-    const existingTestRun = await prisma.testRun.findUnique({
+    const testRun = await prisma.testRun.findUnique({
       where: { id: testRunId },
     });
 
-    if (!existingTestRun) {
+    if (!testRun) {
       throw new NotFoundError('Test run not found');
     }
 
-    if (existingTestRun.projectId !== projectId) {
+    if (testRun.projectId !== projectId) {
       throw new AppError('Test run does not belong to the specified project', 400);
     }
 

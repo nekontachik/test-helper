@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTestRuns, useCreateTestRun, useUpdateTestRun } from '@/hooks/useTestRuns';
-import { apiClient } from '@/lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import { TestRunStatus } from '@/types';
 
 jest.mock('@/lib/apiClient');

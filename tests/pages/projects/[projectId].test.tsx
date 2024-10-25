@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ProjectDetails from '../../../pages/projects/[projectId]';
+import ProjectDetails from '@/app/projects/[projectId]/page';
 import { useRouter } from 'next/router';
 
 jest.mock('next/router', () => ({
@@ -20,7 +20,7 @@ describe('ProjectDetails page', () => {
   it('renders the project details page', () => {
     render(
       <QueryClientProvider client={queryClient}>
-        <ProjectDetails />
+        <ProjectDetails params={{ projectId: 'project1' }} />
       </QueryClientProvider>
     );
     expect(screen.getByText(/project details/i)).toBeInTheDocument();

@@ -1,50 +1,32 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Input, VStack } from '@chakra-ui/react';
+import React from 'react';
+import { VStack } from '@chakra-ui/react';
 import ProjectCard from './ProjectCard';
-import { Project } from '@/types';
-import styles from './ProjectList.module.css';
+import type { Project } from '@prisma/client';
+
+type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+
+interface ExtendedProject extends Project {
+  description: string | null;
+  status: ProjectStatus;
+}
 
 interface ProjectListProps {
-  projects: Project[];
+  projects: ExtendedProject[];
 }
 
-export default function ProjectList({ projects }: ProjectListProps) {
-  const [filter, setFilter] = useState('');
-
-  const filteredProjects = useMemo(
-    () =>
-      projects.filter(
-        (project) =>
-          project.name.toLowerCase().includes(filter.toLowerCase()) ||
-          (project.description?.toLowerCase().includes(filter.toLowerCase()) ?? false)
-      ),
-    [projects, filter]
-  );
-
+export const ProjectList: React.FC<ProjectListProps> = ({ projects }) => {
   return (
-    <VStack spacing={4} align="stretch">
-      <Input
-        placeholder="Search projects..."
-        value={filter}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setFilter(e.target.value)
-        }
-      />
-      <div className={styles.projectGrid}>
-        {filteredProjects.map((project) => (
-          <ProjectCard 
-            key={project.id} 
-            project={{
-              ...project,
-              createdAt: new Date(project.createdAt),
-              updatedAt: new Date(project.updatedAt),
-              description: project.description || 'No description provided'
-            }} 
-          />
-        ))}
-      </div>
+    <VStack spacing={4} align="stretch" data-testid="project-list">
+      {projects.map((project) => (
+        <ProjectCard 
+          key={project.id} 
+          project={project}
+        />
+      ))}
     </VStack>
   );
-}
+};
+
+export default ProjectList;

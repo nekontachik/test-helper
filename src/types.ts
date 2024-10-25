@@ -18,16 +18,14 @@ export enum TestCasePriority {
 }
 
 export interface TestCaseVersion {
-  id: string;
-  testCaseId: string;
   versionNumber: number;
   title: string;
   description: string;
-  status: TestCaseStatus;
-  priority: TestCasePriority;
+  steps: string[]; // Add this line
   expectedResult: string;
-  createdAt: Date;
-  updatedAt: Date;
+  status: string;
+  priority: string;
+  // Add any other properties that should be part of TestCaseVersion
 }
 
 export enum TestCaseResultStatus {
@@ -48,11 +46,11 @@ export interface User {
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
+  status: 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';  // Add this line
   createdAt: Date;
   updatedAt: Date;
-  userId: string; // Add this line
-  // ... other properties
+  userId: string;
 }
 
 export interface TestCase {

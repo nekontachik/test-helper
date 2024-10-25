@@ -1,16 +1,32 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { ChakraProvider } from '@chakra-ui/react';
 
 describe('ErrorBoundary', () => {
   const ErrorComponent = () => {
     throw new Error('Test error');
   };
 
-  it('renders error message when an error occurs', () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  beforeEach(() => {
+    // Prevent console.error from cluttering test output
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
 
-    render(
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const renderWithChakra = (component: React.ReactNode) => {
+    return render(
+      <ChakraProvider>
+        {component}
+      </ChakraProvider>
+    );
+  };
+
+  it('renders error message when an error occurs', () => {
+    renderWithChakra(
       <ErrorBoundary>
         <ErrorComponent />
       </ErrorBoundary>
@@ -18,17 +34,27 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
     expect(screen.getByText('Test error')).toBeInTheDocument();
-
-    consoleErrorSpy.mockRestore();
   });
 
   it('renders children when no error occurs', () => {
-    render(
+    renderWithChakra(
       <ErrorBoundary>
         <div>Test content</div>
       </ErrorBoundary>
     );
 
     expect(screen.getByText('Test content')).toBeInTheDocument();
+  });
+
+  it('calls onError callback when provided', () => {
+    const mockOnError = jest.fn();
+
+    renderWithChakra(
+      <ErrorBoundary onError={mockOnError}>
+        <ErrorComponent />
+      </ErrorBoundary>
+    );
+
+    expect(mockOnError).toHaveBeenCalledWith(expect.any(Error));
   });
 });

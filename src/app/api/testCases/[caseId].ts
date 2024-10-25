@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { apiErrorHandler } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
 
@@ -33,6 +33,6 @@ export default async function handler(
     res.status(200).json({ success: true, data: testCase });
   } catch (error) {
     logger.error('Error in test case handler:', error);
-    apiErrorHandler(res, error);
+    apiErrorHandler(error, 'test case handler');  // Fixed: Swapped arguments to match function signature
   }
 }

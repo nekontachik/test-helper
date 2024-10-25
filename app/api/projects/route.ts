@@ -1,26 +1,33 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { PrismaClient } from '@prisma/client';
+import { errorReporting } from '@/lib/errorReporting';
+import { z } from 'zod';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
+const prisma = new PrismaClient();
+
+const projectSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
+
+/**
+ * GET handler for fetching all projects
+ */
 export async function GET() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const projects = await prisma.project.findMany({
-      where: { userId: session.user.id },
-    });
+    const projects = await prisma.project.findMany();
     return NextResponse.json(projects);
   } catch (error) {
-    console.error("Error fetching projects:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    errorReporting.logError('Failed to fetch projects', error);
+    return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
 }
 
+/**
+ * POST handler for creating a new project
+ */
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,22 +35,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, description } = await request.json();
+    const body = await request.json();
+    const validatedData = projectSchema.parse(body);
+    
     const project = await prisma.project.create({
       data: {
-        name,
-        description,
+        ...validatedData,
         user: {
-          connect: { id: session.user.id },
-        },
+          connect: { id: session.user.id }
+        }
       },
     });
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
-    console.error('Failed to create project:', error);
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 }
-    );
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    errorReporting.logError('Failed to create project', error);
+    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }

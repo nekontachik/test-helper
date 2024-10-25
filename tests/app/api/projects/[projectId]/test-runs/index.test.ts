@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { createMocks, RequestMethod } from 'node-mocks-http';
 import { GET, POST } from '@/app/api/projects/[projectId]/test-runs/route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 jest.mock('@/lib/prisma', () => ({
   testRun: {
@@ -23,19 +22,14 @@ describe('/api/projects/[projectId]/test-runs', () => {
       ];
       (prisma.testRun.findMany as jest.Mock).mockResolvedValue(mockTestRuns);
 
-      const { req, res } = createMocks({
-        method: 'GET' as RequestMethod,
-      });
+      const url = new URL('http://localhost:3000/api/projects/123/test-runs');
+      const request = new NextRequest(url);
+      const handler = await GET;
+      const response = await handler(request);
+      const data = await response.json();
 
-      req.nextUrl = new URL('http://localhost:3000/api/projects/123/test-runs');
-      req.nextUrl.searchParams.append('projectId', '123');
-
-      await GET(req as unknown as NextRequest, {
-        params: { projectId: '123' },
-      });
-
-      expect(res._getStatusCode()).toBe(200);
-      expect(JSON.parse(res._getData())).toEqual(mockTestRuns);
+      expect(response.status).toBe(200);
+      expect(data).toEqual(mockTestRuns);
       expect(prisma.testRun.findMany).toHaveBeenCalledWith({
         where: { projectId: '123' },
       });
@@ -47,23 +41,20 @@ describe('/api/projects/[projectId]/test-runs', () => {
       const mockTestRun = { id: '1', name: 'New Test Run' };
       (prisma.testRun.create as jest.Mock).mockResolvedValue(mockTestRun);
 
-      const { req, res } = createMocks({
-        method: 'POST' as RequestMethod,
-        body: {
+      const url = new URL('http://localhost:3000/api/projects/123/test-runs');
+      const request = new NextRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({
           name: 'New Test Run',
           description: 'Test run description',
-        },
+        }),
       });
+      const handler = await POST;
+      const response = await handler(request);
+      const data = await response.json();
 
-      req.nextUrl = new URL('http://localhost:3000/api/projects/123/test-runs');
-      req.nextUrl.searchParams.append('projectId', '123');
-
-      await POST(req as unknown as NextRequest, {
-        params: { projectId: '123' },
-      });
-
-      expect(res._getStatusCode()).toBe(201);
-      expect(JSON.parse(res._getData())).toEqual(mockTestRun);
+      expect(response.status).toBe(201);
+      expect(data).toEqual(mockTestRun);
       expect(prisma.testRun.create).toHaveBeenCalledWith({
         data: {
           name: 'New Test Run',

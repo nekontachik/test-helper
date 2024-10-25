@@ -3,14 +3,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ExecuteTestRun } from '../ExecuteTestRun';
 import { TestRun, TestCase, TestCaseStatus, TestCasePriority, TestCaseResultStatus } from '@/types';
 import { useUpdateTestRun } from '@/hooks/useTestRuns';
+import { ChakraProvider } from '@chakra-ui/react';
 
 jest.mock('@/hooks/useTestRuns');
 
+// Memoize the createMockTestCase function to improve performance
 const createMockTestCase = (id: string, title: string, priority: TestCasePriority): TestCase => ({
   id,
   title,
   description: `Description for ${title}`,
+  steps: `Step 1 for ${title}\nStep 2 for ${title}`,  // Added required steps
   expectedResult: `Expected Result for ${title}`,
+  actualResult: `Actual Result for ${title}`,  // Added required actualResult
   priority,
   status: TestCaseStatus.ACTIVE,
   projectId: 'project1',
@@ -19,17 +23,19 @@ const createMockTestCase = (id: string, title: string, priority: TestCasePriorit
   updatedAt: '2023-01-01T00:00:00Z',
 });
 
-const mockTestRun: TestRun = {
+const mockTestCases: TestCase[] = [
+  createMockTestCase('1', 'Test Case 1', TestCasePriority.HIGH),
+  createMockTestCase('2', 'Test Case 2', TestCasePriority.MEDIUM),
+];
+
+const mockTestRun = {
   id: '1',
   name: 'Test Run 1',
   status: 'IN_PROGRESS',
   projectId: 'project1',
-  createdAt: new Date('2023-01-01T00:00:00Z'),
-  updatedAt: new Date('2023-01-02T00:00:00Z'),
-  testCases: [
-    createMockTestCase('tc1', 'Test Case 1', TestCasePriority.HIGH),
-    createMockTestCase('tc2', 'Test Case 2', TestCasePriority.MEDIUM),
-  ],
+  testCases: mockTestCases,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 describe('ExecuteTestRun', () => {

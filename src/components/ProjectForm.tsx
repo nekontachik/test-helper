@@ -19,7 +19,7 @@ interface ProjectFormProps {
   onSubmit: (data: ProjectFormData) => Promise<void>;
 }
 
-export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit }) => {
+export function ProjectForm(props: ProjectFormProps) {
   const {
     register,
     handleSubmit,
@@ -29,7 +29,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit }) => {
 
   const onSubmitForm = async (data: ProjectFormData) => {
     try {
-      await onSubmit(data);
+      await props.onSubmit(data);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';
@@ -62,4 +62,4 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSubmit }) => {
       </VStack>
     </Box>
   );
-};
+}

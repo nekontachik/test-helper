@@ -1,12 +1,30 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import TestCasePage from '@/pages/projects/[projectId]/test-cases/[testCaseId]';
+import TestCasePage from '@/app/projects/[projectId]/test-cases/[testCaseId]/page';
 import { useTestCase } from '@/hooks/useTestCase';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock the useTestCase hook
 jest.mock('@/hooks/useTestCase');
 
+const queryClient = new QueryClient();
+
+const renderWithProviders = (component: React.ReactNode) => {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {component}
+    </QueryClientProvider>
+  );
+};
+
 describe('TestCasePage', () => {
+  const mockParams = {
+    params: {
+      projectId: '1',
+      testCaseId: '1'
+    }
+  };
+
   it('renders loading state', () => {
     (useTestCase as jest.Mock).mockReturnValue({
       testCase: null,
@@ -14,7 +32,7 @@ describe('TestCasePage', () => {
       isError: false,
     });
 
-    render(<TestCasePage />);
+    renderWithProviders(<TestCasePage {...mockParams} />);
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -25,7 +43,7 @@ describe('TestCasePage', () => {
       isError: true,
     });
 
-    render(<TestCasePage />);
+    renderWithProviders(<TestCasePage {...mockParams} />);
     expect(screen.getByText(/failed to load test case/i)).toBeInTheDocument();
   });
 
@@ -33,7 +51,16 @@ describe('TestCasePage', () => {
     const mockTestCase = {
       id: '1',
       title: 'Test Case 1',
-      // ... other properties
+      description: 'Test description',
+      steps: 'Test steps',
+      expectedResult: 'Expected result',
+      actualResult: 'Actual result',
+      status: 'ACTIVE',
+      priority: 'HIGH',
+      projectId: '1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      version: 1
     };
 
     (useTestCase as jest.Mock).mockReturnValue({
@@ -42,8 +69,7 @@ describe('TestCasePage', () => {
       isError: false,
     });
 
-    render(<TestCasePage />);
-    expect(screen.getByText(/edit test case/i)).toBeInTheDocument();
-    // Add more assertions based on your TestCaseForm component
+    renderWithProviders(<TestCasePage {...mockParams} />);
+    expect(screen.getByText(/test case 1/i)).toBeInTheDocument();
   });
 });

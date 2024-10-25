@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createMocks, RequestMethod } from 'node-mocks-http';
 import { GET, POST } from './route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma'; // Fixed: Changed default import to named import
 
 jest.mock('@/lib/prisma', () => ({
   testRun: {
@@ -11,6 +11,14 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 describe('/api/projects/[projectId]/test-runs', () => {
+  let getHandler: (req: NextRequest) => Promise<any>;
+  let postHandler: (req: NextRequest) => Promise<any>;
+
+  beforeAll(async () => {
+    getHandler = await GET;
+    postHandler = await POST;
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -23,19 +31,18 @@ describe('/api/projects/[projectId]/test-runs', () => {
       ];
       (prisma.testRun.findMany as jest.Mock).mockResolvedValue(mockTestRuns);
 
-      const { req, res } = createMocks({
-        method: 'GET' as RequestMethod,
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/projects/123/test-runs',
+        {
+          method: 'GET',
+        }
+      );
 
-      req.nextUrl = new URL('http://localhost:3000/api/projects/123/test-runs');
-      req.nextUrl.searchParams.append('projectId', '123');
+      const response = await getHandler(req);
+      const data = await response.json();
 
-      await GET(req as unknown as NextRequest, {
-        params: { projectId: '123' },
-      });
-
-      expect(res._getStatusCode()).toBe(200);
-      expect(JSON.parse(res._getData())).toEqual(mockTestRuns);
+      expect(response.status).toBe(200);
+      expect(data).toEqual(mockTestRuns);
       expect(prisma.testRun.findMany).toHaveBeenCalledWith({
         where: { projectId: '123' },
       });
@@ -47,23 +54,22 @@ describe('/api/projects/[projectId]/test-runs', () => {
       const mockTestRun = { id: '1', name: 'New Test Run' };
       (prisma.testRun.create as jest.Mock).mockResolvedValue(mockTestRun);
 
-      const { req, res } = createMocks({
-        method: 'POST' as RequestMethod,
-        body: {
-          name: 'New Test Run',
-          description: 'Test run description',
-        },
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/projects/123/test-runs',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: 'New Test Run',
+            description: 'Test run description',
+          }),
+        }
+      );
 
-      req.nextUrl = new URL('http://localhost:3000/api/projects/123/test-runs');
-      req.nextUrl.searchParams.append('projectId', '123');
+      const response = await postHandler(req);
+      const data = await response.json();
 
-      await POST(req as unknown as NextRequest, {
-        params: { projectId: '123' },
-      });
-
-      expect(res._getStatusCode()).toBe(201);
-      expect(JSON.parse(res._getData())).toEqual(mockTestRun);
+      expect(response.status).toBe(201);
+      expect(data).toEqual(mockTestRun);
       expect(prisma.testRun.create).toHaveBeenCalledWith({
         data: {
           name: 'New Test Run',

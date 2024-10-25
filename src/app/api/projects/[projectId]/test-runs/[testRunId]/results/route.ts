@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import {prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { AppError, NotFoundError } from '@/lib/errors';
 import logger from '@/lib/logger';

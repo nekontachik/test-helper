@@ -1,26 +1,53 @@
 'use client';
 
 import React from 'react';
-import { useParams } from 'next/navigation';
-import { Box, Heading, Spinner } from '@chakra-ui/react';
-import { TestCaseDetails } from '@/components/TestCaseDetails';
+import { Box, Heading, VStack } from '@chakra-ui/react';
 import { useTestCase } from '@/hooks/useTestCase';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { TestCaseForm } from '@/components/TestCaseForm';
+import { ErrorMessage } from '@/components/ErrorMessage';
+import { useParams } from 'next/navigation';
+import { TestCaseFormData } from '@/types';
 
-export default function TestCasePage() {
-  const params = useParams();
-  const projectId = params?.projectId as string;
-  const testCaseId = params?.testCaseId as string;
+interface TestCasePageProps {
+  params: {
+    projectId: string;
+    testCaseId: string;
+  };
+}
 
-  const { data: testCase, isLoading, error } = useTestCase(projectId, testCaseId);
+export default function TestCasePage({ params }: TestCasePageProps) {
+  const { projectId, testCaseId } = params;
+  const { data: testCase, isLoading, isError } = useTestCase(projectId, testCaseId);
 
-  if (isLoading) return <Spinner />;
-  if (error) return <Box>Error: {error.message}</Box>;
-  if (!testCase) return <Box>Test case not found</Box>;
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (isError) {
+    return <ErrorMessage message="Failed to load test case" />;
+  }
+
+  if (!testCase) {
+    return <ErrorMessage message="Test case not found" />;
+  }
+
+  const handleSubmit = async (data: TestCaseFormData) => {
+    // Handle form submission here
+    console.log('Form submitted:', data);
+  };
 
   return (
-    <Box>
-      <Heading mb={6}>Test Case Details</Heading>
-      <TestCaseDetails testCase={testCase} projectId={projectId} />
+    <Box p={4}>
+      <VStack spacing={4} align="stretch">
+        <Heading>{testCase.title}</Heading>
+        <TestCaseForm 
+          testCase={testCase} 
+          projectId={projectId}
+          onSubmit={handleSubmit}
+          isLoading={false}
+        />
+      </VStack>
     </Box>
   );
 }

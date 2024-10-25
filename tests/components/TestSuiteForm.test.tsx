@@ -1,33 +1,37 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { TestSuiteForm } from '../../components/TestSuiteForm';
-import { TestCase } from '../../models/types';
+import { TestSuiteForm } from '@/components/TestSuiteForm';
+import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
 const mockTestCases: TestCase[] = [
   {
     id: '1',
     title: 'Test Case 1',
     description: 'Description 1',
-    status: 'ACTIVE',
-    priority: 'HIGH',
+    status: TestCaseStatus.ACTIVE,
+    priority: TestCasePriority.HIGH,
     projectId: 'project1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     expectedResult: 'Expected Result 1',
-    testSuiteId: null,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 1',
+    version: 1,
   },
   {
     id: '2',
     title: 'Test Case 2',
     description: 'Description 2',
-    status: 'DRAFT',
-    priority: 'MEDIUM',
+    status: TestCaseStatus.DRAFT,
+    priority: TestCasePriority.MEDIUM,
     projectId: 'project1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     expectedResult: 'Expected Result 2',
-    testSuiteId: null,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 2',
+    version: 1,
   },
 ];
 

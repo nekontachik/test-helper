@@ -3,9 +3,14 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { VStack, Heading, Spinner, Text } from '@chakra-ui/react';
-import EditProjectForm from '@/components/EditProjectForm';
+import { EditProjectForm } from '@/components/EditProjectForm';
 import { useProject } from '@/hooks/useProject';
-import { ProjectFormData } from '@/types';
+
+// Define the type locally since it's not exported from EditProjectForm
+interface ProjectFormData {
+  name: string;
+  description?: string | null;
+}
 
 export default function EditProjectPage() {
   const params = useParams();
@@ -17,7 +22,10 @@ export default function EditProjectPage() {
     const response = await fetch(`/api/projects/${projectId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        name: data.name,
+        description: data.description || undefined,
+      }),
     });
 
     if (response.ok) {
@@ -35,7 +43,7 @@ export default function EditProjectPage() {
       <Heading>Edit Project: {project.name}</Heading>
       <EditProjectForm
         project={project}
-        onUpdateProject={handleUpdateProject}
+        onSubmit={handleUpdateProject}
       />
     </VStack>
   );

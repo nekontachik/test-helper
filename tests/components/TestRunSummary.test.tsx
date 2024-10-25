@@ -6,7 +6,7 @@ import {
   TestRun,
   TestCaseResultStatus,
   TestRunStatus,
-} from '../../models/types';
+} from '@/models/types';
 
 jest.mock('react-chartjs-2', () => ({
   Pie: () => null,

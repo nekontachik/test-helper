@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { TestCaseList } from '@/components/TestCaseList';
-import { TestCaseDetails } from '@/components/TestCaseDetails';
+import TestCaseDetails from '@/components/TestCaseDetails';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
@@ -76,10 +76,19 @@ describe('Test Case Management Integration', () => {
       version: 1,
     };
 
-    render(<TestCaseDetails testCase={mockTestCase} projectId="project1" />);
+    // Mock the API response for the test case details
+    server.use(
+      http.get('/api/projects/project1/test-cases/1', () => {
+        return HttpResponse.json(mockTestCase);
+      })
+    );
 
-    expect(screen.getByText('Test Case')).toBeInTheDocument();
-    expect(screen.getByText('Description')).toBeInTheDocument();
+    render(<TestCaseDetails testCaseId={mockTestCase.id} projectId="project1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Case')).toBeInTheDocument();
+      expect(screen.getByText('Description')).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByText('Edit Test Case'));
 

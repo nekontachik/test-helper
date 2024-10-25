@@ -1,33 +1,38 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';  // Changed from named to default import
+import { ReactNode } from 'react';
+
+const ThrowError = (): ReactNode => {
+  throw new Error('Test error');
+};
 
 describe('ErrorBoundary', () => {
-  it('renders children when there is no error', () => {
-    render(
-      <ErrorBoundary>
-        <div>Test Content</div>
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText('Test Content')).toBeInTheDocument();
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  it('renders error message when there is an error', () => {
-    const ErrorComponent = () => {
-      throw new Error('Test error');
-    };
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('renders fallback UI when error occurs', () => {
     render(
       <ErrorBoundary>
-        <ErrorComponent />
+        <ThrowError />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+  });
 
-    consoleErrorSpy.mockRestore();
+  it('renders children when no error occurs', () => {
+    render(
+      <ErrorBoundary>
+        <div>Test content</div>
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('Test content')).toBeInTheDocument();
   });
 });

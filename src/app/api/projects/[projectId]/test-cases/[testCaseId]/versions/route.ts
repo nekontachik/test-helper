@@ -1,31 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { withAuth } from '@/lib/withAuth';
+import { prisma } from '@/lib/prisma';
+import { UserRole } from '@/types/auth';
+import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
 
-export async function GET(
-  req: NextRequest,
+interface TestCaseVersion {
+  id: string;
+  versionNumber: number;
+  title: string;
+  description: string | null;
+  expectedResult: string | null;
+  status: string;
+  priority: string;
+  testCaseId: string;
+  createdAt: Date;
+}
+
+async function handler(
+  req: Request,
   { params }: { params: { projectId: string; testCaseId: string } }
 ) {
-  const { testCaseId } = params;
+  const { projectId, testCaseId } = params;
 
   try {
-    const testCaseVersions = await prisma.testCaseVersion.findMany({
-      where: { testCaseId },
-      orderBy: { versionNumber: 'desc' },
-      select: { versionNumber: true },
-    });
-
-    if (!testCaseVersions.length) {
-      return NextResponse.json({ error: 'No versions found for this test case' }, { status: 404 });
+    if (req.method === 'GET') {
+      const versions = await prisma.version.findMany({
+        where: { testCaseId },
+        orderBy: { versionNumber: 'desc' },
+      });
+      return NextResponse.json(versions);
     }
 
-    const versions = testCaseVersions.map((v) => v.versionNumber);
+    if (req.method === 'POST') {
+      const data = await req.json();
+      const { versionNumber } = data;
 
-    return NextResponse.json(versions);
-  } catch (error) {
-    console.error('Error fetching test case versions:', error);
+      const version = await prisma.version.findFirst({
+        where: {
+          testCaseId,
+          versionNumber,
+        },
+      });
+
+      if (!version) {
+        return NextResponse.json(
+          { message: 'Version not found' },
+          { status: 404 }
+        );
+      }
+
+      // Restore the version
+      const updatedTestCase = await prisma.testCase.update({
+        where: { id: testCaseId },
+        data: {
+          title: version.title,
+          description: version.description,
+          expectedResult: version.expectedResult,
+          status: version.status,
+          priority: version.priority,
+        },
+      });
+
+      return NextResponse.json({
+        message: 'Version restored successfully',
+        testCase: updatedTestCase,
+      });
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch test case versions' },
-      { status: 500 }
+      { message: 'Method not allowed' },
+      { status: 405 }
     );
+  } catch (error) {
+    const { message, status } = PrismaErrorHandler.handle(error);
+    return NextResponse.json({ message }, { status });
   }
 }
+
+export const GET = withAuth(handler, {
+  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER, UserRole.USER]
+});
+
+export const POST = withAuth(handler, {
+  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+});

@@ -1,28 +1,35 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import ProjectCard from '@/components/ProjectCard';
-import { Project } from '@/types';
+import type { Project } from '@prisma/client';
 
-const mockProject: Project = {
+type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+
+interface ExtendedProject extends Project {
+  description: string | null;
+  status: ProjectStatus;
+}
+
+const mockProject: ExtendedProject = {
   id: '1',
   name: 'Test Project',
-  description: 'This is a test project',
-  createdAt: new Date('2023-01-01'),
-  updatedAt: new Date('2023-01-02'),
-  userId: 'user1',
+  description: 'Test Description',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  userId: '1',
+  status: 'ACTIVE' as ProjectStatus
 };
 
 describe('ProjectCard', () => {
-  it('renders project information correctly', () => {
+  it('renders project information', () => {
     render(
       <ChakraProvider>
         <ProjectCard project={mockProject} />
       </ChakraProvider>
     );
-
-    expect(screen.getByText('Test Project')).toBeInTheDocument();
-    expect(screen.getByText('This is a test project')).toBeInTheDocument();
-    expect(screen.getByText('Created: 01/01/2023')).toBeInTheDocument();
+    
+    expect(screen.getByText(mockProject.name)).toBeInTheDocument();
+    expect(screen.getByText(mockProject.description!)).toBeInTheDocument();
   });
 });

@@ -1,52 +1,60 @@
 import { renderHook } from '@testing-library/react';
-import { useLogger } from './useLogger';
+import { useLogger } from '@/hooks/useLogger';
+import winston from 'winston';
+
+// Create mock logger methods
+const mockLoggerMethods = {
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+};
+
+// Mock winston
+jest.mock('winston', () => ({
+  createLogger: jest.fn(() => mockLoggerMethods),
+  format: {
+    combine: jest.fn(),
+    timestamp: jest.fn(),
+    json: jest.fn(),
+    simple: jest.fn(),
+  },
+  transports: {
+    Console: jest.fn(),
+  },
+}));
 
 describe('useLogger', () => {
-  const originalConsole = { ...console };
-
   beforeEach(() => {
-    console.log = jest.fn();
-    console.error = jest.fn();
-    console.warn = jest.fn();
-    console.info = jest.fn();
+    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    console = { ...originalConsole };
-  });
-
-  it('should log info messages', () => {
+  test.each([
+    ['info', 'Test info message'],
+    ['error', 'Test error message'],
+    ['warn', 'Test warning message'],
+    ['debug', 'Test debug message'],
+  ])('should log %s messages', (level, message) => {
     const { result } = renderHook(() => useLogger());
-    result.current.info('Test info message');
-    expect(console.log).toHaveBeenCalledWith('[INFO]', 'Test info message');
+    result.current[level as keyof typeof mockLoggerMethods](message);
+    expect(mockLoggerMethods[level as keyof typeof mockLoggerMethods]).toHaveBeenCalledWith(message);
   });
 
-  it('should log error messages', () => {
+  it('should include metadata in log messages', () => {
     const { result } = renderHook(() => useLogger());
-    result.current.error('Test error message');
-    expect(console.error).toHaveBeenCalledWith('[ERROR]', 'Test error message');
+    const message = 'Test message with metadata';
+    const metadata = { key: 'value' };
+    
+    result.current.info(message, metadata);
+    expect(mockLoggerMethods.info).toHaveBeenCalledWith(message, metadata);
   });
 
-  it('should log warning messages', () => {
+  it('should handle error objects', () => {
     const { result } = renderHook(() => useLogger());
-    result.current.warn('Test warning message');
-    expect(console.warn).toHaveBeenCalledWith('[WARN]', 'Test warning message');
-  });
-
-  it('should log debug messages', () => {
-    const { result } = renderHook(() => useLogger());
-    result.current.debug('Test debug message');
-    expect(console.log).toHaveBeenCalledWith('[DEBUG]', 'Test debug message');
-  });
-
-  it('should include additional data in log messages', () => {
-    const { result } = renderHook(() => useLogger());
-    const additionalData = { key: 'value' };
-    result.current.info('Test message with data', additionalData);
-    expect(console.log).toHaveBeenCalledWith(
-      '[INFO]',
-      'Test message with data',
-      additionalData
-    );
+    const message = 'Error occurred';
+    const error = new Error('Test error');
+    
+    result.current.error(message, error);
+    expect(mockLoggerMethods.error).toHaveBeenCalledWith(message, error);
   });
 });

@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { ProjectList } from '../../components/ProjectList';
-import { Project } from '../../models/types';
+import ProjectList from '@/components/ProjectList';
+import { Project } from '@/types';
 
 const mockProjects: Project[] = [
   {
     id: '1',
     name: 'Project 1',
-    title: 'Title 1',
     description: 'Description 1',
+    status: 'ACTIVE',
     createdAt: new Date(),
     updatedAt: new Date(),
     userId: 'user1',
@@ -17,8 +17,8 @@ const mockProjects: Project[] = [
   {
     id: '2',
     name: 'Project 2',
-    title: 'Title 2',
     description: 'Description 2',
+    status: 'ARCHIVED',
     createdAt: new Date(),
     updatedAt: new Date(),
     userId: 'user2',

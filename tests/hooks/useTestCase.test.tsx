@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 import { useTestCase } from '@/hooks/useTestCase';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { apiClient } from '@/lib/apiClient';
+import  apiClient  from '@/lib/apiClient';
 
 // Mock the API call
 jest.mock('../../lib/apiClient');

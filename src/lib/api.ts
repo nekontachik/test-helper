@@ -1,47 +1,38 @@
-import { PrismaClient } from '@prisma/client';
 import logger from './logger';
+import { PrismaClient, TestCase as PrismaTestCase, TestRun as PrismaTestRun, TestSuite as PrismaTestSuite } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+export interface TestCase extends PrismaTestCase {}
 
-type TestCase = {
-  id: string;
-  title: string;
-  description: string;
-  expectedResult: string;
-  status: string;
-  priority: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type TestCaseResult = {
+interface TestCaseResult {
   id: string;
   status: string;
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
-type TestRun = {
-  id: string;
-  name: string;
-  status: string;
-  projectId: string;
-  createdAt: Date;
-  updatedAt: Date;
+interface TestRun extends PrismaTestRun {
   testCases: TestCase[];
   testCaseResults: TestCaseResult[];
-};
+}
 
-type TestSuite = {
-  id: string;
-  name: string;
-  description: string | null;
-  projectId: string;
-  createdAt: Date;
-  updatedAt: Date;
+interface TestSuite extends PrismaTestSuite {
   testCases: TestCase[];
-};
+}
+
+interface TestCaseFilters {
+  title?: string;
+  status?: string;
+  priority?: string;
+}
+
+export class ApiError extends Error {
+  constructor(public statusCode: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 export async function getTestRuns(projectId: string): Promise<TestRun[]> {
   try {
@@ -55,27 +46,21 @@ export async function getTestRuns(projectId: string): Promise<TestRun[]> {
     });
 
     logger.info(`Found ${testRuns.length} test runs for project ${projectId}`);
-    return testRuns.map((testRun) => ({
+    return testRuns.map((testRun: PrismaTestRun & { testCases: PrismaTestCase[]; testCaseResults: TestCaseResult[] }) => ({
       ...testRun,
-      createdAt: testRun.createdAt,
-      updatedAt: testRun.updatedAt,
-      testCases: testRun.testCases.map((tc) => ({
+      testCases: testRun.testCases.map(tc => ({
         ...tc,
-        createdAt: tc.createdAt,
-        updatedAt: tc.updatedAt,
         description: tc.description ?? '',
         expectedResult: tc.expectedResult ?? '',
       })),
-      testCaseResults: testRun.testCaseResults.map((tcr) => ({
+      testCaseResults: testRun.testCaseResults.map(tcr => ({
         ...tcr,
-        createdAt: tcr.createdAt,
-        updatedAt: tcr.updatedAt,
         notes: tcr.notes ?? '',
       })),
     }));
   } catch (error) {
     logger.error(`Error fetching test runs for project ${projectId}:`, error);
-    throw error;
+    throw new ApiError(500, `Failed to fetch test runs: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -89,26 +74,18 @@ export async function getTestSuites(projectId: string): Promise<TestSuite[]> {
       },
     });
 
-    logger.info(
-      `Found ${testSuites.length} test suites for project ${projectId}`
-    );
-    return testSuites.map((testSuite) => ({
+    logger.info(`Found ${testSuites.length} test suites for project ${projectId}`);
+    return testSuites.map((testSuite: PrismaTestSuite & { testCases: PrismaTestCase[] }) => ({
       ...testSuite,
-      createdAt: testSuite.createdAt,
-      updatedAt: testSuite.updatedAt,
-      description: testSuite.description ?? '',
-      testCases:
-        testSuite.testCases?.map((tc) => ({
-          ...tc,
-          createdAt: tc.createdAt,
-          updatedAt: tc.updatedAt,
-          description: tc.description ?? '',
-          expectedResult: tc.expectedResult ?? '',
-        })) ?? [],
+      testCases: testSuite.testCases?.map(tc => ({
+        ...tc,
+        description: tc.description ?? '',
+        expectedResult: tc.expectedResult ?? '',
+      })) ?? [],
     }));
   } catch (error) {
     logger.error(`Error fetching test suites for project ${projectId}:`, error);
-    throw error;
+    throw new ApiError(500, `Failed to fetch test suites: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -128,6 +105,30 @@ export async function fetchTestCases(
     throw new Error('Failed to fetch test cases');
   }
   return response.json();
+}
+
+export async function getTestCase(projectId: string, testCaseId: string): Promise<TestCase> {
+  const testCase = await prisma.testCase.findUnique({
+    where: { id: testCaseId, projectId },
+  });
+  if (!testCase) {
+    throw new Error('Test case not found');
+  }
+  return testCase as TestCase;
+}
+
+export async function updateTestCase(projectId: string, testCaseId: string, testCase: Partial<TestCase>): Promise<TestCase> {
+  const updatedTestCase = await prisma.testCase.update({
+    where: { id: testCaseId, projectId },
+    data: testCase,
+  });
+  return updatedTestCase as TestCase;
+}
+
+export async function deleteTestCase(projectId: string, testCaseId: string): Promise<void> {
+  await prisma.testCase.delete({
+    where: { id: testCaseId, projectId },
+  });
 }
 
 // ... (keep other existing functions)

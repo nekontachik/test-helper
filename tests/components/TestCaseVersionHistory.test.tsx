@@ -2,34 +2,30 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TestCaseVersionHistory } from '@/components/TestCaseVersionHistory';
 import { useTestCaseVersions } from '@/hooks/useTestCase';
-import { TestCaseVersion, TestCaseStatus, TestCasePriority } from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 jest.mock('@/hooks/useTestCase');
 
-const mockVersions: TestCaseVersion[] = [
+const mockVersions = [
   {
     id: '2',
-    testCaseId: '1',
     versionNumber: 2,
     title: 'Updated Test Case',
     description: 'Updated description',
     status: TestCaseStatus.ACTIVE,
     priority: TestCasePriority.HIGH,
     expectedResult: 'Updated expected result',
-    createdAt: new Date('2023-05-02'),
-    updatedAt: new Date('2023-05-02'),
+    createdAt: '2023-05-02',
   },
   {
     id: '1',
-    testCaseId: '1',
     versionNumber: 1,
     title: 'Original Test Case',
     description: 'Original description',
     status: TestCaseStatus.DRAFT,
     priority: TestCasePriority.MEDIUM,
     expectedResult: 'Original expected result',
-    createdAt: new Date('2023-05-01'),
-    updatedAt: new Date('2023-05-01'),
+    createdAt: '2023-05-01',
   },
 ];
 
@@ -43,36 +39,33 @@ describe('TestCaseVersionHistory', () => {
   });
 
   it('renders version history correctly', () => {
-    const mockOnVersionRestore = jest.fn();
+    const mockOnVersionSelect = jest.fn();
     render(
       <TestCaseVersionHistory
-        projectId="project1"
-        testCaseId="testcase1"
-        onVersionRestore={mockOnVersionRestore}
+        versions={mockVersions}
+        onVersionSelect={mockOnVersionSelect}
+        currentVersion={2}
       />
     );
 
-    expect(screen.getByText('Version History')).toBeInTheDocument();
     expect(screen.getByText('Version 2')).toBeInTheDocument();
     expect(screen.getByText('Version 1')).toBeInTheDocument();
     expect(screen.getByText('Updated Test Case')).toBeInTheDocument();
     expect(screen.getByText('Original Test Case')).toBeInTheDocument();
   });
 
-  it('calls onVersionRestore when restore button is clicked', async () => {
-    const mockOnVersionRestore = jest.fn();
+  it('calls onVersionSelect when version is clicked', async () => {
+    const mockOnVersionSelect = jest.fn();
     render(
       <TestCaseVersionHistory
-        projectId="project1"
-        testCaseId="testcase1"
-        onVersionRestore={mockOnVersionRestore}
+        versions={mockVersions}
+        onVersionSelect={mockOnVersionSelect}
+        currentVersion={1}
       />
     );
 
-    fireEvent.click(screen.getAllByText('Restore this version')[0]);
-    await waitFor(() => {
-      expect(mockOnVersionRestore).toHaveBeenCalledWith(2);
-    });
+    fireEvent.click(screen.getByText('Version 2'));
+    expect(mockOnVersionSelect).toHaveBeenCalledWith(mockVersions[0]);
   });
 
   it('shows loading state', () => {
@@ -84,9 +77,8 @@ describe('TestCaseVersionHistory', () => {
 
     render(
       <TestCaseVersionHistory
-        projectId="project1"
-        testCaseId="testcase1"
-        onVersionRestore={jest.fn()}
+        versions={[]}
+        currentVersion={1}
       />
     );
 
@@ -102,9 +94,8 @@ describe('TestCaseVersionHistory', () => {
 
     render(
       <TestCaseVersionHistory
-        projectId="project1"
-        testCaseId="testcase1"
-        onVersionRestore={jest.fn()}
+        versions={[]}
+        currentVersion={1}
       />
     );
 

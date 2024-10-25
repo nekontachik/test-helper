@@ -1,87 +1,63 @@
-import React from 'react';
-import { Box, Heading, Text, Badge, VStack, Button, Flex } from '@chakra-ui/react';
+'use client';
+
+import React, { useState } from 'react';
+import { useTestCase, useTestCaseVersions } from '@/hooks/useTestCase';
+import { Box, Heading, Text, Button, VStack, Flex } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
-import { useRouter } from 'next/navigation';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
-import { TestCaseVersionHistory } from '@/components/TestCaseVersionHistory';
-import { useRestoreTestCaseVersion } from '@/hooks/useTestCase';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { EditTestCaseForm } from './EditTestCaseForm';
+import TestCaseVersionComparison from './TestCaseVersionComparison';
+import ErrorBoundary from './ErrorBoundary';
+import { handleApiError, logError } from '@/lib/errorReporting';
 
 interface TestCaseDetailsProps {
-  testCase: TestCase;
   projectId: string;
+  testCaseId: string;
 }
 
-export function TestCaseDetails({ testCase, projectId }: TestCaseDetailsProps) {
-  const router = useRouter();
+const TestCaseDetails: React.FC<TestCaseDetailsProps> = ({ projectId, testCaseId }) => {
+  const { data: testCase, isLoading, error } = useTestCase(projectId, testCaseId);
+  const { data: versions } = useTestCaseVersions(projectId, testCaseId);
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
   const toast = useToast();
-  const restoreVersion = useRestoreTestCaseVersion(projectId, testCase.id);
 
-  const handleEdit = () => {
-    router.push(`/projects/${projectId}/test-cases/${testCase.id}/edit`);
-  };
+  if (isLoading) {
+    return <Box>Loading...</Box>;
+  }
 
-  const handleVersionRestore = async (versionNumber: number) => {
-    try {
-      await restoreVersion.mutateAsync(versionNumber);
-      toast({
-        title: 'Version restored',
-        description: `Successfully restored version ${versionNumber}`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error restoring version',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
+  if (error) {
+    return <Box>Error: {error.message}</Box>;
+  }
+
+  if (!testCase) {
+    return <Box>Test case not found</Box>;
+  }
+
+  const currentVersion = versions?.find((v: any) => v.versionNumber === testCase.version);
+  const selectedVersionData = selectedVersion ? versions?.find((v: any) => v.versionNumber === selectedVersion) : null;
 
   return (
     <ErrorBoundary>
-      <Box borderWidth="1px" borderRadius="lg" p={6} boxShadow="md">
+      <Box>
+        {currentVersion && selectedVersionData && (
+          <TestCaseVersionComparison oldVersion={currentVersion} newVersion={selectedVersionData} />
+        )}
         <VStack align="start" spacing={4}>
-          <Heading size="lg">{testCase.title}</Heading>
-          <Flex>
-            <Badge colorScheme={testCase.status === TestCaseStatus.ACTIVE ? 'green' : 'red'} mr={2}>
-              {testCase.status}
-            </Badge>
-            <Badge colorScheme={testCase.priority === TestCasePriority.HIGH ? 'red' : testCase.priority === TestCasePriority.MEDIUM ? 'yellow' : 'blue'}>
-              {testCase.priority}
-            </Badge>
+          <Heading as="h1" size="xl">
+            {testCase?.title}
+          </Heading>
+          <Text>{testCase?.description}</Text>
+          <Text>Status: {testCase?.status}</Text>
+          <Text>Priority: {testCase?.priority}</Text>
+          <Flex gap={4}>
+            <Button onClick={() => console.log('Edit button clicked')}>Edit</Button>
+            <Button onClick={() => console.log('Delete button clicked')} colorScheme="red">
+              Delete
+            </Button>
           </Flex>
-          <Text>{testCase.description}</Text>
-          {testCase.steps && (
-            <Box>
-              <Heading size="md" mb={2}>Steps</Heading>
-              <Text whiteSpace="pre-wrap">{testCase.steps}</Text>
-            </Box>
-          )}
-          <Box>
-            <Heading size="md" mb={2}>Expected Result</Heading>
-            <Text>{testCase.expectedResult}</Text>
-          </Box>
-          {testCase.actualResult && (
-            <Box>
-              <Heading size="md" mb={2}>Actual Result</Heading>
-              <Text>{testCase.actualResult}</Text>
-            </Box>
-          )}
-          <Flex>
-            <Button onClick={handleEdit} colorScheme="blue">Edit Test Case</Button>
-          </Flex>
-          <TestCaseVersionHistory 
-            projectId={projectId} 
-            testCaseId={testCase.id} 
-            onVersionRestore={handleVersionRestore}
-          />
         </VStack>
       </Box>
     </ErrorBoundary>
   );
-}
+};
+
+export default TestCaseDetails;

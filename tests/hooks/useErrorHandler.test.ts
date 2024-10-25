@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useErrorHandler } from './useErrorHandler';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useToast } from '@chakra-ui/toast';
 
 jest.mock('@chakra-ui/toast', () => ({

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { TestRunStatus } from '@/types';
 
@@ -27,8 +27,21 @@ describe('Test Runs API', () => {
       (prisma.testRun.findMany as jest.Mock).mockResolvedValue([{ id: '1', name: 'Test Run 1' }]);
       (prisma.testRun.count as jest.Mock).mockResolvedValue(1);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-runs?page=1&limit=10');
-      const response = await GET(request, { params: { projectId: '1' } });
+      const url = new URL('http://localhost:3000/api/projects/1/test-runs?page=1&limit=10');
+      const request = new NextRequest(url, {
+        method: 'GET'
+      });
+      Object.defineProperty(request, 'nextUrl', {
+        value: url
+      });
+
+      const context = {
+        params: { projectId: '1' }
+      };
+
+      const handler = await GET;
+      const response = await handler(request);
+
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -43,8 +56,16 @@ describe('Test Runs API', () => {
     it('should return 401 when not authenticated', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-runs');
-      const response = await GET(request, { params: { projectId: '1' } });
+      const url = new URL('http://localhost:3000/api/projects/1/test-runs');
+      const request = new NextRequest(url, {
+        method: 'GET'
+      });
+      Object.defineProperty(request, 'nextUrl', {
+        value: url
+      });
+
+      const handler = await GET;
+      const response = await handler(request);
 
       expect(response.status).toBe(401);
     });
@@ -55,11 +76,18 @@ describe('Test Runs API', () => {
       (getServerSession as jest.Mock).mockResolvedValue({ user: { id: '1' } });
       (prisma.testRun.create as jest.Mock).mockResolvedValue({ id: '1', name: 'New Test Run' });
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-runs', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-runs');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({ name: 'New Test Run' }),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      Object.defineProperty(request, 'nextUrl', {
+        value: url
+      });
+
+      const handler = await POST;
+      const response = await handler(request);
+
       const data = await response.json();
 
       expect(response.status).toBe(201);
@@ -76,11 +104,17 @@ describe('Test Runs API', () => {
     it('should return 401 when not authenticated', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-runs', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-runs');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({ name: 'New Test Run' }),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      Object.defineProperty(request, 'nextUrl', {
+        value: url
+      });
+
+      const handler = await POST;
+      const response = await handler(request);
 
       expect(response.status).toBe(401);
     });
@@ -88,11 +122,17 @@ describe('Test Runs API', () => {
     it('should return 400 when name is missing', async () => {
       (getServerSession as jest.Mock).mockResolvedValue({ user: { id: '1' } });
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-runs', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-runs');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({}),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      Object.defineProperty(request, 'nextUrl', {
+        value: url
+      });
+
+      const handler = await POST;
+      const response = await handler(request);
 
       expect(response.status).toBe(400);
     });

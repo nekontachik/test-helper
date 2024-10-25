@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TestCaseDetails } from '@/components/TestCaseDetails';
+import TestCaseDetails from '@/components/TestCaseDetails';
 import apiClient from '@/lib/apiClient';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
@@ -14,13 +14,15 @@ const mockTestCase: TestCase = {
   id: '1',
   title: 'Test Case 1',
   description: 'Description for Test Case 1',
+  steps: 'Step 1\nStep 2',
   expectedResult: 'Expected Result 1',
+  actualResult: 'Actual Result 1',
   status: TestCaseStatus.ACTIVE,
   priority: TestCasePriority.HIGH,
   projectId: 'project1',
   version: 1,
-  createdAt: '2023-01-01T00:00:00Z', // Use ISO string format
-  updatedAt: '2023-01-01T00:00:00Z', // Use ISO string format
+  createdAt: new Date('2023-01-01T00:00:00Z'),
+  updatedAt: new Date('2023-01-01T00:00:00Z'),
 };
 
 describe('Edit Test Case Flow', () => {
@@ -34,7 +36,7 @@ describe('Edit Test Case Flow', () => {
     render(
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
-          <TestCaseDetails testCase={mockTestCase} projectId="project1" />
+          <TestCaseDetails testCaseId={mockTestCase.id} projectId="project1" />
         </QueryClientProvider>
       </ChakraProvider>
     );
@@ -58,7 +60,9 @@ describe('Edit Test Case Flow', () => {
     expect(apiClient.updateTestCase).toHaveBeenCalledWith('project1', '1', {
       title: 'Updated Test Case 1',
       description: 'Updated Description',
-      expectedResult: 'Expected Result 1',
+      steps: mockTestCase.steps,
+      expectedResult: mockTestCase.expectedResult,
+      actualResult: mockTestCase.actualResult,
       status: TestCaseStatus.ACTIVE,
       priority: TestCasePriority.HIGH,
     });

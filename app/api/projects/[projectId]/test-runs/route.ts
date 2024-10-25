@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+import { TestRun } from '@prisma/client';
 
 export async function GET(
   request: Request,
@@ -22,11 +23,11 @@ export async function GET(
       },
     });
 
-    const filteredTestRuns = allTestRuns.filter((testRun) =>
+    const filteredTestRuns = allTestRuns.filter((testRun: TestRun) =>
       testRun.name.toLowerCase().includes(filter.toLowerCase())
     );
 
-    const sortedTestRuns = filteredTestRuns.sort((a, b) => {
+    const sortedTestRuns = filteredTestRuns.sort((a: TestRun, b: TestRun) => {
       if (sortField === 'name') {
         return sortOrder === 'asc'
           ? a.name.localeCompare(b.name)

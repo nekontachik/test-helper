@@ -50,12 +50,28 @@ const apiClient = {
     await api.delete(url);
   },
 
-  async createProject(data: ProjectFormData): Promise<Project> {
-    return this.post<Project>('/projects', data);
+  async getProjects(page = 1, limit = 10): Promise<PaginatedResponse<Project>> {
+    const response = await fetch(`/api/projects?page=${page}&limit=${limit}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch projects');
+    }
+    return response.json();
   },
 
-  async getProjects(): Promise<PaginatedResponse<Project>> {
-    return this.get<PaginatedResponse<Project>>('/projects');
+  async createProject(data: ProjectFormData): Promise<Project> {
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create project');
+    }
+
+    return response.json();
   },
 
   async getTestCases(
@@ -69,8 +85,7 @@ const apiClient = {
     }
   ): Promise<PaginatedResponse<TestCase>> {
     try {
-      const response = await this.get<PaginatedResponse<TestCase>>(`/projects/${projectId}/test-cases`, params);
-      return response;
+      return this.get<PaginatedResponse<TestCase>>(`/projects/${projectId}/test-cases`, params);
     } catch (error) {
       return handleApiError(error);
     }
@@ -82,8 +97,7 @@ const apiClient = {
 
   async createTestCase(projectId: string, data: TestCaseFormData): Promise<TestCase> {
     try {
-      const response = await this.post<TestCase>(`/projects/${projectId}/test-cases`, data);
-      return response;
+      return this.post<TestCase>(`/projects/${projectId}/test-cases`, data);
     } catch (error) {
       return handleApiError(error);
     }
@@ -119,13 +133,11 @@ const apiClient = {
   },
 
   async getTestCase(projectId: string, testCaseId: string): Promise<TestCase> {
-    const response = await axios.get(`/api/projects/${projectId}/test-cases/${testCaseId}`);
-    return response.data;
+    return this.get<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}`);
   },
 
   async updateTestCase(projectId: string, testCaseId: string, data: Partial<TestCaseFormData>): Promise<TestCase> {
-    const response = await axios.put(`/api/projects/${projectId}/test-cases/${testCaseId}`, data);
-    return response.data;
+    return this.put<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}`, data);
   },
 
   async deleteTestCase(projectId: string, testCaseId: string): Promise<void> {
@@ -134,15 +146,17 @@ const apiClient = {
 
   async restoreTestCaseVersion(projectId: string, testCaseId: string, versionNumber: number): Promise<TestCase> {
     try {
-      const response = await api.post(`/projects/${projectId}/test-cases/${testCaseId}/restore`, { versionNumber });
-      return response.data;
+      return this.post<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}/restore`, { versionNumber });
     } catch (error) {
       return handleApiError(error);
     }
   },
 
-  async register(data: { name: string; email: string; password: string }): Promise<void> {
-    return this.post('/auth/register', data);
+  async register(data: { name: string; email: string; password: string; role: string }): Promise<void> {
+    const response = await api.post('/auth/register', data);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Registration failed');
+    }
   },
 
   async getProject(projectId: string): Promise<Project> {

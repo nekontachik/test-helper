@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { usePerformanceMonitor } from './usePerformanceMonitor';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 
 describe('usePerformanceMonitor', () => {
   const originalConsoleLog = console.log;

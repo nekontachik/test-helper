@@ -1,61 +1,87 @@
-import React, { ErrorInfo, ReactNode } from 'react';
-import { Box, Heading, Text, Button, VStack } from '@chakra-ui/react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import logger from '@/lib/logger';
 
-interface ErrorBoundaryProps {
+export interface ErrorBoundaryProps {
   children: ReactNode;
+  errorMessage?: string;
+  fallback?: (error: Error) => ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorId: string | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export default class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorId: null,
+    };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: Error): State {
+    return {
+      hasError: true,
+      error,
+      errorId: uuidv4(),
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({ errorInfo });
-    // You can log the error to an error reporting service here
-    console.error('Uncaught error:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    const errorId = this.state.errorId || uuidv4();
+    
+    // Log the error
+    logger.error('Error caught by boundary:', {
+      error,
+      errorInfo,
+      errorId,
+    });
+
+    // Call custom error handler if provided
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
+
+  handleReset = () => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorId: null,
+    });
+  };
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback(this.state.error!);
+      }
+
       return (
-        <Box textAlign="center" py={10} px={6}>
-          <VStack spacing={4}>
-            <Heading as="h2" size="xl" color="red.500">
-              Oops! Something went wrong.
-            </Heading>
-            <Text fontSize="lg">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </Text>
-            {this.state.errorInfo && (
-              <Text fontSize="sm" color="gray.500">
-                {this.state.errorInfo.componentStack}
-              </Text>
-            )}
-            <Button
-              colorScheme="blue"
-              onClick={() => window.location.reload()}
-            >
-              Refresh Page
-            </Button>
-          </VStack>
-        </Box>
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+          <h2 className="text-lg font-semibold text-red-800">
+            {this.props.errorMessage || 'Oops! Something went wrong.'}
+          </h2>
+          <p className="mt-2 text-sm text-red-600">{this.state.error?.message}</p>
+          {this.state.errorId && (
+            <p className="mt-1 text-xs text-red-500">Error ID: {this.state.errorId}</p>
+          )}
+          <button
+            onClick={this.handleReset}
+            className="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
+          >
+            Try again
+          </button>
+        </div>
       );
     }
 
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

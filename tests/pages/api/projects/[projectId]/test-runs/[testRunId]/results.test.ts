@@ -1,6 +1,6 @@
 import { createMocks } from 'node-mocks-http';
 import { GET, POST } from '@/app/api/projects/[projectId]/test-runs/[testRunId]/results/route';
-import prisma from '@/lib/prisma';
+import {prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest } from 'next/server';
 

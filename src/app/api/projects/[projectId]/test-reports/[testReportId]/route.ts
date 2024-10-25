@@ -1,34 +1,38 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma';
-import { AppError, NotFoundError, ValidationError } from '@/lib/errors';
+import { authOptions } from '@/lib/auth';
 import logger from '@/lib/logger';
+import { AppError, ValidationError, NotFoundError } from '@/lib/errors';
+
+interface UpdateTestReportBody {
+  title: string;  // Changed from 'name' to 'title' to match the schema
+  content?: string;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string; testReportId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
-    const { projectId, testReportId } = params;
-
     const testReport = await prisma.testReport.findUnique({
-      where: { id: testReportId },
+      where: { id: params.testReportId },
     });
 
     if (!testReport) {
       throw new NotFoundError('Test report not found');
     }
 
-    if (testReport.projectId !== projectId) {
-      throw new AppError('Test report does not belong to the specified project', 400);
+    if (testReport.projectId !== params.projectId) {
+      throw new AppError('Test report does not belong to this project', 403);
     }
 
-    logger.info(`Retrieved test report: ${testReportId}`, { projectId, testReportId });
+    logger.info(`Retrieved test report: ${params.testReportId}`);
     return NextResponse.json(testReport);
   } catch (error) {
     if (error instanceof AppError) {
@@ -45,16 +49,16 @@ export async function PUT(
   { params }: { params: { projectId: string; testReportId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
     const { projectId, testReportId } = params;
-    const body = await request.json();
+    const body = await request.json() as UpdateTestReportBody;
 
-    if (!body.name) {
-      throw new ValidationError('Name is required');
+    if (!body.title) {  // Changed from body.name to body.title
+      throw new ValidationError('Title is required');
     }
 
     const existingTestReport = await prisma.testReport.findUnique({
@@ -91,7 +95,7 @@ export async function DELETE(
   { params }: { params: { projectId: string; testReportId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }

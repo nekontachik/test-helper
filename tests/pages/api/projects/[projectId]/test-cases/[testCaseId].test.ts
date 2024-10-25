@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET, PUT, DELETE } from '@/app/api/projects/[projectId]/test-cases/[testCaseId]/route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 
 jest.mock('next-auth');

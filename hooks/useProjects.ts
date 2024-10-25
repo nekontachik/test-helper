@@ -1,17 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
-import apiClient from '@/lib/apiClient';
-import { useSession } from 'next-auth/react';
-import { Project, PaginatedResponse } from '@/types';
+import useSWR from 'swr';
+import { Project } from '@prisma/client';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function useProjects() {
-  const { data: session, status } = useSession();
+  const { data, error, isLoading } = useSWR<Project[]>('/api/projects', fetcher);
 
-  return useQuery({
-    queryKey: ['projects'],
-    queryFn: () => apiClient.getProjects(),
-    onError: (error: Error) => {
-      console.error('Error fetching projects:', error);
-    },
-    enabled: status === 'authenticated',
-  });
+  return {
+    data,
+    isLoading,
+    error
+  };
 }

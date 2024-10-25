@@ -5,7 +5,7 @@ import { CreateTestCaseModal } from '@/components/CreateTestCaseModal';
 import { TestCaseStatus, TestCasePriority } from '@/types';
 
 describe('CreateTestCaseModal', () => {
-  const mockOnSubmit = jest.fn();
+  const mockOnCreateTestCase = jest.fn();  // Changed from mockOnCreate
   const mockOnClose = jest.fn();
   const projectId = 'project1';
 
@@ -15,7 +15,7 @@ describe('CreateTestCaseModal', () => {
         <CreateTestCaseModal
           isOpen={true}
           onClose={mockOnClose}
-          onSubmit={mockOnSubmit}
+          onCreateTestCase={mockOnCreateTestCase}  // Changed from onCreate to onCreateTestCase
           projectId={projectId}
           {...props}
         />
@@ -23,26 +23,33 @@ describe('CreateTestCaseModal', () => {
     );
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders modal when isOpen is true', () => {
     renderComponent();
     expect(screen.getByText('Create New Test Case')).toBeInTheDocument();
   });
 
-  it('calls onSubmit with form data when Create button is clicked', async () => {
+  it('calls onCreateTestCase with form data when Create button is clicked', async () => {
     renderComponent();
 
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Test Case' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'New Description' } });
+    fireEvent.change(screen.getByLabelText('Steps'), { target: { value: 'Step 1\nStep 2' } });
     fireEvent.change(screen.getByLabelText('Expected Result'), { target: { value: 'New Expected Result' } });
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: TestCaseStatus.ACTIVE } });
     fireEvent.change(screen.getByLabelText('Priority'), { target: { value: TestCasePriority.HIGH } });
 
     fireEvent.click(screen.getByText('Create'));
 
-    expect(mockOnSubmit).toHaveBeenCalledWith({
+    expect(mockOnCreateTestCase).toHaveBeenCalledWith({
       title: 'New Test Case',
       description: 'New Description',
+      steps: 'Step 1\nStep 2',
       expectedResult: 'New Expected Result',
+      actualResult: '',
       status: TestCaseStatus.ACTIVE,
       priority: TestCasePriority.HIGH,
       projectId: projectId,
@@ -55,9 +62,19 @@ describe('CreateTestCaseModal', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('does not call onSubmit when form is empty', () => {
+  it('does not call onCreateTestCase when form is empty', () => {
     renderComponent();
     fireEvent.click(screen.getByText('Create'));
-    expect(mockOnSubmit).not.toHaveBeenCalled();
+    expect(mockOnCreateTestCase).not.toHaveBeenCalled();
+  });
+
+  it('shows validation errors for required fields', async () => {
+    renderComponent();
+    
+    fireEvent.click(screen.getByText('Create'));
+
+    expect(screen.getByText('Title is required')).toBeInTheDocument();
+    expect(screen.getByText('Steps are required')).toBeInTheDocument();
+    expect(screen.getByText('Expected result is required')).toBeInTheDocument();
   });
 });

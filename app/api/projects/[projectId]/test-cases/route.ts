@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
 import { validateTestCase } from '@/lib/validationSchemas';
+import { TestCase } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
@@ -34,7 +35,6 @@ export async function GET(
           ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title);
       }
-      // Add more sorting options if needed
       return 0;
     });
 

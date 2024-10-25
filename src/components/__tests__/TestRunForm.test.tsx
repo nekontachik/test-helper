@@ -12,7 +12,9 @@ describe('TestRunForm', () => {
       priority: TestCasePriority.HIGH, 
       projectId: 'project1', 
       description: 'Description 1', 
-      expectedResult: 'Expected 1', 
+      expectedResult: 'Expected 1',
+      steps: 'Step 1\nStep 2',  // Added missing steps
+      actualResult: 'Actual Result 1',  // Added missing actualResult
       version: 1, 
       createdAt: '2023-01-01T00:00:00Z', 
       updatedAt: '2023-01-01T00:00:00Z' 
@@ -24,7 +26,9 @@ describe('TestRunForm', () => {
       priority: TestCasePriority.MEDIUM, 
       projectId: 'project1', 
       description: 'Description 2', 
-      expectedResult: 'Expected 2', 
+      expectedResult: 'Expected 2',
+      steps: 'Step 1\nStep 2',  // Added missing steps
+      actualResult: 'Actual Result 2',  // Added missing actualResult
       version: 1, 
       createdAt: '2023-01-02T00:00:00Z', 
       updatedAt: '2023-01-02T00:00:00Z' 

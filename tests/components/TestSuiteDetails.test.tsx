@@ -19,6 +19,8 @@ const mockTestCases: TestCase[] = [
     updatedAt: '2023-01-01T00:00:00Z',
     expectedResult: 'Expected Result 1',
     version: 1,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 1',
   },
   {
     id: '2',
@@ -31,6 +33,8 @@ const mockTestCases: TestCase[] = [
     updatedAt: '2023-01-01T00:00:00Z',
     expectedResult: 'Expected Result 2',
     version: 1,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 2',
   },
 ];
 

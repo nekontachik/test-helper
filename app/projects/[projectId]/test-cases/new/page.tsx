@@ -16,20 +16,18 @@ export default function NewTestCasePage() {
   const queryClient = useQueryClient();
   const { showSuccessToast, showErrorToast } = useToast();
 
-  const createTestCase = useMutation(
-    (data: TestCaseFormData) => apiClient.createTestCase(projectId, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['testCases', projectId]);
-        showSuccessToast('Test case created successfully');
-        router.push(`/projects/${projectId}/test-cases`);
-      },
-      onError: (error: unknown) => {
-        showErrorToast('Failed to create test case. Please try again.');
-        console.error('Failed to create test case:', error);
-      },
-    }
-  );
+  const createTestCase = useMutation({
+    mutationFn: (data: TestCaseFormData) => apiClient.createTestCase(projectId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['testCases', projectId] });
+      showSuccessToast('Test case created successfully');
+      router.push(`/projects/${projectId}/test-cases`);
+    },
+    onError: (error: unknown) => {
+      showErrorToast('Failed to create test case. Please try again.');
+      console.error('Failed to create test case:', error);
+    },
+  });
 
   const handleCreateTestCase = async (data: TestCaseFormData) => {
     createTestCase.mutate(data);
@@ -42,7 +40,11 @@ export default function NewTestCasePage() {
   return (
     <Box p={4}>
       <Heading mb={6}>Create New Test Case</Heading>
-      <TestCaseForm onSubmit={handleCreateTestCase} isLoading={createTestCase.isLoading} />
+      <TestCaseForm 
+        projectId={projectId}
+        onSubmit={handleCreateTestCase} 
+        isLoading={createTestCase.isPending}
+      />
     </Box>
   );
 }

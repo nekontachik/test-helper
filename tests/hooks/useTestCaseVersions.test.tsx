@@ -1,9 +1,14 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTestCaseVersions } from '@/hooks/useTestCases';
-import { apiClient } from '@/lib/apiClient';
+import { useTestCaseVersions } from '@/hooks/useTestCase';
+import apiClient from '@/lib/apiClient';
 
-jest.mock('@/lib/apiClient');
+jest.mock('@/lib/apiClient', () => ({
+  __esModule: true,
+  default: {
+    getTestCaseVersions: jest.fn(),
+  },
+}));
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (

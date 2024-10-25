@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { UserRole } from '@/types/auth';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 jest.mock('@/lib/prisma', () => ({
   testCase: {
@@ -16,6 +18,18 @@ jest.mock('next-auth/next', () => ({
 }));
 
 describe('Test Cases API', () => {
+  const mockToken = {
+    role: UserRole.TESTER,
+  };
+
+  const mockTestCase = {
+    title: 'Test Case 1',
+    description: 'Description',
+    steps: 'Step 1\nStep 2',
+    expectedResult: 'Expected result',
+    priority: TestCasePriority.HIGH,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -26,8 +40,10 @@ describe('Test Cases API', () => {
       (prisma.testCase.findMany as jest.Mock).mockResolvedValue([{ id: '1', title: 'Test Case 1' }]);
       (prisma.testCase.count as jest.Mock).mockResolvedValue(1);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-cases?page=1&limit=10');
-      const response = await GET(request, { params: { projectId: '1' } });
+      const url = new URL('http://localhost:3000/api/projects/1/test-cases?page=1&limit=10');
+      const request = new NextRequest(url);
+      const handler = await GET;
+      const response = await handler(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -42,8 +58,10 @@ describe('Test Cases API', () => {
     it('should return 401 when not authenticated', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-cases');
-      const response = await GET(request, { params: { projectId: '1' } });
+      const url = new URL('http://localhost:3000/api/projects/1/test-cases');
+      const request = new NextRequest(url);
+      const handler = await GET;
+      const response = await handler(request);
 
       expect(response.status).toBe(401);
     });
@@ -54,11 +72,13 @@ describe('Test Cases API', () => {
       (getServerSession as jest.Mock).mockResolvedValue({ user: { id: '1' } });
       (prisma.testCase.create as jest.Mock).mockResolvedValue({ id: '1', title: 'New Test Case' });
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-cases', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-cases');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({ title: 'New Test Case', description: 'Description' }),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      const handler = await POST;
+      const response = await handler(request);
       const data = await response.json();
 
       expect(response.status).toBe(201);
@@ -68,11 +88,13 @@ describe('Test Cases API', () => {
     it('should return 401 when not authenticated', async () => {
       (getServerSession as jest.Mock).mockResolvedValue(null);
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-cases', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-cases');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({ title: 'New Test Case', description: 'Description' }),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      const handler = await POST;
+      const response = await handler(request);
 
       expect(response.status).toBe(401);
     });
@@ -80,11 +102,13 @@ describe('Test Cases API', () => {
     it('should return 400 when title or description is missing', async () => {
       (getServerSession as jest.Mock).mockResolvedValue({ user: { id: '1' } });
 
-      const request = new NextRequest('http://localhost:3000/api/projects/1/test-cases', {
+      const url = new URL('http://localhost:3000/api/projects/1/test-cases');
+      const request = new NextRequest(url, {
         method: 'POST',
         body: JSON.stringify({ title: 'New Test Case' }),
       });
-      const response = await POST(request, { params: { projectId: '1' } });
+      const handler = await POST;
+      const response = await handler(request);
 
       expect(response.status).toBe(400);
     });

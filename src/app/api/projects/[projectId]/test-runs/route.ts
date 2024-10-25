@@ -1,88 +1,63 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma';
-import { AppError, ValidationError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { withAuth } from '@/lib/withAuth';
+import { prisma } from '@/lib/prisma';
+import { UserRole } from '@/types/auth';
+import { testRunSchema } from '@/lib/validation';
 import { TestRunStatus } from '@/types';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { projectId: string } }
-) {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      throw new AppError('Unauthorized', 401);
-    }
+async function handler(req: Request, { params }: { params: { projectId: string } }) {
+  const { projectId } = params;
 
-    const { projectId } = params;
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const skip = (page - 1) * limit;
-
-    const [testRuns, totalCount] = await Promise.all([
-      prisma.testRun.findMany({
-        where: { projectId },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.testRun.count({ where: { projectId } }),
-    ]);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    logger.info(`Retrieved test runs for project ${projectId}`, { page, limit });
-    return NextResponse.json({
-      items: testRuns,
-      currentPage: page,
-      totalPages,
-      totalCount,
-    });
-  } catch (error) {
-    if (error instanceof AppError) {
-      logger.warn(`AppError in GET test runs: ${error.message}`, { statusCode: error.statusCode });
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    logger.error('Unexpected error in GET test runs:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
-  }
-}
-
-export async function POST(
-  request: Request,
-  { params }: { params: { projectId: string } }
-) {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      throw new AppError('Unauthorized', 401);
-    }
-
-    const { projectId } = params;
-    const body = await request.json();
-
-    if (!body.name) {
-      throw new ValidationError('Name is required');
-    }
-
-    const newTestRun = await prisma.testRun.create({
-      data: {
-        ...body,
-        projectId,
-        status: TestRunStatus.IN_PROGRESS,
+  if (req.method === 'GET') {
+    const testRuns = await prisma.testRun.findMany({
+      where: { projectId },
+      include: {
+        testCases: true,
+        testCaseResults: true,
       },
+      orderBy: { createdAt: 'desc' },
     });
-
-    logger.info(`Created new test run for project ${projectId}`, { testRunId: newTestRun.id });
-    return NextResponse.json(newTestRun, { status: 201 });
-  } catch (error) {
-    if (error instanceof AppError) {
-      logger.warn(`AppError in POST test run: ${error.message}`, { statusCode: error.statusCode });
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    logger.error('Unexpected error in POST test run:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
+    return NextResponse.json(testRuns);
   }
+
+  if (req.method === 'POST') {
+    try {
+      const data = await req.json();
+      const validated = testRunSchema.parse(data);
+
+      const testRun = await prisma.testRun.create({
+        data: {
+          ...validated,
+          projectId,
+          status: TestRunStatus.PENDING,
+          testCases: {
+            connect: validated.testCaseIds.map(id => ({ id })),
+          },
+        },
+        include: {
+          testCases: true,
+        },
+      });
+
+      return NextResponse.json(testRun, { status: 201 });
+    } catch (error) {
+      return NextResponse.json(
+        { message: 'Invalid test run data' },
+        { status: 400 }
+      );
+    }
+  }
+
+  return NextResponse.json(
+    { message: 'Method not allowed' },
+    { status: 405 }
+  );
 }
+
+export const GET = withAuth(handler, {
+  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+});
+
+export const POST = withAuth(handler, {
+  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+});

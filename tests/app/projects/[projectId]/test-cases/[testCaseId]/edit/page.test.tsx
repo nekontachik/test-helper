@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
-import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCases';
+import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
 import EditTestCasePage from '@/app/projects/[projectId]/test-cases/[testCaseId]/edit/page';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
 
@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('@/hooks/useTestCases', () => ({
+jest.mock('@/hooks/useTestCase', () => ({
   useTestCase: jest.fn(),
   useUpdateTestCase: jest.fn(),
 }));
@@ -32,6 +32,7 @@ const mockTestCase: TestCase = {
 
 describe('EditTestCasePage', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     (useParams as jest.Mock).mockReturnValue({ projectId: 'project1', testCaseId: '1' });
     (useRouter as jest.Mock).mockReturnValue({ push: jest.fn() });
     (useTestCase as jest.Mock).mockReturnValue({ data: mockTestCase, isLoading: false, error: null });

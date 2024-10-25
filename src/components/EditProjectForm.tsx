@@ -5,53 +5,60 @@ import {
   FormControl,
   FormLabel,
   Input,
-  Textarea,
   VStack,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
-import { Project, ProjectFormData } from '@/types';
+import type { Project } from '@prisma/client';
 
-interface EditProjectFormProps {
-  project: Project;
-  onUpdateProject: (data: ProjectFormData) => void;
+interface ExtendedProject extends Project {
+  description?: string | null;
 }
 
-export default function EditProjectForm({
-  project,
-  onUpdateProject,
-}: EditProjectFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ProjectFormData>({
+interface EditProjectFormData {
+  name: string;
+  description?: string | null;
+}
+
+interface EditProjectFormProps {
+  project: ExtendedProject;
+  onSubmit: (data: EditProjectFormData) => void;
+  isLoading?: boolean;
+}
+
+export const EditProjectForm: React.FC<EditProjectFormProps> = ({ 
+  project, 
+  onSubmit, 
+  isLoading = false 
+}) => {
+  const { register, handleSubmit, formState: { errors } } = useForm<EditProjectFormData>({
     defaultValues: {
       name: project.name,
-      description: project.description,
-    },
+      description: project.description || ''
+    }
   });
-
-  const onSubmit = (data: ProjectFormData) => {
-    onUpdateProject(data);
-  };
 
   return (
     <Box as="form" onSubmit={handleSubmit(onSubmit)}>
-      <VStack spacing={4} align="stretch">
-        <FormControl isInvalid={!!errors.name}>
-          <FormLabel>Project Name</FormLabel>
-          <Input
-            {...register('name', { required: 'Project name is required' })}
-          />
+      <VStack spacing={4}>
+        <FormControl isRequired isInvalid={!!errors.name}>
+          <FormLabel>Name</FormLabel>
+          <Input {...register('name', { required: 'Name is required' })} />
         </FormControl>
+
         <FormControl>
           <FormLabel>Description</FormLabel>
-          <Textarea {...register('description')} />
+          <Input {...register('description')} />
         </FormControl>
-        <Button type="submit" colorScheme="blue">
+
+        <Button 
+          type="submit" 
+          colorScheme="blue" 
+          width="full"
+          isLoading={isLoading}
+        >
           Update Project
         </Button>
       </VStack>
     </Box>
   );
-}
+};

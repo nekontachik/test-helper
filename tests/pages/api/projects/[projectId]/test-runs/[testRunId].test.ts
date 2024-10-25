@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET, PUT, DELETE } from '@/app/api/projects/[projectId]/test-runs/[testRunId]/route';
-import prisma from '@/lib/prisma';
+import {prisma } from '@/lib/prisma';
 import { TestRunStatus } from '@/types';
 import { getServerSession } from 'next-auth/next';
 

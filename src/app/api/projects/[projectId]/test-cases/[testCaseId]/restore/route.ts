@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import logger from '@/lib/logger';
 
@@ -20,18 +20,17 @@ export async function POST(
 
     const testCase = await prisma.testCase.findUnique({
       where: { id: testCaseId, projectId },
+      include: { versions: true },
     });
 
     if (!testCase) {
       throw new AppError('Test case not found', 404);
     }
 
-    const versionToRestore = await prisma.testCaseVersion.findUnique({
+    const versionToRestore = await prisma.version.findFirst({
       where: {
-        testCaseId_versionNumber: {
-          testCaseId,
-          versionNumber,
-        },
+        testCaseId,
+        versionNumber,
       },
     });
 
@@ -39,36 +38,26 @@ export async function POST(
       throw new AppError('Version not found', 404);
     }
 
-    const restoredTestCase = await prisma.$transaction(async (prisma) => {
-      // Create a new version with the current state
-      await prisma.testCaseVersion.create({
-        data: {
-          testCaseId: testCase.id,
-          versionNumber: testCase.version,
-          title: testCase.title,
-          description: testCase.description,
-          steps: testCase.steps,
-          expectedResult: testCase.expectedResult,
-          actualResult: testCase.actualResult,
-          status: testCase.status,
-          priority: testCase.priority,
+    const restoredTestCase = await prisma.testCase.update({
+      where: { id: testCaseId },
+      data: {
+        title: versionToRestore.title,
+        description: versionToRestore.description,
+        expectedResult: versionToRestore.expectedResult,
+        status: versionToRestore.status,
+        priority: versionToRestore.priority,
+        versions: {
+          create: {
+            versionNumber: testCase.versions.length + 1,
+            title: testCase.title,
+            description: testCase.description,
+            expectedResult: testCase.expectedResult,
+            status: testCase.status,
+            priority: testCase.priority,
+          },
         },
-      });
-
-      // Restore the selected version
-      return prisma.testCase.update({
-        where: { id: testCaseId },
-        data: {
-          title: versionToRestore.title,
-          description: versionToRestore.description,
-          steps: versionToRestore.steps,
-          expectedResult: versionToRestore.expectedResult,
-          actualResult: versionToRestore.actualResult,
-          status: versionToRestore.status,
-          priority: versionToRestore.priority,
-          version: { increment: 1 },
-        },
-      });
+      },
+      include: { versions: true },
     });
 
     logger.info(`Restored test case ${testCaseId} to version ${versionNumber}`);

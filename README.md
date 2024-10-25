@@ -75,3 +75,20 @@ We've implemented skeleton loading states to improve the user experience while d
 ### Enhanced Error Handling and Logging
 
 The application now has more robust error handling and logging, providing better diagnostics and user feedback.
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up your environment variables in a `.env` file
+4. Run the development server: `npm run dev`
+
+## New Features
+
+- Improved error handling across all API routes
+- Input validation using Zod schemas
+- Updated frontend components to handle new error responses
+
+## Usage
+
+[Add any new usage instructions here]

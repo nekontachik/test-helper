@@ -1,71 +1,78 @@
 import { NextAuthOptions } from 'next-auth';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { prisma } from './prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import prisma from './prisma';
 import { compare } from 'bcrypt';
+import { UserRole } from '@/types/auth';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  password: string;
+}
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            password: true,
-            role: true, // Make sure to select the role
-          },
+          where: { email: credentials.email }
         });
-        if (!user || !user.password) {
+
+        if (!user) {
           return null;
         }
-        const isPasswordValid = await compare(
-          credentials.password,
-          user.password
-        );
+
+        const isPasswordValid = await compare(credentials.password, user.password);
+
         if (!isPasswordValid) {
           return null;
         }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role, // Include the role in the returned object
+          role: user.role as UserRole,
         };
-      },
-    }),
+      }
+    })
   ],
   callbacks: {
-    session: ({ session, token }) => {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role, // Include the role in the session
-        },
-      };
-    },
-    jwt: ({ token, user }) => {
+    async jwt({ token, user }) {
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role, // Include the role in the token
-        };
+        token.id = user.id;
+        token.role = user.role as UserRole;
       }
       return token;
     },
+    async session({ session, token }) {
+      if (token && session?.user) {
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          role: token.role as UserRole,
+        };
+      }
+      return session;
+    }
   },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+    // Remove signUp as it's not a valid option in NextAuth pages config
+    // Instead, we'll handle registration separately
+  }
 };

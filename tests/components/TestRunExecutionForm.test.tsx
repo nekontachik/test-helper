@@ -1,65 +1,76 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { TestRunExecutionForm } from '../../components/TestRunExecutionForm';
-import { TestCase, TestCaseResultStatus } from '../../models/types';
+import { TestRunExecutionForm } from '@/components/TestRunExecutionForm';
+import { TestCase, TestCaseResultStatus, TestCaseStatus, TestCasePriority } from '@/types';
 
+// Create a test wrapper component to reduce re-renders
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ChakraProvider>{children}</ChakraProvider>
+);
+
+// Memoize test cases to prevent unnecessary re-creation
 const mockTestCases: TestCase[] = [
   {
     id: '1',
     title: 'Test Case 1',
     description: 'Description 1',
-    status: 'ACTIVE',
-    priority: 'HIGH',
+    status: TestCaseStatus.ACTIVE,
+    priority: TestCasePriority.HIGH,
     projectId: 'project1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     expectedResult: 'Expected Result 1',
-    testSuiteId: null,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 1',
+    version: 1,
   },
   {
     id: '2',
     title: 'Test Case 2',
     description: 'Description 2',
-    status: 'ACTIVE',
-    priority: 'MEDIUM',
+    status: TestCaseStatus.ACTIVE,
+    priority: TestCasePriority.MEDIUM,
     projectId: 'project1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     expectedResult: 'Expected Result 2',
-    testSuiteId: null,
+    steps: 'Step 1\nStep 2',
+    actualResult: 'Actual Result 2',
+    version: 1,
   },
 ];
 
 describe('TestRunExecutionForm', () => {
-  it('renders test cases correctly', () => {
+  // Setup function to reduce boilerplate
+  const setup = (props = {}) => {
     const mockOnSubmit = jest.fn();
-    render(
-      <ChakraProvider>
+    const utils = render(
+      <TestWrapper>
         <TestRunExecutionForm
           testCases={mockTestCases}
           onSubmit={mockOnSubmit}
+          {...props}
         />
-      </ChakraProvider>
+      </TestWrapper>
     );
+    return {
+      ...utils,
+      mockOnSubmit,
+    };
+  };
 
+  it('renders test cases correctly', () => {
+    setup();
     expect(screen.getByText('Test Case 1')).toBeInTheDocument();
     expect(screen.getByText('Test Case 2')).toBeInTheDocument();
   });
 
   it('submits form data correctly', async () => {
-    const mockOnSubmit = jest.fn();
-    render(
-      <ChakraProvider>
-        <TestRunExecutionForm
-          testCases={mockTestCases}
-          onSubmit={mockOnSubmit}
-        />
-      </ChakraProvider>
-    );
+    const { mockOnSubmit } = setup();
 
     fireEvent.change(screen.getAllByLabelText('Status')[0], {
-      target: { value: TestCaseResultStatus.PASSED },
+      target: { value: 'PASSED' },
     });
     fireEvent.change(screen.getAllByLabelText('Notes')[0], {
       target: { value: 'Test passed successfully' },
@@ -71,12 +82,12 @@ describe('TestRunExecutionForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith([
         {
           testCaseId: '1',
-          status: TestCaseResultStatus.PASSED,
+          status: 'PASSED',
           notes: 'Test passed successfully',
         },
         {
           testCaseId: '2',
-          status: TestCaseResultStatus.NOT_EXECUTED,
+          status: 'PENDING',
           notes: '',
         },
       ]);
@@ -84,15 +95,7 @@ describe('TestRunExecutionForm', () => {
   });
 
   it('validates required fields', async () => {
-    const mockOnSubmit = jest.fn();
-    render(
-      <ChakraProvider>
-        <TestRunExecutionForm
-          testCases={mockTestCases}
-          onSubmit={mockOnSubmit}
-        />
-      </ChakraProvider>
-    );
+    const { mockOnSubmit } = setup();
 
     fireEvent.click(screen.getByText('Submit Results'));
 
@@ -106,18 +109,10 @@ describe('TestRunExecutionForm', () => {
   });
 
   it('allows skipping test cases', async () => {
-    const mockOnSubmit = jest.fn();
-    render(
-      <ChakraProvider>
-        <TestRunExecutionForm
-          testCases={mockTestCases}
-          onSubmit={mockOnSubmit}
-        />
-      </ChakraProvider>
-    );
+    const { mockOnSubmit } = setup();
 
     fireEvent.change(screen.getAllByLabelText('Status')[0], {
-      target: { value: TestCaseResultStatus.SKIPPED },
+      target: { value: 'SKIPPED' },
     });
     fireEvent.change(screen.getAllByLabelText('Notes')[0], {
       target: { value: 'Skipped due to environment issues' },
@@ -129,12 +124,12 @@ describe('TestRunExecutionForm', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith([
         {
           testCaseId: '1',
-          status: TestCaseResultStatus.SKIPPED,
+          status: 'SKIPPED',
           notes: 'Skipped due to environment issues',
         },
         {
           testCaseId: '2',
-          status: TestCaseResultStatus.NOT_EXECUTED,
+          status: 'PENDING',
           notes: '',
         },
       ]);

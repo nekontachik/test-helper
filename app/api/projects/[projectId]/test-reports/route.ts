@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { TestReport } from '@/types';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+interface TestReportInput {
+  title: string;
+  content: string;
+}
 
 export async function GET(
   request: Request,
@@ -14,6 +16,12 @@ export async function GET(
     const testReports = await prisma.testReport.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(testReports);
@@ -31,13 +39,22 @@ export async function POST(
   { params }: { params: { projectId: string } }
 ) {
   const { projectId } = params;
-  const body = await request.json();
+  const body = await request.json() as TestReportInput;
 
   try {
     const newTestReport = await prisma.testReport.create({
       data: {
-        ...body,
-        projectId,
+        title: body.title,
+        content: body.content,
+        project: {
+          connect: { id: projectId }
+        }
+      },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 

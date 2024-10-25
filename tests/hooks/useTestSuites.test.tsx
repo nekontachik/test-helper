@@ -1,10 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useTestSuites } from './useTestSuites';
+import { useTestSuites } from '@/hooks/useTestSuites';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { apiClient } from '../lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import React from 'react';
 
-jest.mock('../lib/apiClient');
+jest.mock('@/lib/apiClient');
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (

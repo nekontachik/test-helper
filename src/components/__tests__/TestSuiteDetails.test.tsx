@@ -25,25 +25,29 @@ describe('TestSuiteDetails', () => {
       id: '1',
       title: 'Test Case 1',
       description: 'Test Case 1 Description',
+      steps: 'Step 1\nStep 2\nStep 3',  // Added missing steps
+      expectedResult: 'Expected Result 1',
+      actualResult: 'Actual Result 1',   // Added missing actualResult
       status: TestCaseStatus.ACTIVE,
       priority: TestCasePriority.HIGH,
       projectId: 'project1',
       version: 1,
       createdAt: '2023-01-01T00:00:00Z',
       updatedAt: '2023-01-02T00:00:00Z',
-      expectedResult: 'Expected Result 1',
     },
     {
       id: '2',
       title: 'Test Case 2',
       description: 'Test Case 2 Description',
+      steps: 'Step 1\nStep 2\nStep 3',  // Added missing steps
+      expectedResult: 'Expected Result 2',
+      actualResult: 'Actual Result 2',   // Added missing actualResult
       status: TestCaseStatus.INACTIVE,
       priority: TestCasePriority.LOW,
       projectId: 'project1',
       version: 1,
       createdAt: '2023-01-01T00:00:00Z',
       updatedAt: '2023-01-02T00:00:00Z',
-      expectedResult: 'Expected Result 2',
     },
   ];
 

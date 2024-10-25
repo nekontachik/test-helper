@@ -1,10 +1,10 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '../../../../../../../pages/api/projects/[projectId]/test-runs/[testRunId]/execute';
-import prisma from '../../../../../../../lib/prisma';
+import handler from '@/app/api/projects/[projectId]/test-runs/[testRunId]/execute';
+import { prisma } from '@/lib/prisma';
 import { getSession } from 'next-auth/react';
 
 jest.mock('next-auth/react');
-jest.mock('../../../../../../../lib/prisma', () => ({
+jest.mock('@/lib/prisma', () => ({
   testRun: {
     update: jest.fn(),
   },

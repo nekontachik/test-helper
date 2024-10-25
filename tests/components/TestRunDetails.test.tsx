@@ -28,6 +28,8 @@ const mockTestRun: TestRun = {
       version: 1,
       createdAt: '2023-01-01T00:00:00Z',
       updatedAt: '2023-01-01T00:00:00Z',
+      steps: 'Step 1\nStep 2',
+      actualResult: 'Actual Result 1',
     },
     {
       id: '2',
@@ -40,6 +42,8 @@ const mockTestRun: TestRun = {
       version: 1,
       createdAt: '2023-01-01T00:00:00Z',
       updatedAt: '2023-01-01T00:00:00Z',
+      steps: 'Step 1\nStep 2',
+      actualResult: 'Actual Result 2',
     },
   ],
 };

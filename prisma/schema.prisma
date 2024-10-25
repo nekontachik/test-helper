@@ -1,120 +1,231 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Your models remain the same
 model User {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  name      String
-  email     String    @unique
-  password  String
-  role      String    @default("user")
-  projects  Project[]
+  id                String      @id @default(cuid())
+  name              String?
+  email             String      @unique
+  hashedPassword    String?
+  role              String      @default("USER")
+  emailVerified     DateTime?
+  verifyToken       String?     @unique
+  verifyTokenExpiry DateTime?
+  resetToken        String?     @unique
+  resetTokenExpiry  DateTime?
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean     @default(false)
+  backupCodes       String?     // Store as JSON string
+  sessions          Session[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  projects      Project[]
+  attachments TestCaseAttachment[] @relation("UploadedBy")
+  notes         TestRunNote[]        @relation("Author")
+  comments      TestCaseComment[]
 }
 
 model Project {
-  id          String       @id @default(cuid())
+  id          String       @id @default(uuid())
   name        String
-  description String?
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   testCases   TestCase[]
   testRuns    TestRun[]
   testSuites  TestSuite[]
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String
   testReports TestReport[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 }
 
 model TestCase {
-  id             String            @id @default(cuid())
+  id             String    @id @default(cuid())
   title          String
-  description    String
+  description    String?
   steps          String?
-  expectedResult String
-  actualResult   String?
+  expectedResult String?
   status         String
   priority       String
   projectId      String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  version        Int               @default(1)
-  project        Project           @relation(fields: [projectId], references: [id])
-  versions       TestCaseVersion[]
-  testRuns       TestRun[]         @relation("TestCaseToTestRun")
-  testSuites     TestSuite[]       @relation("TestCaseToTestSuite")
-  testResults    TestCaseResult[]
+  project        Project   @relation(fields: [projectId], references: [id])
+  testRuns       TestRun[]
+  testSuites     TestSuite[]
+  attachments    TestCaseAttachment[]
+  testCaseResults TestCaseResult[]
+  versions       Version[]
+  testCaseVersions TestCaseVersion[] // Add this relation
+  comments       TestCaseComment[]    // Add this relation
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([projectId])
 }
 
 model TestRun {
-  id              String           @id @default(cuid())
+  id              String           @id @default(uuid())
   name            String
   status          String
   projectId       String
-  project         Project          @relation(fields: [projectId], references: [id])
-  testCases       TestCase[]       @relation("TestCaseToTestRun")
-  testCaseResults TestCaseResult[]
-  testReport      TestReport?
+  completedAt     DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-}
+  project         Project          @relation(fields: [projectId], references: [id])
+  testCases       TestCase[]
+  testCaseResults TestCaseResult[]
+  notes           TestRunNote[]
 
-model TestSuite {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  projectId   String
-  project     Project    @relation(fields: [projectId], references: [id])
-  testCases   TestCase[] @relation("TestCaseToTestSuite")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  @@index([projectId])
 }
 
 model TestCaseResult {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   status     String
   notes      String?
-  testCaseId String
-  testCase   TestCase @relation(fields: [testCaseId], references: [id])
-  testRunId  String
-  testRun    TestRun  @relation(fields: [testRunId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  testRunId  String
+  testRun    TestRun  @relation(fields: [testRunId], references: [id])
+  // Add these fields for the TestCase relation
+  testCaseId String
+  testCase   TestCase @relation(fields: [testCaseId], references: [id])
+
+  @@index([testRunId])
+  @@index([testCaseId])
+}
+
+model TestSuite {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  projectId   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  project     Project    @relation(fields: [projectId], references: [id])
+  testCases   TestCase[] // This now has its opposite relation
+
+  @@index([projectId])
 }
 
 model TestReport {
-  id        String   @id @default(cuid())
-  name      String
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  testRunId String   @unique
-  testRun   TestRun  @relation(fields: [testRunId], references: [id])
+  id        String   @id @default(uuid())
+  title     String
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+}
+
+// Add this model to your schema
+model Version {
+  id             String   @id @default(cuid())
+  versionNumber  Int
+  title          String
+  description    String?
+  steps          String? // Add steps field
+  expectedResult String?
+  status         String
+  priority       String
+  testCase       TestCase @relation(fields: [testCaseId], references: [id])
+  testCaseId     String
+  createdAt      DateTime @default(now())
+
+  @@index([testCaseId])
 }
 
 model TestCaseVersion {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
+  testCase       TestCase  @relation(fields: [testCaseId], references: [id])
   testCaseId     String
   versionNumber  Int
   title          String
-  description    String
-  steps          String?
+  description    String?
+  steps          String
   expectedResult String
   actualResult   String?
   status         String
   priority       String
-  createdAt      DateTime @default(now())
-  testCase       TestCase @relation(fields: [testCaseId], references: [id])
+  createdAt      DateTime  @default(now())
 
+  @@index([testCaseId])
   @@unique([testCaseId, versionNumber])
+}
+
+// Add new models
+model TestCaseAttachment {
+  id         String   @id @default(cuid())
+  testCase   TestCase @relation(fields: [testCaseId], references: [id])
+  testCaseId String
+  fileName   String
+  fileType   String
+  fileSize   Int
+  url        String
+  uploadedBy String
+  user       User     @relation("UploadedBy", fields: [uploadedBy], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([testCaseId])
+  @@index([uploadedBy])
+}
+
+model TestRunNote {
+  id        String   @id @default(cuid())
+  testRun   TestRun  @relation(fields: [testRunId], references: [id])
+  testRunId String
+  content   String
+  userId    String
+  user      User     @relation("Author", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([testRunId])
+  @@index([userId])
+}
+
+model TestCaseComment {
+  id         String   @id @default(cuid())
+  content    String
+  testCase   TestCase @relation(fields: [testCaseId], references: [id])
+  testCaseId String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([testCaseId])
+  @@index([userId])
+}
+
+// Add Session model for managing user sessions
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  lastActive   DateTime @default(now())
+  userAgent    String?
+  ipAddress    String?
+
+  @@index([userId])
+}
+
+// Add VerificationToken model for email verification
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

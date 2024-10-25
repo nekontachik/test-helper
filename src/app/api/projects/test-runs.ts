@@ -1,32 +1,36 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { apiErrorHandler } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
+import { AppError } from '@/lib/errors';
 
-interface TestRunResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<TestRunResponse>
-) {
+export async function GET(request: Request) {
   try {
-    if (req.method === 'GET') {
-      const testRuns = await prisma.testRun.findMany({
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    const [testRuns, totalCount] = await Promise.all([
+      prisma.testRun.findMany({
         orderBy: { createdAt: 'desc' },
-      });
-      res.status(200).json({ success: true, data: testRuns });
-    } else {
-      res.setHeader('Allow', ['GET']);
-      res
-        .status(405)
-        .json({ success: false, error: `Method ${req.method} Not Allowed` });
-    }
+        skip,
+        take: limit,
+      }),
+      prisma.testRun.count(),
+    ]);
+
+    logger.info('Retrieved test runs', { page, limit });
+    return NextResponse.json({
+      items: testRuns,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+      },
+    });
   } catch (error) {
     logger.error('Error in test runs handler:', error);
-    apiErrorHandler(res, error);
+    return apiErrorHandler(error, 'test runs handler');  // Fixed: Pass error first, then context string
   }
 }

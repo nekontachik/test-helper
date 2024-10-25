@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
-import { useErrorToast } from './useErrorToast';
-import { useToast } from '@chakra-ui/react';
+import { useErrorToast } from '@/hooks/useErrorToast';
+import { useToast } from '@/hooks/use-toast'; // Changed to use shadcn/ui toast
 
-jest.mock('@chakra-ui/react', () => ({
+jest.mock('@/hooks/use-toast', () => ({
   useToast: jest.fn(),
 }));
 
@@ -10,7 +10,7 @@ describe('useErrorToast', () => {
   const mockToast = jest.fn();
 
   beforeEach(() => {
-    (useToast as jest.Mock).mockReturnValue(mockToast);
+    (useToast as jest.Mock).mockReturnValue({ toast: mockToast });
   });
 
   it('should call toast with error message', () => {
@@ -21,9 +21,8 @@ describe('useErrorToast', () => {
     expect(mockToast).toHaveBeenCalledWith({
       title: 'Error',
       description: 'Test error message',
-      status: 'error',
+      variant: 'destructive',
       duration: 5000,
-      isClosable: true,
     });
   });
 
@@ -35,9 +34,8 @@ describe('useErrorToast', () => {
     expect(mockToast).toHaveBeenCalledWith({
       title: 'Error',
       description: 'An unknown error occurred',
-      status: 'error',
+      variant: 'destructive',
       duration: 5000,
-      isClosable: true,
     });
   });
 });

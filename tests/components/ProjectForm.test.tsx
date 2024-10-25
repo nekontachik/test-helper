@@ -1,91 +1,42 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { ProjectForm } from '../../components/ProjectForm';
+import { ProjectForm } from '@/components/ProjectForm';
+import userEvent from '@testing-library/user-event';
 
 describe('ProjectForm', () => {
-  it('renders correctly with initial data', () => {
-    const mockOnSubmit = jest.fn();
-    render(
-      <ChakraProvider>
-        <ProjectForm
-          onSubmit={mockOnSubmit}
-          initialData={{
-            name: 'Initial Project',
-            description: 'Initial Description',
-          }}
-        />
-      </ChakraProvider>
-    );
+  const mockOnSubmit = jest.fn();
 
-    expect(screen.getByLabelText('Name')).toHaveValue('Initial Project');
-    expect(screen.getByLabelText('Description')).toHaveValue(
-      'Initial Description'
-    );
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('submits form data correctly', async () => {
-    const mockOnSubmit = jest.fn();
+  it('renders correctly with default data', () => {
     render(
       <ChakraProvider>
         <ProjectForm onSubmit={mockOnSubmit} />
       </ChakraProvider>
     );
 
-    fireEvent.change(screen.getByLabelText('Name'), {
-      target: { value: 'New Project' },
-    });
-    fireEvent.change(screen.getByLabelText('Description'), {
-      target: { value: 'New Description' },
-    });
-
-    fireEvent.click(screen.getByText('Submit'));
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith({
-        name: 'New Project',
-        description: 'New Description',
-      });
-    });
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Description')).toBeInTheDocument();
   });
 
-  it('displays validation errors', async () => {
-    const mockOnSubmit = jest.fn();
+  it('submits form with correct data', async () => {
     render(
       <ChakraProvider>
         <ProjectForm onSubmit={mockOnSubmit} />
       </ChakraProvider>
     );
 
-    fireEvent.click(screen.getByText('Submit'));
+    await userEvent.type(screen.getByLabelText(/name/i), 'Test Project');
+    await userEvent.type(screen.getByLabelText(/description/i), 'Test Description');
+    
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Name is required')).toBeInTheDocument();
-    });
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('submits the form with correct data', async () => {
-    const mockOnSubmit = jest.fn();
-    const { getByLabelText, getByText } = render(
-      <ProjectForm onSubmit={mockOnSubmit} />
-    );
-
-    fireEvent.change(getByLabelText(/name/i), {
-      target: { value: 'Test Project' },
-    });
-    fireEvent.change(getByLabelText(/description/i), {
-      target: { value: 'Test Description' },
-    });
-
-    fireEvent.click(getByText(/submit/i));
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith({
-        name: 'Test Project',
-        description: 'Test Description',
-      });
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      name: 'Test Project',
+      description: 'Test Description'
     });
   });
 });

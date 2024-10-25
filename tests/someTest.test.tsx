@@ -1,3 +1,10 @@
 import { MockResizeObserver } from '../jest.setup';
 
-// Test code...
+describe('Component', () => {
+  beforeEach(() => {
+    window.ResizeObserver = MockResizeObserver;
+  });
+
+  // ... test cases ...
+});
+

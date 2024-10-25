@@ -25,6 +25,20 @@ describe('TextInput', () => {
     fireEvent.change(getByLabelText('Test Input'), {
       target: { value: 'New Value' },
     });
-    expect(handleChange).toHaveBeenCalled();
+    expect(handleChange).toHaveBeenCalledWith('New Value');
+  });
+
+  it('displays error message when error prop is provided', () => {
+    const { getByText } = render(
+      <TextInput
+        label="Test Input"
+        name="test"
+        value=""
+        onChange={() => {}}
+        error="This field is required"
+      />
+    );
+
+    expect(getByText('This field is required')).toBeInTheDocument();
   });
 });

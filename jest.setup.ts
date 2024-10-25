@@ -16,10 +16,10 @@ jest.mock('@chakra-ui/react', () => ({
   useToast: jest.fn(() => jest.fn()),
 }));
 
-class MockResizeObserver {
-  observe = jest.fn();
-  unobserve = jest.fn();
-  disconnect = jest.fn();
+export class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
 }
 
 global.ResizeObserver = MockResizeObserver;

@@ -1,53 +1,40 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '../../../../../../lib/prisma';
-import { apiErrorHandler } from '../../../../../../lib/apiErrorHandler';
-import { TestCase } from '@prisma/client';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { apiErrorHandler } from '@/lib/apiErrorHandler';
+import logger from '@/lib/logger';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function GET(
+  request: Request,
+  { params }: { params: { projectId: string; testRunId: string } }
 ) {
-  const { projectId, testRunId } = req.query;
+  try {
+    const testRun = await prisma.testRun.findUnique({
+      where: {
+        id: String(params.testRunId),
+        projectId: String(params.projectId),
+      },
+      include: { testCases: true },
+    });
 
-  if (req.method === 'GET') {
-    try {
-      const testRun = await prisma.testRun.findUnique({
-        where: {
-          id: String(testRunId),
-          projectId: String(projectId),
-        },
-        include: { testCases: true },
-      });
-
-      if (!testRun) {
-        return res.status(404).json({ message: 'Test run not found' });
-      }
-
-      const rows = testRun.testCases.map((testCase: TestCase) => [
-        testCase.id,
-        testCase.title,
-        testCase.description || '',
-        testCase.status,
-        testCase.priority,
-      ]);
-
-      const exportData = {
-        id: testRun.id,
-        name: testRun.name,
-        status: testRun.status,
-        testCases: testRun.testCases.map((tc) => ({
-          id: tc.id,
-          title: tc.title,
-          status: tc.status,
-        })),
-      };
-
-      res.status(200).json(exportData);
-    } catch (error) {
-      apiErrorHandler(res, error);
+    if (!testRun) {
+      return NextResponse.json({ error: 'Test run not found' }, { status: 404 });
     }
-  } else {
-    res.setHeader('Allow', ['GET']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    const exportData = {
+      id: testRun.id,
+      name: testRun.name,
+      status: testRun.status,
+      testCases: testRun.testCases.map((tc) => ({
+        id: tc.id,
+        title: tc.title,
+        status: tc.status,
+      })),
+    };
+
+    logger.info(`Exported test run data: ${testRun.id}`);
+    return NextResponse.json(exportData);
+  } catch (error) {
+    logger.error('Error exporting test run:', error);
+    return apiErrorHandler(error, 'test run export handler');
   }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { TestRunStatus, TestCaseResultStatus } from '@/types';
 
 export async function PUT(

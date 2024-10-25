@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Box, Heading } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
-import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCases';
+import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
 import { TestCaseFormData } from '@/types';
 
 export default function EditTestCasePage() {
@@ -16,7 +16,7 @@ export default function EditTestCasePage() {
   const testCaseId = params?.testCaseId as string;
 
   const { data: testCase, isLoading, error } = useTestCase(projectId, testCaseId);
-  const updateTestCaseMutation = useUpdateTestCase();
+  const updateTestCaseMutation = useUpdateTestCase(projectId, testCaseId);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -24,7 +24,7 @@ export default function EditTestCasePage() {
 
   const handleSubmit = async (data: TestCaseFormData) => {
     try {
-      await updateTestCaseMutation.mutateAsync({ projectId, testCaseId, testCase: data });
+      await updateTestCaseMutation.mutateAsync(data);
       toast({
         title: 'Test case updated',
         status: 'success',

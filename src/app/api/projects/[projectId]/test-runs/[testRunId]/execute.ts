@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { authorizeMiddleware } from '@/lib/authorize'; // Updated import
 import { withMiddleware } from '@/lib/withMiddleware';
 import { TestRunStatus } from '@/types';

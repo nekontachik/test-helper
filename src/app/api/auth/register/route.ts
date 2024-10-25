@@ -1,38 +1,61 @@
 import { NextResponse } from 'next/server';
-import { hash } from 'bcrypt';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+import { RegisterData } from '@/types/auth';
+import { sendVerificationEmail } from '@/lib/emailService';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  name: z.string().min(2).max(50),
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(['USER', 'TESTER']),
+});
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { name, email, password, role = 'user' } = body;
-
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  }
-
   try {
+    const body = await request.json();
+    const validatedData = registerSchema.parse(body) as RegisterData;
+
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: validatedData.email },
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Email already in use' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'User already exists' },
+        { status: 400 }
+      );
     }
 
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
+        name: validatedData.name,
+        email: validatedData.email,
+        hashedPassword,
+        role: validatedData.role,
       },
     });
 
-    return NextResponse.json({ message: 'User created successfully', role: user.role }, { status: 201 });
+    // Send verification email
+    await sendVerificationEmail(user.email, user.name || 'User');
+
+    const { hashedPassword: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json(
+      { 
+        ...userWithoutPassword,
+        message: 'Registration successful. Please check your email to verify your account.' 
+      }, 
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Error during registration:', error);
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    console.error('Registration error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

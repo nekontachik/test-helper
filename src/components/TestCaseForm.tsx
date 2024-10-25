@@ -1,47 +1,66 @@
+'use client';
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  Box,
-  Button,
+  VStack,
   FormControl,
   FormLabel,
   Input,
-  Select,
   Textarea,
-  VStack,
+  Select,
+  Button,
   FormErrorMessage,
 } from '@chakra-ui/react';
-import { TestCaseFormData, TestCaseStatus, TestCasePriority } from '@/types';
+import { TestCase, TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
 
-interface TestCaseFormProps {
-  onSubmit: (data: TestCaseFormData) => void;
-  isLoading: boolean;
-  initialData?: Partial<TestCaseFormData>;
+export interface TestCaseFormProps {
+  testCase?: TestCase;  // Optional for create form
+  projectId: string;
+  onSubmit: (data: TestCaseFormData) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export const TestCaseForm: React.FC<TestCaseFormProps> = ({
-  onSubmit,
-  isLoading,
-  initialData,
-}) => {
+export function TestCaseForm({ testCase, projectId, onSubmit, isLoading = false }: TestCaseFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<TestCaseFormData>({
-    defaultValues: initialData,
+    defaultValues: testCase ? {
+      title: testCase.title,
+      description: testCase.description,
+      steps: testCase.steps,
+      expectedResult: testCase.expectedResult,
+      actualResult: testCase.actualResult,
+      status: testCase.status,
+      priority: testCase.priority,
+      projectId: projectId,
+    } : {
+      title: '',
+      description: '',
+      steps: '',
+      expectedResult: '',
+      actualResult: '',
+      status: TestCaseStatus.DRAFT,
+      priority: TestCasePriority.MEDIUM,
+      projectId: projectId,
+    },
   });
 
+  const onSubmitForm = async (data: TestCaseFormData) => {
+    await onSubmit(data);
+  };
+
   return (
-    <Box as="form" onSubmit={handleSubmit(onSubmit)}>
-      <VStack spacing={4}>
+    <form onSubmit={handleSubmit(onSubmitForm)}>
+      <VStack spacing={4} align="stretch">
         <FormControl isInvalid={!!errors.title}>
           <FormLabel>Title</FormLabel>
           <Input
             {...register('title', {
               required: 'Title is required',
-              minLength: { value: 3, message: 'Title must be at least 3 characters long' },
-              maxLength: { value: 100, message: 'Title must not exceed 100 characters' },
+              maxLength: { value: 200, message: 'Title is too long' },
             })}
           />
           <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
@@ -51,11 +70,20 @@ export const TestCaseForm: React.FC<TestCaseFormProps> = ({
           <FormLabel>Description</FormLabel>
           <Textarea
             {...register('description', {
-              required: 'Description is required',
-              minLength: { value: 10, message: 'Description must be at least 10 characters long' },
+              maxLength: { value: 2000, message: 'Description is too long' },
             })}
           />
           <FormErrorMessage>{errors.description?.message}</FormErrorMessage>
+        </FormControl>
+
+        <FormControl isInvalid={!!errors.steps}>
+          <FormLabel>Steps</FormLabel>
+          <Textarea
+            {...register('steps', {
+              required: 'Steps are required',
+            })}
+          />
+          <FormErrorMessage>{errors.steps?.message}</FormErrorMessage>
         </FormControl>
 
         <FormControl isInvalid={!!errors.expectedResult}>
@@ -63,15 +91,20 @@ export const TestCaseForm: React.FC<TestCaseFormProps> = ({
           <Textarea
             {...register('expectedResult', {
               required: 'Expected result is required',
-              minLength: { value: 5, message: 'Expected result must be at least 5 characters long' },
             })}
           />
           <FormErrorMessage>{errors.expectedResult?.message}</FormErrorMessage>
         </FormControl>
 
+        <FormControl isInvalid={!!errors.actualResult}>
+          <FormLabel>Actual Result</FormLabel>
+          <Textarea {...register('actualResult')} />
+          <FormErrorMessage>{errors.actualResult?.message}</FormErrorMessage>
+        </FormControl>
+
         <FormControl isInvalid={!!errors.status}>
           <FormLabel>Status</FormLabel>
-          <Select {...register('status', { required: 'Status is required' })}>
+          <Select {...register('status')}>
             {Object.values(TestCaseStatus).map((status) => (
               <option key={status} value={status}>
                 {status}
@@ -83,7 +116,7 @@ export const TestCaseForm: React.FC<TestCaseFormProps> = ({
 
         <FormControl isInvalid={!!errors.priority}>
           <FormLabel>Priority</FormLabel>
-          <Select {...register('priority', { required: 'Priority is required' })}>
+          <Select {...register('priority')}>
             {Object.values(TestCasePriority).map((priority) => (
               <option key={priority} value={priority}>
                 {priority}
@@ -94,9 +127,9 @@ export const TestCaseForm: React.FC<TestCaseFormProps> = ({
         </FormControl>
 
         <Button type="submit" colorScheme="blue" isLoading={isLoading}>
-          {initialData ? 'Update Test Case' : 'Create Test Case'}
+          {testCase ? 'Update Test Case' : 'Create Test Case'}
         </Button>
       </VStack>
-    </Box>
+    </form>
   );
-};
+}
