@@ -11,6 +11,8 @@ interface User {
   name: string;
   role: UserRole;
   password: string;
+  twoFactorEnabled: boolean;
+  emailVerified: boolean | null;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -46,6 +48,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role as UserRole,
+          twoFactorEnabled: user.twoFactorEnabled,
+          emailVerified: user.emailVerified,
         };
       }
     })
@@ -54,17 +58,18 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role as UserRole;
+        token.role = user.role;
+        token.twoFactorEnabled = user.twoFactorEnabled;
+        token.emailVerified = user.emailVerified;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session?.user) {
-        session.user = {
-          ...session.user,
-          id: token.id as string,
-          role: token.role as UserRole,
-        };
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role as UserRole;
+        session.user.twoFactorEnabled = token.twoFactorEnabled;
+        session.user.emailVerified = token.emailVerified;
       }
       return session;
     }

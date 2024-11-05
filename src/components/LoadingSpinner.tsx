@@ -1,8 +1,19 @@
-import React from 'react';
-import { Spinner, Flex } from '@chakra-ui/react';
+import { Spinner, Box } from '@chakra-ui/react'
 
-export const LoadingSpinner: React.FC = () => (
-  <Flex justify="center" align="center" height="100%">
-    <Spinner size="xl" color="blue.500" />
-  </Flex>
-);
+interface LoadingSpinnerProps {
+  size?: string
+}
+
+export function LoadingSpinner({ size = 'xl' }: LoadingSpinnerProps) {
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" h="200px">
+      <Spinner
+        thickness="4px"
+        speed="0.65s"
+        emptyColor="gray.200"
+        color="blue.500"
+        size={size}
+      />
+    </Box>
+  )
+}

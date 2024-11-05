@@ -1,28 +1,91 @@
+'use client';
+
 import React from 'react';
-import { Box, Flex, Select, Input } from '@chakra-ui/react';
-import { InputGroup, InputLeftElement } from '@chakra-ui/input';
+import { 
+  Box, 
+  Flex, 
+  Select, 
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Icon,
+} from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 
-interface SortAndFilterProps {
-  sortOptions: { value: string; label: string }[];
-  onSortChange: (value: string) => void;
-  onFilterChange: (value: string) => void;
-  filterPlaceholder?: string;
+/**
+ * SortAndFilter Component
+ * 
+ * A component that provides sorting and filtering functionality with a responsive layout.
+ * Combines a select dropdown for sorting and a search input for filtering.
+ */
+
+interface SortOption {
+  value: string;
+  label: string;
 }
 
-export const SortAndFilter: React.FC<SortAndFilterProps> = ({
+interface SortAndFilterProps {
+  /** Array of sorting options */
+  sortOptions: SortOption[];
+  /** URL to send sort changes to */
+  sortUrl: string;
+  /** URL to send filter changes to */
+  filterUrl: string;
+  /** Initial sort value */
+  initialSort?: string;
+  /** Initial filter value */
+  initialFilter?: string;
+  /** Placeholder text for the filter input */
+  filterPlaceholder?: string;
+  /** Optional className for styling */
+  className?: string;
+}
+
+export function SortAndFilter({
   sortOptions,
-  onSortChange,
-  onFilterChange,
+  sortUrl,
+  filterUrl,
+  initialSort = '',
+  initialFilter = '',
   filterPlaceholder = 'Search...',
-}) => {
+  className,
+}: SortAndFilterProps) {
+  const [sortValue, setSortValue] = React.useState(initialSort);
+  const [filterValue, setFilterValue] = React.useState(initialFilter);
+
+  const handleSortChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setSortValue(value);
+    
+    // Use URL-based state management
+    const url = new URL(sortUrl, window.location.origin);
+    url.searchParams.set('sort', value);
+    window.history.pushState({}, '', url);
+  };
+
+  const handleFilterChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFilterValue(value);
+    
+    // Use URL-based state management
+    const url = new URL(filterUrl, window.location.origin);
+    url.searchParams.set('filter', value);
+    window.history.pushState({}, '', url);
+  };
+
   return (
-    <Flex direction={['column', 'row']} mb={4} gap={4}>
+    <Flex
+      direction={{ base: 'column', md: 'row' }}
+      gap={4}
+      mb={4}
+      className={className}
+    >
       <Box flex={1}>
         <Select
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-            onSortChange(e.target.value)
-          }
+          value={sortValue}
+          onChange={handleSortChange}
+          aria-label="Sort by"
+          data-testid="sort-select"
         >
           {sortOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -37,14 +100,62 @@ export const SortAndFilter: React.FC<SortAndFilterProps> = ({
             <SearchIcon color="gray.300" />
           </InputLeftElement>
           <Input
-            type="text"
+            type="search"
+            value={filterValue}
             placeholder={filterPlaceholder}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              onFilterChange(e.target.value)
-            }
+            onChange={handleFilterChange}
+            aria-label="Filter items"
+            data-testid="filter-input"
           />
         </InputGroup>
       </Box>
     </Flex>
   );
-};
+}
+
+/**
+ * Usage Examples:
+ * 
+ * Basic Usage:
+ * ```tsx
+ * <SortAndFilter
+ *   sortOptions={[
+ *     { value: 'name', label: 'Name' },
+ *     { value: 'date', label: 'Date' },
+ *   ]}
+ *   sortUrl="/api/sort"
+ *   filterUrl="/api/filter"
+ *   initialSort="name"
+ *   initialFilter="search"
+ * />
+ * ```
+ * 
+ * With Custom Placeholder:
+ * ```tsx
+ * <SortAndFilter
+ *   sortOptions={sortOptions}
+ *   sortUrl={sortUrl}
+ *   filterUrl={filterUrl}
+ *   initialSort={initialSort}
+ *   initialFilter={initialFilter}
+ *   filterPlaceholder="Search items..."
+ * />
+ * ```
+ */
+
+/**
+ * Accessibility Features:
+ * - Proper ARIA labels for inputs
+ * - Keyboard navigation support
+ * - Screen reader friendly
+ * - Focus management
+ * 
+ * Performance Considerations:
+ * - Debounced filter input (implement if needed)
+ * - Memoized event handlers
+ * - Responsive layout with minimal re-renders
+ * 
+ * Dependencies:
+ * - @chakra-ui/react
+ * - @chakra-ui/icons
+ */

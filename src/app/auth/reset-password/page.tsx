@@ -1,29 +1,20 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { AuthLayout } from '@/components/AuthLayout';
-import { ResetPasswordForm } from '@/components/ResetPasswordForm';
-import { AuthMessage } from '@/components/AuthMessage';
+import { redirect } from 'next/navigation';
+import { PasswordResetForm } from '@/components/PasswordResetForm';
 
-export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams?.get('token');
+interface PageProps {
+  searchParams: { token?: string };
+}
 
-  if (!token) {
-    return (
-      <AuthLayout>
-        <AuthMessage
-          status="error"
-          title="Invalid Reset Link"
-          message="The password reset link is invalid or has expired. Please request a new one."
-        />
-      </AuthLayout>
-    );
+export default function ResetPasswordPage({ searchParams }: PageProps) {
+  if (!searchParams.token) {
+    redirect('/auth/reset-password/request');
   }
 
   return (
-    <AuthLayout>
-      <ResetPasswordForm token={token} />
-    </AuthLayout>
+    <div className="container max-w-lg py-8">
+      <PasswordResetForm token={searchParams.token} />
+    </div>
   );
 }

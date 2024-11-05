@@ -1,47 +1,56 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { validatePasswordResetToken } from '@/lib/tokens';
 import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { verifyPasswordResetToken } from '@/lib/auth/tokens';
+import { SecurityService } from '@/lib/auth/securityService';
+import { AUTH_ERRORS } from '@/lib/utils/error';
 
-const resetPasswordSchema = z.object({
+const resetSchema = z.object({
   token: z.string().min(1),
-  password: z.string().min(6),
+  password: z.string().min(8),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token, password } = resetPasswordSchema.parse(body);
+    const { token, password } = resetSchema.parse(body);
 
-    const user = await validatePasswordResetToken(token);
-
-    if (!user) {
+    const payload = await verifyPasswordResetToken(token);
+    if (!payload?.email) {
       return NextResponse.json(
-        { message: 'Invalid or expired reset token' },
+        { error: AUTH_ERRORS.INVALID_TOKEN },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Check if password has been breached
+    const isBreached = await SecurityService.checkPasswordBreached(password);
+    if (isBreached) {
+      return NextResponse.json(
+        { error: AUTH_ERRORS.PASSWORD_COMPROMISED },
+        { status: 400 }
+      );
+    }
+
+    const hashedPassword = await SecurityService.hashPassword(password);
 
     await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
+      where: { email: payload.email },
+      data: { password: hashedPassword },
     });
 
     return NextResponse.json({
-      message: 'Password reset successful',
+      message: 'Password reset successfully',
     });
   } catch (error) {
     console.error('Password reset error:', error);
     return NextResponse.json(
-      { message: 'Failed to reset password' },
+      { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }
     );
   }
+}
+
+export async function PUT(request: Request) {
+  // Complete password reset
 }

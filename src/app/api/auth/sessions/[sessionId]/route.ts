@@ -1,56 +1,42 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { SessionService } from '@/lib/auth/sessionService';
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { sessionId: string } }
-) {
+interface RouteParams {
+  params: {
+    sessionId: string;
+  };
+}
+
+export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const currentSessionId = request.headers.get('x-session-id');
-    
-    // Prevent terminating current session
-    if (params.sessionId === currentSessionId) {
+    // Don't allow terminating current session
+    if (params.sessionId === session.id) {
       return NextResponse.json(
-        { message: 'Cannot terminate current session' },
+        { error: 'Cannot terminate current session' },
         { status: 400 }
       );
     }
 
-    // Verify session belongs to user
-    const targetSession = await prisma.session.findUnique({
-      where: { id: params.sessionId },
-      select: { userId: true },
-    });
-
-    if (!targetSession || targetSession.userId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Session not found' },
-        { status: 404 }
-      );
-    }
-
-    await prisma.session.delete({
-      where: { id: params.sessionId },
-    });
+    await SessionService.terminateSession(params.sessionId, session.user.id);
 
     return NextResponse.json({
-      message: 'Session terminated successfully',
+      message: 'Session terminated',
     });
   } catch (error) {
     console.error('Session termination error:', error);
     return NextResponse.json(
-      { message: 'Failed to terminate session' },
+      { error: 'Failed to terminate session' },
       { status: 500 }
     );
   }

@@ -1,18 +1,37 @@
-import { useSession } from "next-auth/react";
-import { UserRole } from "@/types/auth";
+import { useSession } from 'next-auth/react';
+import { RBACService } from '@/lib/auth/rbac/service';
+import { ActionType, ResourceType, UserRole } from '@/types/rbac';
+import type { Session, AuthUser } from '@/lib/auth/types';
+
+interface ExtendedSession extends Session {
+  user: AuthUser;
+}
 
 export function usePermissions() {
-  const { data: session } = useSession();
-  const userRole = session?.user?.role;
+  const { data: session } = useSession() as { data: ExtendedSession | null };
 
-  return {
-    canCreateProject: userRole === UserRole.ADMIN || userRole === UserRole.PROJECT_MANAGER,
-    canEditProject: userRole === UserRole.ADMIN || userRole === UserRole.PROJECT_MANAGER,
-    canDeleteProject: userRole === UserRole.ADMIN,
-    canCreateTestCase: userRole === UserRole.TESTER || userRole === UserRole.ADMIN,
-    canExecuteTestRun: userRole === UserRole.TESTER || userRole === UserRole.ADMIN,
-    isAdmin: userRole === UserRole.ADMIN,
-    isProjectManager: userRole === UserRole.PROJECT_MANAGER,
-    isTester: userRole === UserRole.TESTER,
+  const can = async (
+    action: ActionType,
+    resource: ResourceType,
+    context?: {
+      userId?: string;
+      resourceOwnerId?: string;
+      teamMembers?: string[];
+      status?: string;
+    }
+  ): Promise<boolean> => {
+    if (!session?.user) return false;
+
+    return RBACService.can(
+      session.user.role,
+      action,
+      resource,
+      {
+        userId: session.user.id,
+        ...context,
+      }
+    );
   };
+
+  return { can };
 }

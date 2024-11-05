@@ -1,21 +1,34 @@
 import { NextResponse } from 'next/server';
-import { AppError, ValidationError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
+import { AuthError } from '@/lib/errors/AuthError';
 
-export function apiErrorHandler(error: unknown, context: string) {
-  if (error instanceof AppError) {
-    logger.warn(`AppError in ${context}: ${error.message}`, { statusCode: error.statusCode });
-    return NextResponse.json({ error: error.message }, { status: error.statusCode });
+export function handleApiError(error: unknown) {
+  console.error('API Error:', error);
+
+  if (error instanceof ZodError) {
+    return NextResponse.json(
+      { error: 'Validation error', details: error.errors },
+      { status: 400 }
+    );
   }
-  if (error instanceof ValidationError) {
-    logger.warn(`ValidationError in ${context}: ${error.message}`);
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    logger.error(`Database error in ${context}: ${error.message}`, { code: error.code });
-    return NextResponse.json({ error: 'Database operation failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Database error', code: error.code },
+      { status: 400 }
+    );
   }
-  logger.error(`Unexpected error in ${context}:`, error);
-  return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+
+  if (error instanceof AuthError) {
+    return NextResponse.json(
+      { error: error.message, code: error.code },
+      { status: error.status }
+    );
+  }
+
+  return NextResponse.json(
+    { error: 'Internal server error' },
+    { status: 500 }
+  );
 }

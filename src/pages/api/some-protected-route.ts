@@ -1,9 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { authMiddleware } from '@/middleware/auth';
+import { ActionType, ResourceType } from '@/types/rbac';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await new Promise<void>((resolve) => {
-    authMiddleware(req, res, () => resolve());
+    authMiddleware(req, res, resolve, {
+      permissions: [{
+        action: ActionType.READ,
+        resource: ResourceType.PROJECT
+      }]
+    });
   });
 
   // Your protected route logic here

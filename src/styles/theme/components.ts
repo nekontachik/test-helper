@@ -1,19 +1,19 @@
-import { defineStyleConfig } from '@chakra-ui/react';
+import type { ComponentStyleConfig } from './types';
 
-export const components = {
-  Button: defineStyleConfig({
+export const components: Record<string, ComponentStyleConfig> = {
+  Button: {
     defaultProps: {
       colorScheme: 'blue',
     },
-  }),
-  Input: defineStyleConfig({
+  },
+  Input: {
     defaultProps: {
       focusBorderColor: 'blue.500',
     },
-  }),
-  FormLabel: defineStyleConfig({
+  },
+  FormLabel: {
     baseStyle: {
       fontWeight: 'medium',
     },
-  }),
+  },
 };

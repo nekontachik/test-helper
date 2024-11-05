@@ -2,25 +2,22 @@ import 'next-auth';
 import { UserRole } from './auth';
 
 declare module 'next-auth' {
-  interface User {
-    id: string;
-    email: string;
-    name: string | null;
-    role: UserRole;
-    emailVerified?: Date | null;
-  }
-  
   interface Session {
-    user: User & {
+    id: string;
+    user: {
       id: string;
+      email: string;
       role: UserRole;
+      twoFactorEnabled: boolean;
+      emailVerified: Date | null;
+      twoFactorAuthenticated: boolean;
     };
   }
-}
 
-declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
     role: UserRole;
+    twoFactorEnabled: boolean;
+    emailVerified: Date | null;
   }
 }

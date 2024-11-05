@@ -1,49 +1,33 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { UAParser } from 'ua-parser-js';
+import { SessionService } from '@/lib/auth/sessionService';
 
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const sessions = await prisma.session.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      orderBy: {
-        lastActive: 'desc',
-      },
+    const sessions = await SessionService.getUserSessions(session.user.id);
+
+    return NextResponse.json({
+      sessions: sessions.map(session => ({
+        id: session.id,
+        userAgent: session.userAgent,
+        lastActive: session.lastActive,
+        deviceInfo: session.deviceInfo,
+      })),
     });
-
-    const currentSessionId = request.headers.get('x-session-id');
-
-    const parser = new UAParser();
-    const formattedSessions = sessions.map(s => {
-      parser.setUA(s.userAgent || '');
-      const device = parser.getResult();
-
-      return {
-        id: s.id,
-        userAgent: `${device.browser.name} on ${device.os.name}`,
-        lastActive: s.lastActive,
-        isCurrent: s.id === currentSessionId,
-      };
-    });
-
-    return NextResponse.json(formattedSessions);
   } catch (error) {
-    console.error('Sessions fetch error:', error);
+    console.error('Session fetch error:', error);
     return NextResponse.json(
-      { message: 'Failed to fetch sessions' },
+      { error: 'Failed to fetch sessions' },
       { status: 500 }
     );
   }
@@ -52,32 +36,22 @@ export async function GET(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const currentSessionId = request.headers.get('x-session-id');
-
-    await prisma.session.deleteMany({
-      where: {
-        userId: session.user.id,
-        NOT: {
-          id: currentSessionId,
-        },
-      },
-    });
+    await SessionService.terminateAllSessions(session.user.id, session.id);
 
     return NextResponse.json({
-      message: 'All other sessions terminated successfully',
+      message: 'All other sessions terminated',
     });
   } catch (error) {
-    console.error('Sessions termination error:', error);
+    console.error('Session termination error:', error);
     return NextResponse.json(
-      { message: 'Failed to terminate sessions' },
+      { error: 'Failed to terminate sessions' },
       { status: 500 }
     );
   }

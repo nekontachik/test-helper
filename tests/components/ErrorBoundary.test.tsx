@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import ErrorBoundary from '@/components/ErrorBoundary';  // Changed from named to default import
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ReactNode } from 'react';
 
 const ThrowError = (): ReactNode => {

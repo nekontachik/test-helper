@@ -12,6 +12,33 @@ Test Management Application is a comprehensive tool designed to streamline the p
 - Filter and search test cases
 - Pagination for test case lists
 
+## Technical Architecture
+
+### Provider Setup
+The application uses a well-structured provider hierarchy with Chakra UI v2.8.0 (latest stable version compatible with Next.js 13+):
+
+#### Provider Structure
+- Uses the official Chakra UI types from @chakra-ui/react@2.8.0
+- Maintains a single source of truth for providers
+- Follows Next.js 13+ app directory best practices
+- Implements provider order: React Query -> NextAuth -> Chakra UI
+
+#### Chakra UI Integration
+- Version: 2.8.0 (stable, Next.js 13+ compatible)
+- Dependencies:
+  - @chakra-ui/react@2.8.0
+  - @chakra-ui/next-js@2.1.5
+  - @emotion/react@11.11.1
+  - @emotion/styled@11.11.0
+  - framer-motion@10.16.4
+
+#### Key Features
+- Server-side rendering support
+- Type-safe component props
+- Responsive design utilities
+- Custom theme support
+- Performance optimized
+
 ## Test Case Versioning
 
 The application now supports test case versioning. Each time a test case is updated, a new version is created. Users can view the version history and restore previous versions if needed.
@@ -42,13 +69,13 @@ To restore a previous version of a test case:
 
 To run the tests:
 
-```
+```bash
 npm test
 ```
 
 To start the development server:
 
-```
+```bash
 npm run dev
 ```
 
@@ -92,3 +119,15 @@ The application now has more robust error handling and logging, providing better
 ## Usage
 
 [Add any new usage instructions here]
+
+# Chakra UI Components Usage Guide
+
+## Setup
+We use Chakra UI v2.8.0 for our component library. The setup includes:
+- Core Chakra UI package (@chakra-ui/react)
+- Theme customization
+- Provider configuration
+
+## Component Usage
+
+### Basic Components

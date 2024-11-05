@@ -1,55 +1,63 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { authenticator } from 'otplib';
+import { prisma } from '@/lib/prisma';
+import { generateTOTPConfig, verifyTOTP } from '@/lib/utils/totp';
+import { authOptions } from '../../[...nextauth]/route';
+import { AUTH_ERRORS } from '@/lib/utils/error';
 
 export async function POST(request: Request) {
+  // Initialize 2FA setup
+  // Generate and return QR code
+}
+
+export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: AUTH_ERRORS.SESSION_REQUIRED },
         { status: 401 }
+      );
+    }
+
+    const { token } = await request.json();
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Verification code is required' },
+        { status: 400 }
       );
     }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { emailVerified: true },
+      select: { twoFactorSecret: true },
     });
 
-    if (!user?.emailVerified) {
+    if (!user?.twoFactorSecret) {
       return NextResponse.json(
-        { message: 'Email must be verified before enabling 2FA' },
+        { error: '2FA setup not initiated' },
         { status: 400 }
       );
     }
 
-    const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(
-      session.user.email,
-      'Test Management System',
-      secret
-    );
+    const isValid = verifyTOTP(token, user.twoFactorSecret);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: 'Invalid verification code' },
+        { status: 400 }
+      );
+    }
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        twoFactorSecret: secret,
-        twoFactorEnabled: false,
-      },
+      data: { twoFactorEnabled: true },
     });
 
-    return NextResponse.json({
-      secret,
-      qrCodeUrl: otpauthUrl,
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('2FA setup error:', error);
+    console.error('2FA verification error:', error);
     return NextResponse.json(
-      { message: 'Failed to setup 2FA' },
+      { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }
     );
   }

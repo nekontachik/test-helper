@@ -1,33 +1,56 @@
 import { NextResponse } from 'next/server';
-import { validateVerificationToken } from '@/lib/tokens';
-import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { AUTH_ERRORS } from '@/lib/utils/error';
 
-const verifySchema = z.object({
-  token: z.string().min(1),
-});
-
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const body = await request.json();
-    const { token } = verifySchema.parse(body);
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get('token');
 
-    const user = await validateVerificationToken(token);
-
-    if (!user) {
+    if (!token) {
       return NextResponse.json(
-        { message: 'Invalid or expired verification token' },
+        { error: AUTH_ERRORS.INVALID_TOKEN },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { message: 'Email verified successfully' },
-      { status: 200 }
-    );
+    const verificationToken = await prisma.verificationToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!verificationToken) {
+      return NextResponse.json(
+        { error: AUTH_ERRORS.INVALID_TOKEN },
+        { status: 400 }
+      );
+    }
+
+    if (verificationToken.expires < new Date()) {
+      await prisma.verificationToken.delete({
+        where: { id: verificationToken.id },
+      });
+      return NextResponse.json(
+        { error: AUTH_ERRORS.TOKEN_EXPIRED },
+        { status: 400 }
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: verificationToken.userId },
+        data: { emailVerified: new Date() },
+      }),
+      prisma.verificationToken.delete({
+        where: { id: verificationToken.id },
+      }),
+    ]);
+
+    return NextResponse.redirect(new URL('/auth/signin', request.url));
   } catch (error) {
     console.error('Verification error:', error);
     return NextResponse.json(
-      { message: 'Failed to verify email' },
+      { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }
     );
   }

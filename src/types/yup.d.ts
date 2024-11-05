@@ -1,5 +1,13 @@
-import * as Yup from 'yup';
+import { ObjectSchema, AnyObject } from 'yup';
 
 declare module 'yup' {
-  interface AnyObjectSchema extends Yup.ObjectSchema<any> {}
+  interface ObjectSchema<
+    TShape extends AnyObject,
+    TContext = any,
+    TOut = TShape extends {
+      [key: string]: any;
+    }
+      ? TShape
+      : any
+  > extends ObjectSchema<TShape, TContext, TOut> {}
 }

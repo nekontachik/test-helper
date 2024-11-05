@@ -4,17 +4,14 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
-  Input,
-  FormHelperText,
-  InputProps,
-} from '@chakra-ui/react';
+} from '@chakra-ui/form-control';
+import { Input, InputProps } from '@chakra-ui/input';
 import { UseFormRegisterReturn } from 'react-hook-form';
 
 interface FormFieldProps extends Omit<InputProps, 'name'> {
   label: string;
   name: string;
   error?: string;
-  helperText?: string;
   registration?: UseFormRegisterReturn;
   isRequired?: boolean;
 }
@@ -23,7 +20,6 @@ export function FormField({
   label,
   name,
   error,
-  helperText,
   registration,
   isRequired,
   ...props
@@ -36,11 +32,9 @@ export function FormField({
         {...registration}
         {...props}
       />
-      {error ? (
+      {error && (
         <FormErrorMessage>{error}</FormErrorMessage>
-      ) : helperText ? (
-        <FormHelperText>{helperText}</FormHelperText>
-      ) : null}
+      )}
     </FormControl>
   );
 }

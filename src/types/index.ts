@@ -60,15 +60,13 @@ export interface TestCase {
 
 export interface TestCaseVersion {
   id: string;
-  testCaseId: string;
   versionNumber: number;
   title: string;
   description: string;
-  status: TestCaseStatus;
-  priority: TestCasePriority;
+  steps: string[];
   expectedResult: string;
-  createdAt: Date;
-  updatedAt: Date;
+  status: string;
+  priority: string;
 }
 
 export interface TestRun {

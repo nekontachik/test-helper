@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { ErrorBoundary, Props as ErrorBoundaryProps } from '@/components/ErrorBoundary';
 import { ChakraProvider } from '@chakra-ui/react';
 
 describe('ErrorBoundary', () => {
@@ -27,7 +27,12 @@ describe('ErrorBoundary', () => {
 
   it('renders error message when an error occurs', () => {
     renderWithChakra(
-      <ErrorBoundary>
+      <ErrorBoundary fallback={(error: Error) => (
+        <div>
+          <div>Something went wrong.</div>
+          <div>{error.message}</div>
+        </div>
+      )}>
         <ErrorComponent />
       </ErrorBoundary>
     );
@@ -50,7 +55,15 @@ describe('ErrorBoundary', () => {
     const mockOnError = jest.fn();
 
     renderWithChakra(
-      <ErrorBoundary onError={mockOnError}>
+      <ErrorBoundary 
+        fallback={(error: Error) => (
+          <div>
+            <div>Something went wrong.</div>
+            <div>{error.message}</div>
+          </div>
+        )}
+        onCatch={mockOnError}
+      >
         <ErrorComponent />
       </ErrorBoundary>
     );

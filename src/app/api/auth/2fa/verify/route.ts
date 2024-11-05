@@ -1,65 +1,67 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { authenticator } from 'otplib';
+import { TwoFactorService } from '@/lib/auth/twoFactorService';
+import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
+import { withRateLimit } from '@/middleware/rateLimit';
 import { z } from 'zod';
 
 const verifySchema = z.object({
-  code: z.string().length(6),
+  token: z.string().length(6),
 });
 
-export async function POST(request: Request) {
+async function handler(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
     const body = await request.json();
-    const { code } = verifySchema.parse(body);
+    const { token } = verifySchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { twoFactorSecret: true },
-    });
-
-    if (!user?.twoFactorSecret) {
-      return NextResponse.json(
-        { message: '2FA not set up' },
-        { status: 400 }
-      );
-    }
-
-    const isValid = authenticator.verify({
-      token: code,
-      secret: user.twoFactorSecret,
-    });
+    const isValid = await TwoFactorService.verifyTOTP(
+      session.user.id,
+      token
+    );
 
     if (!isValid) {
       return NextResponse.json(
-        { message: 'Invalid verification code' },
+        { error: 'Invalid verification code' },
         { status: 400 }
       );
     }
 
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { twoFactorEnabled: true },
+    // Mark session as 2FA verified
+    await TwoFactorService.markSessionVerified(
+      session.id,
+      session.user.id,
+      request.headers.get('x-forwarded-for') || undefined,
+      request.headers.get('user-agent') || undefined
+    );
+
+    // Track session
+    await SessionTrackingService.trackSession({
+      sessionId: session.id,
+      userId: session.user.id,
+      ip: request.headers.get('x-forwarded-for') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
     });
 
     return NextResponse.json({
-      message: '2FA enabled successfully',
+      success: true,
+      message: 'Two-factor authentication verified',
     });
   } catch (error) {
     console.error('2FA verification error:', error);
     return NextResponse.json(
-      { message: 'Failed to verify 2FA code' },
+      { error: 'Verification failed' },
       { status: 500 }
     );
   }
 }
+
+export const POST = withRateLimit(handler, 'auth:2fa');

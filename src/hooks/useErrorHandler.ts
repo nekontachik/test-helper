@@ -1,43 +1,70 @@
 import { useState, useCallback } from 'react';
-import { useToast } from '@chakra-ui/toast';
+import { AppError } from '@/lib/errors';
 
 interface ErrorState {
   message: string;
   code?: string;
+  status?: number;
+  details?: Record<string, unknown>;
 }
 
 export function useErrorHandler() {
   const [error, setError] = useState<ErrorState | null>(null);
-  const toast = useToast();
+  const [loading, setLoading] = useState(false);
 
   const handleError = useCallback((error: unknown) => {
-    let errorState: ErrorState;
-
-    if (error instanceof Error) {
-      errorState = {
+    if (error instanceof AppError) {
+      setError({
         message: error.message,
-        code: (error as any).code,
-      };
-    } else if (typeof error === 'string') {
-      errorState = { message: error };
+        code: error.code,
+        status: error.statusCode,
+        details: {
+          name: error.name,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }
+      });
+    } else if (error instanceof Error) {
+      setError({
+        message: error.message,
+        details: { 
+          name: error.name, 
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        }
+      });
     } else {
-      errorState = { message: 'An unexpected error occurred' };
+      setError({
+        message: 'An unexpected error occurred',
+        code: 'UNKNOWN_ERROR',
+        status: 500
+      });
     }
-
-    setError(errorState);
-
-    toast({
-      title: 'Error',
-      description: errorState.message,
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  }, [toast]);
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  return { error, handleError, clearError };
+  const withErrorHandling = useCallback(
+    async <T,>(operation: () => Promise<T>): Promise<T | undefined> => {
+      try {
+        setLoading(true);
+        clearError();
+        return await operation();
+      } catch (error) {
+        handleError(error);
+        return undefined;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleError, clearError]
+  );
+
+  return {
+    error,
+    loading,
+    handleError,
+    clearError,
+    withErrorHandling,
+  };
 }

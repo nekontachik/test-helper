@@ -1,13 +1,19 @@
-import { useUser } from '@auth0/nextjs-auth0/client';
-import { User } from '@/types';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { DEFAULT_LOGIN_REDIRECT } from '@/lib/auth/redirects';
 
-export function useAuth() {
-  const { user, error, isLoading } = useUser();
+export function useAuth(requireAuth = true) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  return {
-    user: user as User | undefined,
-    isAuthenticated: !!user,
-    isLoading,
-    error,
-  };
+  useEffect(() => {
+    if (requireAuth && status === 'unauthenticated') {
+      router.push('/auth/signin');
+    } else if (!requireAuth && status === 'authenticated') {
+      router.push(DEFAULT_LOGIN_REDIRECT);
+    }
+  }, [requireAuth, status, router]);
+
+  return { session, status, isLoading: status === 'loading' };
 }

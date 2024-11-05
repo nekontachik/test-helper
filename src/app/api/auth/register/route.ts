@@ -1,60 +1,75 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { RegisterData } from '@/types/auth';
-import { sendVerificationEmail } from '@/lib/emailService';
 import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { SecurityService } from '@/lib/auth/securityService';
+import { sendVerificationEmail } from '@/lib/emailService';
+import { AUTH_ERRORS } from '@/lib/utils/error';
 
 const registerSchema = z.object({
-  name: z.string().min(2).max(50),
+  name: z.string().min(2),
   email: z.string().email(),
-  password: z.string().min(6),
-  role: z.enum(['USER', 'TESTER']),
+  password: z.string().min(8),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const validatedData = registerSchema.parse(body) as RegisterData;
+    const { name, email, password } = registerSchema.parse(body);
 
+    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email },
+      where: { email },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'User already exists' },
+        { error: AUTH_ERRORS.USER_EXISTS },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
+    // Check if password has been breached
+    const isBreached = await SecurityService.checkPasswordBreached(password);
+    if (isBreached) {
+      return NextResponse.json(
+        { error: AUTH_ERRORS.PASSWORD_COMPROMISED },
+        { status: 400 }
+      );
+    }
 
+    // Hash password
+    const hashedPassword = await SecurityService.hashPassword(password);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        hashedPassword,
-        role: validatedData.role,
+        name,
+        email,
+        password: hashedPassword,
+        role: 'USER',
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
       },
     });
 
     // Send verification email
-    await sendVerificationEmail(user.email, user.name || 'User');
-
-    const { hashedPassword: _, ...userWithoutPassword } = user;
+    await sendVerificationEmail(email, name);
 
     return NextResponse.json(
-      { 
-        ...userWithoutPassword,
-        message: 'Registration successful. Please check your email to verify your account.' 
-      }, 
+      {
+        message: 'Registration successful',
+        user,
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }
     );
   }

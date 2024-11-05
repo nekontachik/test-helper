@@ -1,62 +1,77 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { SecurityService } from '@/lib/auth/securityService';
 import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { SecurityService } from '@/lib/auth/securityService';
+import { ActivityService } from '@/lib/auth/activityService';
+import { authOptions } from '../../[...nextauth]/route';
 
 const deleteSchema = z.object({
-  password: z.string().min(1),
-  reason: z.string().optional(),
+  password: z.string(),
+  confirmPhrase: z.literal('DELETE'),
 });
 
-export async function DELETE(request: Request) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
-    const { password, reason } = deleteSchema.parse(body);
-
-    // Verify password
-    const isValid = await SecurityService.verifyPassword(
-      session.user.id,
-      password
+    const { password, confirmPhrase } = deleteSchema.parse(
+      await request.json()
     );
 
-    if (!isValid) {
+    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+    const userAgent = request.headers.get('user-agent');
+
+    // Verify password
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, password: true },
+    });
+
+    if (!user || !await SecurityService.verifyPassword(password, user.password)) {
+      await ActivityService.log(session.user.id, 'ACCOUNT_DELETE_FAILED', {
+        ip,
+        userAgent,
+        metadata: { reason: 'invalid_password' },
+      });
       return NextResponse.json(
-        { message: 'Invalid password' },
+        { error: 'Invalid password' },
         { status: 400 }
       );
     }
 
-    // Log account deletion
-    await prisma.accountDeletionLog.create({
+    // Schedule account for deletion
+    const deletionDate = new Date();
+    deletionDate.setDate(deletionDate.getDate() + 30); // 30 days grace period
+
+    await prisma.user.update({
+      where: { id: session.user.id },
       data: {
-        userId: session.user.id,
-        reason: reason || 'No reason provided',
+        scheduledDeletion: deletionDate,
+        status: 'PENDING_DELETION',
       },
     });
 
-    // Delete user data
-    await prisma.user.delete({
-      where: { id: session.user.id },
+    await ActivityService.log(session.user.id, 'ACCOUNT_DELETE_SCHEDULED', {
+      ip,
+      userAgent,
+      metadata: { scheduledDate: deletionDate },
     });
 
     return NextResponse.json({
-      message: 'Account deleted successfully',
+      message: 'Account scheduled for deletion',
+      deletionDate,
     });
   } catch (error) {
     console.error('Account deletion error:', error);
     return NextResponse.json(
-      { message: 'Failed to delete account' },
+      { error: 'Failed to process request' },
       { status: 500 }
     );
   }

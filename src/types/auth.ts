@@ -1,44 +1,54 @@
-export const UserRoles = {
-  USER: 'USER',
-  TESTER: 'TESTER',
-  ADMIN: 'ADMIN',
-  PROJECT_MANAGER: 'PROJECT_MANAGER'
-} as const;
+import { UserRole } from './rbac';
+import { AuditAction } from './audit';
 
-export type UserRole = typeof UserRoles[keyof typeof UserRoles];
+export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
 
-export function isValidUserRole(role: string): role is UserRole {
-  return Object.values(UserRoles).includes(role as UserRole);
-}
-
-export interface User {
+export interface AuthUser {
   id: string;
-  name: string;
   email: string;
+  name: string | null;
   role: UserRole;
-  emailVerified?: Date;
-  image?: string;
+  twoFactorEnabled: boolean;
+  emailVerified: Date | null;
+  twoFactorAuthenticated: boolean;
+  status: AccountStatus;
 }
 
-declare module "next-auth" {
-  interface Session {
-    user: User;
-  }
+export interface Session {
+  user: AuthUser;
+  expires: string;
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    role: UserRole;
-    id: string;
-  }
-}
-
-export interface LoginCredentials {
+export interface TokenPayload {
+  type: string;
   email: string;
-  password: string;
+  userId: string;
+  expiresIn?: string;
 }
 
-export interface RegisterData extends LoginCredentials {
-  name: string;
-  role?: UserRole;
+export interface VerificationToken {
+  identifier: string;
+  token: string;
+  expires: Date;
+}
+
+export interface BackupCodes {
+  codes: string[];
+  updatedAt: Date;
+}
+
+export interface EmailVerificationToken {
+  value: string;
+  expiresAt: Date;
+}
+
+export interface EmailVerificationData {
+  userId: string;
+  type: 'email_verification';
+  action: AuditAction;
+  metadata: {
+    event: string;
+    email: string;
+    error?: string;
+  };
 }

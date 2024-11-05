@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { UAParser } from 'ua-parser-js';
+import crypto from 'crypto';
 
 export class SessionManager {
   static async createSession(data: {
@@ -9,18 +10,22 @@ export class SessionManager {
   }) {
     const parser = new UAParser(data.userAgent);
     const device = parser.getResult();
+    
+    // Generate a secure random session token
+    const sessionToken = crypto.randomBytes(32).toString('hex');
 
     const session = await prisma.session.create({
       data: {
         userId: data.userId,
+        sessionToken,
         userAgent: data.userAgent,
         ipAddress: data.ipAddress,
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        deviceInfo: {
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        deviceInfo: JSON.stringify({
           browser: device.browser.name,
           os: device.os.name,
           device: device.device.type || 'desktop',
-        },
+        }),
       },
     });
 
@@ -30,10 +35,10 @@ export class SessionManager {
   static async validateSession(sessionId: string): Promise<boolean> {
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
-      select: { expires: true },
+      select: { expiresAt: true },
     });
 
-    return !!session && session.expires > new Date();
+    return !!session && session.expiresAt > new Date();
   }
 
   static async updateSessionActivity(sessionId: string): Promise<void> {
@@ -61,7 +66,7 @@ export class SessionManager {
   static async cleanupExpiredSessions(): Promise<void> {
     await prisma.session.deleteMany({
       where: {
-        expires: {
+        expiresAt: {
           lt: new Date(),
         },
       },

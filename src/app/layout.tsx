@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { Providers } from '@/lib/chakra';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function RootLayout({
   children,
@@ -12,11 +12,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ChakraProvider>
+        <Providers>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
-        </ChakraProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -1,6 +1,14 @@
-import { extendTheme } from '@chakra-ui/react';
+'use client';
 
-export const theme = extendTheme({
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+
+const config: ThemeConfig = {
+  initialColorMode: 'light',
+  useSystemColorMode: false,
+};
+
+const theme = extendTheme({
+  config,
   components: {
     Button: {
       defaultProps: {
@@ -11,8 +19,10 @@ export const theme = extendTheme({
   styles: {
     global: {
       body: {
-        bg: 'gray.50',
+        bg: 'white',
       },
     },
   },
 });
+
+export default theme;

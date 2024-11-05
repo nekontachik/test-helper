@@ -1,40 +1,76 @@
 'use client';
 
-import { useState, forwardRef } from 'react';
-import {
-  Input,
-  InputGroup,
-  InputRightElement,
-  IconButton,
-  InputProps,
-} from '@chakra-ui/react';
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 
-export const PasswordInput = forwardRef<HTMLInputElement, InputProps>(
-  (props, ref) => {
-    const [show, setShow] = useState(false);
+interface PasswordInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  showStrengthMeter?: boolean;
+  name?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  autoComplete?: string;
+  error?: string;
+}
 
-    return (
-      <InputGroup size="md">
+export function PasswordInput({
+  value,
+  onChange,
+  showStrengthMeter = true,
+  name = 'password',
+  placeholder = '••••••••',
+  disabled = false,
+  required = false,
+  autoComplete = 'current-password',
+  error,
+}: PasswordInputProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
         <Input
-          ref={ref}
-          pr="4.5rem"
-          type={show ? 'text' : 'password'}
-          {...props}
+          type={showPassword ? 'text' : 'password'}
+          name={name}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          required={required}
+          autoComplete={autoComplete}
+          className="pr-10"
         />
-        <InputRightElement width="4.5rem">
-          <IconButton
-            aria-label={show ? 'Hide password' : 'Show password'}
-            h="1.75rem"
-            size="sm"
-            onClick={() => setShow(!show)}
-            icon={show ? <ViewOffIcon /> : <ViewIcon />}
-            variant="ghost"
-          />
-        </InputRightElement>
-      </InputGroup>
-    );
-  }
-);
-
-PasswordInput.displayName = 'PasswordInput';
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+          onClick={() => setShowPassword(!showPassword)}
+          disabled={disabled}
+        >
+          {showPassword ? (
+            <EyeOff className="h-4 w-4 text-gray-400" />
+          ) : (
+            <Eye className="h-4 w-4 text-gray-400" />
+          )}
+        </Button>
+      </div>
+      
+      {error && (
+        <p className="text-sm text-red-500">{error}</p>
+      )}
+      
+      {showStrengthMeter && value && (
+        <PasswordStrengthMeter 
+          password={value} 
+          className="mt-2"
+        />
+      )}
+    </div>
+  );
+}

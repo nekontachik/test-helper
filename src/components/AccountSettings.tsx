@@ -1,44 +1,115 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Button,
-  useToast,
-  Divider,
+  HStack,
   Text,
   Box,
-  HStack,
   Badge,
+  Input,
+  Button,
+  useDisclosure,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
+  useToast,
 } from '@chakra-ui/react';
+import { Divider } from '@chakra-ui/layout';
 import { AuthCard } from './AuthCard';
 import { PasswordInput } from './PasswordInput';
-import type { User } from '@/types/auth';
+import { usePermissions } from '@/hooks/usePermissions';
+import { ActionType, ResourceType } from '@/types/rbac';
+import logger from '@/lib/logger';
+import type { AuthUser } from '@/lib/auth/types';
+
+// Validation schemas
+const profileSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(8, 'Current password is required'),
+  newPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 interface AccountSettingsProps {
-  user: User;
+  user: AuthUser;
+}
+
+interface PasswordInputWrapperProps {
+  register: any;
+  name: string;
+  placeholder: string;
+  value: string;
+}
+
+function PasswordInputWrapper({ register, name, placeholder, value }: PasswordInputWrapperProps) {
+  const { onChange, ...rest } = register(name);
+  return (
+    <PasswordInput
+      {...rest}
+      onChange={(e: any) => onChange(e)}
+      value={value}
+      placeholder={placeholder}
+    />
+  );
 }
 
 export function AccountSettings({ user }: AccountSettingsProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState(user.name || '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
   const toast = useToast();
+  const { can } = usePermissions();
+  const { isOpen: isChangingPassword, onOpen: onPasswordChange, onClose: onPasswordClose } = useDisclosure();
 
-  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    formState: { errors: profileErrors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: user.name || '',
+    },
+  });
 
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPassword,
+    watch,
+    formState: { errors: passwordErrors },
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+  });
+
+  const handleUpdateProfile = async (data: ProfileFormData) => {
     try {
+      setIsUpdating(true);
+      const canUpdate = await can(ActionType.UPDATE, ResourceType.USER);
+      if (!canUpdate) {
+        throw new Error('Insufficient permissions');
+      }
+
       const response = await fetch('/api/auth/update-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -52,44 +123,33 @@ export function AccountSettings({ user }: AccountSettingsProps) {
         duration: 5000,
       });
     } catch (error) {
+      logger.error('Profile update failed:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to update profile',
         status: 'error',
         duration: 5000,
       });
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'New passwords do not match',
-        status: 'error',
-        duration: 5000,
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
+  const handleChangePassword = async (data: PasswordFormData) => {
     try {
+      setIsUpdating(true);
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentPassword,
-          newPassword,
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to change password');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to change password');
       }
 
       toast({
@@ -99,18 +159,18 @@ export function AccountSettings({ user }: AccountSettingsProps) {
         duration: 5000,
       });
 
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      resetPassword();
+      onPasswordClose();
     } catch (error) {
+      logger.error('Password change failed:', error);
       toast({
         title: 'Error',
-        description: 'Failed to change password. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to change password',
         status: 'error',
         duration: 5000,
       });
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -121,6 +181,9 @@ export function AccountSettings({ user }: AccountSettingsProps) {
           <HStack spacing={4} mb={4}>
             <Text fontSize="lg" fontWeight="medium">Account Information</Text>
             <Badge colorScheme="blue">{user.role}</Badge>
+            {user.twoFactorEnabled && (
+              <Badge colorScheme="green">2FA Enabled</Badge>
+            )}
           </HStack>
           <Text color="gray.600" mb={4}>
             Email: {user.email}
@@ -132,22 +195,24 @@ export function AccountSettings({ user }: AccountSettingsProps) {
 
         <Divider />
 
-        <form onSubmit={handleUpdateProfile}>
+        <form onSubmit={handleProfileSubmit(handleUpdateProfile)}>
           <VStack spacing={6}>
             <Text fontSize="lg" fontWeight="medium">Profile Information</Text>
-            <FormControl>
+            <FormControl isInvalid={!!profileErrors.name}>
               <FormLabel>Name</FormLabel>
               <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...registerProfile('name')}
                 placeholder="Enter your name"
               />
+              <FormErrorMessage>
+                {profileErrors.name?.message}
+              </FormErrorMessage>
             </FormControl>
             <Button
               type="submit"
               colorScheme="blue"
               width="full"
-              isLoading={isLoading}
+              isLoading={isUpdating}
             >
               Update Profile
             </Button>
@@ -156,38 +221,50 @@ export function AccountSettings({ user }: AccountSettingsProps) {
 
         <Divider />
 
-        <form onSubmit={handleChangePassword}>
+        <form onSubmit={handlePasswordSubmit(handleChangePassword)}>
           <VStack spacing={6}>
             <Text fontSize="lg" fontWeight="medium">Change Password</Text>
-            <FormControl isRequired>
+            <FormControl isInvalid={!!passwordErrors.currentPassword}>
               <FormLabel>Current Password</FormLabel>
-              <PasswordInput
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+              <PasswordInputWrapper
+                register={registerPassword}
+                name="currentPassword"
+                value={watch('currentPassword') || ''}
                 placeholder="Enter current password"
               />
+              <FormErrorMessage>
+                {passwordErrors.currentPassword?.message}
+              </FormErrorMessage>
             </FormControl>
-            <FormControl isRequired>
+            <FormControl isInvalid={!!passwordErrors.newPassword}>
               <FormLabel>New Password</FormLabel>
-              <PasswordInput
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+              <PasswordInputWrapper
+                register={registerPassword}
+                name="newPassword"
+                value={watch('newPassword') || ''}
                 placeholder="Enter new password"
               />
+              <FormErrorMessage>
+                {passwordErrors.newPassword?.message}
+              </FormErrorMessage>
             </FormControl>
-            <FormControl isRequired>
+            <FormControl isInvalid={!!passwordErrors.confirmPassword}>
               <FormLabel>Confirm New Password</FormLabel>
-              <PasswordInput
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+              <PasswordInputWrapper
+                register={registerPassword}
+                name="confirmPassword"
+                value={watch('confirmPassword') || ''}
                 placeholder="Confirm new password"
               />
+              <FormErrorMessage>
+                {passwordErrors.confirmPassword?.message}
+              </FormErrorMessage>
             </FormControl>
             <Button
               type="submit"
               colorScheme="blue"
               width="full"
-              isLoading={isLoading}
+              isLoading={isUpdating}
             >
               Change Password
             </Button>

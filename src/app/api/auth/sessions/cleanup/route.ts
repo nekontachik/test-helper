@@ -1,36 +1,26 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
+    // Verify that the request comes from a cron job or authorized source
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Delete expired sessions
-    const result = await prisma.session.deleteMany({
-      where: {
-        userId: session.user.id,
-        expires: {
-          lt: new Date(),
-        },
-      },
-    });
+    await SessionTrackingService.cleanupExpiredSessions();
 
     return NextResponse.json({
-      message: `Cleaned up ${result.count} expired sessions`,
+      message: 'Session cleanup completed',
     });
   } catch (error) {
     console.error('Session cleanup error:', error);
     return NextResponse.json(
-      { message: 'Failed to cleanup sessions' },
+      { error: 'Failed to cleanup sessions' },
       { status: 500 }
     );
   }

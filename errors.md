@@ -1,60 +1,101 @@
 # Error Categories
 
-## API Route Errors (Missing Modules/Types)
-1. Missing '@lib/auth' module:
-   - src/app/api/projects/[projectId]/test-cases/[testCaseId]/restore/route.ts:4
-   - src/app/api/projects/[projectId]/test-cases/[testCaseId]/route.ts:4
+## Type Errors (Priority 1)
+1. Type Reference Errors:
+   - 'AuthError' only refers to a type but used as value (src/lib/apiErrorHandler.ts)
+   - Unknown type errors on error.message and error.status
+   - Missing type definitions in test files
+   - Generic type errors in hooks
 
-2. Missing '@lib/apiErrorHandler' module:
-   - src/app/api/projects/test-runs.ts:2
+2. Missing Type Definitions:
+   - Missing interfaces for API responses
+   - Missing types for test mocks
+   - Incomplete component prop types
+   - Missing enum types for status and priorities
 
-3. Property does not exist on PrismaClient:
-   - src/app/api/projects/[projectId]/test-cases/route.ts:52 (testCase)
-   - src/app/api/projects/[projectId]/test-runs/route.ts:3 (testRun)
-   - src/app/api/projects/[projectId]/test-reports/route.ts:3 (testReport)
+## Import/Export Errors (Priority 2)
+1. Chakra UI Import Errors:
+   - Module '@chakra-ui/react' missing 'Center' export (LoadingSpinner.tsx, LoadingScreen.tsx)
+   - Missing other Chakra component exports
 
-## Test File Errors (Missing Test Dependencies)
-1. Missing test utilities:
-   - tests/components/ErrorBoundary.test.tsx:3
-   - tests/components/ProjectCard.test.tsx:7
-   - tests/components/ProjectForm.test.tsx:4
-   - tests/components/TestCaseDetails.test.tsx:3
+2. Missing Local Module Imports:
+   - Missing '@lib/auth' imports
+   - Missing '@lib/apiErrorHandler' imports
+   - Missing validation utility imports
+   - Missing test utility imports
 
-2. Missing test mocks:
-   - src/app/api/projects/[projectId]/test-cases/__tests__/route.test.ts:3
-   - src/app/api/projects/[projectId]/test-reports/__tests__/route.test.ts:3
-   - src/app/api/projects/[projectId]/test-runs/__tests__/route.test.ts:3
+## API Route Errors (Priority 3)
+1. Prisma Client Errors:
+   - Missing or incorrect model properties
+   - Incorrect query structures
+   - Missing type definitions for query results
 
-## Component Errors (Type/Props Issues)
-1. Props validation errors:
-   - src/components/CreateProjectForm.tsx:39
-   - src/components/EditProjectForm.tsx:30
-   - src/components/TestCaseList.tsx:3
-   - src/components/TestCaseVersionHistory.tsx:37
+2. Authentication/Authorization:
+   - Missing or incorrect auth checks
+   - Incorrect permission handling
+   - Session management issues
 
-2. Story type errors:
-   - src/components/TestRunForm.stories.tsx:16
+## Component Errors (Priority 4)
+1. Props Validation:
+   - Missing required props
+   - Incorrect prop types
+   - Optional props handling issues
 
-## Hook Errors (Missing Dependencies)
-1. Missing hook dependencies:
-   - src/hooks/useProjects.ts:4
-   - tests/hooks/useApi.test.ts:2
-   - tests/hooks/useErrorHandler.test.ts:2
-   - tests/hooks/useLogger.test.ts:2
+2. State Management:
+   - Missing or incorrect state types
+   - useEffect dependency issues
+   - Context type mismatches
 
-## Page Component Errors
-1. Missing page dependencies:
-   - src/app/projects/[projectId]/test-cases/[testCaseId]/page.tsx:6
-   - src/app/projects/[projectId]/test-cases/create/page.tsx:7
-   - src/app/projects/page.tsx:22
+## Test File Errors (Priority 5)
+1. Test Setup Issues:
+   - Missing test utilities
+   - Incorrect mock types
+   - Missing test providers
 
-## Integration Test Errors
-1. Missing test utilities:
-   - tests/integration/createAndExecuteTestRun.test.tsx:7
-   - tests/integration/createProject.test.tsx:5
-   - tests/integration/createTestCase.test.tsx:6
-   - tests/integration/editTestCase.test.tsx:5
+2. Test Assertions:
+   - Type mismatches in expectations
+   - Missing type assertions
+   - Incorrect mock return types
 
-## Validation Errors
-1. Missing validation utilities:
-   - src/lib/__tests__/validation.test.ts:1
+## Build/Configuration Errors (Priority 6)
+1. Next.js Config:
+   - Incorrect route handlers
+   - Missing middleware types
+   - API route type mismatches
+
+2. TypeScript Config:
+   - Path alias issues
+   - Module resolution problems
+   - Strict mode violations
+
+## Action Plan
+1. Fix Core Type Definitions:
+   - Create/update auth types
+   - Define API response types
+   - Update component prop types
+   - Add test utility types
+
+2. Resolve Import Issues:
+   - Update Chakra UI imports
+   - Fix local module imports
+   - Add missing type imports
+
+3. Fix API Routes:
+   - Update Prisma client usage
+   - Add proper error handling
+   - Implement auth checks
+
+4. Update Components:
+   - Fix prop validations
+   - Update state management
+   - Add proper type guards
+
+5. Fix Test Files:
+   - Add test utilities
+   - Update mock types
+   - Fix assertions
+
+6. Update Configuration:
+   - Fix Next.js config
+   - Update TypeScript settings
+   - Resolve path aliases

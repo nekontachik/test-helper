@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { SessionService } from '@/lib/auth/sessionService';
 import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+import { ActivityService } from '@/lib/auth/activityService';
+import { authOptions } from '../../[...nextauth]/route';
 
 const revokeSchema = z.object({
   sessionIds: z.array(z.string()),
@@ -12,41 +12,54 @@ const revokeSchema = z.object({
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
-    const { sessionIds } = revokeSchema.parse(body);
+    const { sessionIds } = revokeSchema.parse(await request.json());
+    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+    const userAgent = request.headers.get('user-agent');
 
-    // Verify all sessions belong to user
-    const sessions = await SessionService.getUserSessions(session.user.id);
-    const userSessionIds = sessions.map(s => s.id);
-    const invalidSessionIds = sessionIds.filter(id => !userSessionIds.includes(id));
+    // Verify ownership of sessions
+    const sessions = await prisma.session.findMany({
+      where: {
+        id: { in: sessionIds },
+        userId: session.user.id,
+      },
+    });
 
-    if (invalidSessionIds.length > 0) {
+    if (sessions.length !== sessionIds.length) {
       return NextResponse.json(
-        { message: 'Invalid session IDs' },
+        { error: 'Invalid session IDs' },
         { status: 400 }
       );
     }
 
     // Revoke sessions
-    await Promise.all(
-      sessionIds.map(id => SessionService.terminateSession(id, session.user.id))
-    );
+    await prisma.session.deleteMany({
+      where: {
+        id: { in: sessionIds },
+        userId: session.user.id,
+      },
+    });
+
+    await ActivityService.log(session.user.id, 'SESSIONS_REVOKED', {
+      ip,
+      userAgent,
+      metadata: { sessionIds },
+    });
 
     return NextResponse.json({
       message: 'Sessions revoked successfully',
+      count: sessions.length,
     });
   } catch (error) {
     console.error('Session revocation error:', error);
     return NextResponse.json(
-      { message: 'Failed to revoke sessions' },
+      { error: 'Failed to revoke sessions' },
       { status: 500 }
     );
   }

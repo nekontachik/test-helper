@@ -1,53 +1,40 @@
 'use client';
 
-import {
-  Box,
-  Heading,
-  Text,
-  VStack,
-  Button,
-  Icon,
-} from '@chakra-ui/react';
+import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
-import { FiLock } from 'react-icons/fi';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Unauthorized() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user } = useAuth();
 
   return (
-    <Box maxW="md" mx="auto" mt={16} p={6}>
-      <VStack spacing={6}>
-        <Icon as={FiLock} boxSize={12} color="red.500" />
-        <Heading size="lg" textAlign="center">
-          Access Denied
-        </Heading>
-        <Text textAlign="center" color="gray.600">
-          You don't have permission to access this page.
-          {session?.user?.role && (
-            <Text mt={2}>
-              Current role: {session.user.role}
-            </Text>
-          )}
-        </Text>
-        <VStack spacing={4} width="100%">
-          <Button
-            width="full"
-            onClick={() => router.back()}
-            colorScheme="blue"
-          >
-            Go Back
-          </Button>
-          <Button
-            width="full"
-            variant="ghost"
-            onClick={() => router.push('/')}
-          >
-            Return to Home
-          </Button>
-        </VStack>
-      </VStack>
+    <Box textAlign="center" py={10} px={6}>
+      <Heading
+        display="inline-block"
+        as="h2"
+        size="2xl"
+        bgGradient="linear(to-r, red.400, red.600)"
+        backgroundClip="text"
+      >
+        Access Denied
+      </Heading>
+      <Text fontSize="18px" mt={3} mb={2}>
+        You don&apos;t have permission to access this page
+      </Text>
+      <Text color={'gray.500'} mb={6}>
+        Current role: {user?.role}
+      </Text>
+
+      <Button
+        colorScheme="blue"
+        bgGradient="linear(to-r, blue.400, blue.500, blue.600)"
+        color="white"
+        variant="solid"
+        onClick={() => router.push('/')}
+      >
+        Go to Home
+      </Button>
     </Box>
   );
 }

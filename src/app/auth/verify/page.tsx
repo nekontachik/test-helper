@@ -1,30 +1,39 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { EmailVerification } from '@/components/EmailVerification';
 
-import { useSearchParams } from 'next/navigation';
-import { AuthLayout } from '@/components/AuthLayout';
-import { AuthVerification } from '@/components/AuthVerification';
-import { VerificationStatus } from '@/components/VerificationStatus';
+export default async function VerifyPage() {
+  const session = await getServerSession(authOptions);
 
-export default function VerifyPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams?.get('token');
-  const email = searchParams?.get('email');
-
-  if (!token && !email) {
-    return (
-      <AuthLayout>
-        <div>Invalid verification link</div>
-      </AuthLayout>
-    );
+  if (!session?.user) {
+    redirect('/auth/signin');
   }
 
+  if (session.user.emailVerified) {
+    redirect('/dashboard');
+  }
+
+  const handleResendVerification = async () => {
+    'use server';
+    
+    const response = await fetch('/api/auth/verify-email', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: session.user.email }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to resend verification email');
+    }
+  };
+
   return (
-    <AuthLayout>
-      {token ? (
-        <AuthVerification token={token} />
-      ) : (
-        <VerificationStatus email={email!} />
-      )}
-    </AuthLayout>
+    <div className="container max-w-lg py-8">
+      <EmailVerification 
+        email={session.user.email} 
+        onResend={handleResendVerification} 
+      />
+    </div>
   );
 }

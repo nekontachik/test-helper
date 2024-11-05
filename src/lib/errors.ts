@@ -59,10 +59,16 @@ export class AuthorizationError extends AppError {
   }
 }
 
-export class RateLimitError extends ApplicationError {
-  constructor(message: string) {
-    super(message);
+export class RateLimitError extends AppError {
+  public resetIn: number;
+
+  constructor(
+    message: string,
+    resetIn: number
+  ) {
+    super(message, 429, 'RATE_LIMIT_ERROR');
     this.name = 'RateLimitError';
+    this.resetIn = resetIn;
   }
 }
 
@@ -75,6 +81,21 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.code = code;
     this.statusCode = statusCode;
+  }
+}
+
+export class SessionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SessionError';
+  }
+}
+
+export class SecurityError extends AppError {
+  constructor(message: string) {
+    super(message, 403, 'SECURITY_ERROR');
+    this.name = 'SecurityError';
+    Object.setPrototypeOf(this, SecurityError.prototype);
   }
 }
 
