@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
-import { ActionType, ResourceType } from '@/types/rbac';
+import { ActionType, ResourceType, UserRole } from '@/types/rbac';
 import { RateLimitError } from '@/lib/errors/RateLimitError';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import logger from '@/lib/logger';
@@ -21,8 +21,6 @@ interface ProtectConfig {
 
 /**
  * Higher-order function that adds protection to API routes
- * @param handler - The route handler to protect
- * @param config - Protection configuration
  */
 export function withProtect(
   handler: (request: Request, session: Session) => Promise<Response>,
@@ -57,7 +55,7 @@ export function withProtect(
 
       // Check RBAC permissions
       const hasPermission = await RBACService.can(
-        session.user.role,
+        session.user.role as UserRole,
         config.action,
         config.resource
       );
@@ -80,7 +78,7 @@ export function withProtect(
         const ip = request.headers.get('x-forwarded-for') || 'unknown';
 
         try {
-          await rateLimiter.checkLimit(ip);
+          await rateLimiter.checkLimit(ip, config.rateLimit);
         } catch (error) {
           if (error instanceof RateLimitError) {
             return NextResponse.json(
@@ -88,7 +86,7 @@ export function withProtect(
               { 
                 status: 429, 
                 headers: { 
-                  'Retry-After': String(Math.ceil(error.resetIn / 1000))
+                  'Retry-After': String(Math.ceil(error.info.resetIn / 1000))
                 } 
               }
             );

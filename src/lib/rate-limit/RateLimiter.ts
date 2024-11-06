@@ -7,6 +7,12 @@ interface RateLimitConfig {
   duration: number;
 }
 
+interface RateLimitInfo {
+  resetIn: number;
+  limit: number;
+  remaining: number;
+}
+
 export class RateLimiter {
   private static redis: Redis;
   private static cache = new Map<string, { count: number; expires: number }>();
@@ -43,7 +49,11 @@ export class RateLimiter {
       if (cached) {
         if (cached.count >= config.points) {
           const resetIn = cached.expires - Date.now();
-          throw new RateLimitError('Rate limit exceeded', resetIn);
+          throw new RateLimitError('Rate limit exceeded', {
+            resetIn,
+            limit: config.points,
+            remaining: 0
+          });
         }
         return;
       }
@@ -54,12 +64,18 @@ export class RateLimiter {
         .expire(key, config.duration)
         .exec();
 
-      // Cache the result
-      this.setCachedValue(key, count as number, Date.now() + (config.duration * 1000));
+      const currentCount = count as number;
 
-      if ((count as number) > config.points) {
+      // Cache the result
+      this.setCachedValue(key, currentCount, Date.now() + (config.duration * 1000));
+
+      if (currentCount > config.points) {
         const ttl = await RateLimiter.redis.ttl(key);
-        throw new RateLimitError('Rate limit exceeded', ttl * 1000);
+        throw new RateLimitError('Rate limit exceeded', {
+          resetIn: ttl * 1000,
+          limit: config.points,
+          remaining: 0
+        });
       }
     } catch (error) {
       if (error instanceof RateLimitError) {

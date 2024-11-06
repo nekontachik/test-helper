@@ -8,8 +8,8 @@ export async function generateVerificationToken(email: string): Promise<string> 
   await prisma.user.update({
     where: { email },
     data: {
-      verifyToken: token,
-      verifyTokenExpiry: expires,
+      emailVerificationToken: token,
+      emailVerificationExpires: expires,
     },
   });
 
@@ -19,8 +19,8 @@ export async function generateVerificationToken(email: string): Promise<string> 
 export async function validateVerificationToken(token: string) {
   const user = await prisma.user.findFirst({
     where: {
-      verifyToken: token,
-      verifyTokenExpiry: {
+      emailVerificationToken: token,
+      emailVerificationExpires: {
         gt: new Date(),
       },
     },
@@ -34,8 +34,8 @@ export async function validateVerificationToken(token: string) {
     where: { id: user.id },
     data: {
       emailVerified: new Date(),
-      verifyToken: null,
-      verifyTokenExpiry: null,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
     },
   });
 

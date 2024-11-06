@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import { ActivityService } from './activityService';
+import type { Prisma } from '@prisma/client';
 
 interface ApiKeyMetadata {
   name: string;
@@ -22,12 +23,15 @@ export class ApiKeyService {
         hashedKey,
         name: metadata.name,
         expiresAt: metadata.expiresAt,
-        scopes: metadata.scopes,
+        scopesData: JSON.stringify(metadata.scopes),
       },
     });
 
-    await ActivityService.log(userId, 'API_KEY_CREATED', {
-      metadata: { name: metadata.name },
+    await ActivityService.log(userId, 'API_KEY_MANAGEMENT', {
+      metadata: { 
+        name: metadata.name,
+        action: 'created',
+      },
     });
 
     return key;
@@ -50,8 +54,11 @@ export class ApiKeyService {
 
     if (!apiKey) return false;
 
+    // Parse scopes from JSON string
+    const scopes = JSON.parse(apiKey.scopesData || '[]') as string[];
+
     // Check if key has all required scopes
-    return requiredScopes.every(scope => apiKey.scopes.includes(scope));
+    return requiredScopes.every(scope => scopes.includes(scope));
   }
 
   static async revokeApiKey(userId: string, keyId: string): Promise<void> {
@@ -62,8 +69,11 @@ export class ApiKeyService {
       },
     });
 
-    await ActivityService.log(userId, 'API_KEY_REVOKED', {
-      metadata: { keyId },
+    await ActivityService.log(userId, 'API_KEY_MANAGEMENT', {
+      metadata: { 
+        keyId,
+        action: 'revoked',
+      },
     });
   }
 

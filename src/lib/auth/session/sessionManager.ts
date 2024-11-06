@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { UAParser } from 'ua-parser-js';
-import { AuditService } from '@/services/audit';
+import { AuditService } from '@/lib/audit/auditService';
 import { logger } from '@/lib/utils/logger';
 import { SessionError } from '@/lib/errors';
 import { AuditAction } from '@/types/audit';

@@ -7,13 +7,29 @@ export enum AuditAction {
   SESSION_CREATED = 'session_created',
   SESSION_INVALIDATED = 'session_invalidated',
   SESSION_EXPIRED = 'session_expired',
+  TWO_FACTOR_VERIFY = 'two_factor_verify',
+  TWO_FACTOR_ENABLE = 'two_factor_enable',
+  TWO_FACTOR_DISABLE = 'two_factor_disable',
+  ACCOUNT_LOCKOUT = 'account_lockout',
+  USER_LOGIN = 'user_login',
+  USER_LOGOUT = 'user_logout',
+  USER_LOGIN_FAILED = 'user_login_failed',
 }
 
-export type AuditLogType = 'system' | 'user_action' | 'email_verification' | 'auth';
+export enum AuditLogType {
+  SYSTEM = 'system',
+  USER_ACTION = 'user_action',
+  EMAIL_VERIFICATION = 'email_verification',
+  AUTH = 'auth'
+}
 
 export interface AuditLogData {
   userId: string;
   type: AuditLogType;
   action: AuditAction;
   metadata: Record<string, unknown>;
+  context?: {
+    ip?: string;
+    userAgent?: string;
+  };
 } 

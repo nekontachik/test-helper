@@ -1,6 +1,25 @@
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Build output
+.next
+out
+dist
+build
+
+# Dependencies
 node_modules
-node_modules
-# Custom type declarations
-*.d.ts
-!src/types/**/*.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.idea
+.vscode
+*.swp
+*.swo

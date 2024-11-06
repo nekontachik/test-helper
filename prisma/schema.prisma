@@ -27,6 +27,8 @@ model User {
   name                  String?
   role                  String    @default("USER")
   emailVerified         DateTime?
+  emailVerificationToken      String?
+  emailVerificationExpires    DateTime?
   image                 String?
   status               String    @default("ACTIVE")
   twoFactorEnabled      Boolean   @default(false)
@@ -77,6 +79,7 @@ model Session {
   deviceInfo   String?
   createdAt    DateTime         @default(now())
   activities   SessionActivity[]
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     // Generate new verification token
-    const token = await TokenService.generateVerificationToken(user.email);
+    const token = await TokenService.generateEmailVerificationToken(user.email);
     await sendVerificationEmail(user.email, user.name || 'User');
 
     return NextResponse.json({

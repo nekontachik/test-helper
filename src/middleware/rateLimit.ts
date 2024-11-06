@@ -21,7 +21,7 @@ interface RateLimitConfig {
 
 interface RateLimitInfo {
   remaining: number;
-  reset: Date;
+  resetIn: number;
   limit: number;
 }
 
@@ -51,19 +51,19 @@ class RateLimiter {
       .exec();
 
     const remaining = Math.max(0, this.config.points - (count as number));
-    const reset = new Date((now + this.config.duration) * 1000);
+    const resetIn = this.config.duration * 1000;
 
     if (remaining < 0) {
       throw new RateLimitError('Too many requests', {
         limit: this.config.points,
         remaining,
-        reset,
+        resetIn,
       });
     }
 
     return {
       remaining,
-      reset,
+      resetIn,
       limit: this.config.points,
     };
   }
@@ -106,7 +106,7 @@ export async function rateLimitMiddleware(
     // Add rate limit headers
     response.headers.set('X-RateLimit-Limit', String(result.limit));
     response.headers.set('X-RateLimit-Remaining', String(result.remaining));
-    response.headers.set('X-RateLimit-Reset', result.reset.toISOString());
+    response.headers.set('X-RateLimit-Reset', String(Math.ceil(result.resetIn / 1000)));
 
     return response;
   } catch (error) {
@@ -120,14 +120,14 @@ export async function rateLimitMiddleware(
       return NextResponse.json(
         { 
           error: 'Too Many Requests',
-          retryAfter: error.info.reset,
+          retryAfter: Math.ceil(error.info.resetIn / 1000),
         },
         { 
           status: 429,
           headers: {
-            'Retry-After': Math.ceil((error.info.reset.getTime() - Date.now()) / 1000).toString(),
+            'Retry-After': String(Math.ceil(error.info.resetIn / 1000)),
             'X-RateLimit-Limit': String(error.info.limit),
-            'X-RateLimit-Reset': error.info.reset.toISOString(),
+            'X-RateLimit-Reset': String(Math.ceil(error.info.resetIn / 1000)),
           },
         }
       );

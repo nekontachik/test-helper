@@ -6,36 +6,26 @@ export * from './security';
 export class AppError extends Error {
   constructor(
     message: string,
-    public code: string,
     public statusCode: number = 500,
-    public metadata?: Record<string, unknown>
+    public code?: string
   ) {
     super(message);
-    this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
+    this.name = 'AppError';
   }
 }
 
 // Authentication related errors
 export class AuthenticationError extends AppError {
-  constructor(
-    message: string,
-    code: string = 'AUTHENTICATION_ERROR',
-    statusCode: number = 401
-  ) {
-    super(message, code, statusCode);
+  constructor(message: string) {
+    super(message, 401, 'AUTHENTICATION_ERROR');
     this.name = 'AuthenticationError';
   }
 }
 
 // Authorization related errors
 export class AuthorizationError extends AppError {
-  constructor(
-    message: string,
-    code: string = 'AUTHORIZATION_ERROR',
-    statusCode: number = 403
-  ) {
-    super(message, code, statusCode);
+  constructor(message: string) {
+    super(message, 403, 'AUTHORIZATION_ERROR');
     this.name = 'AuthorizationError';
   }
 }
@@ -47,7 +37,7 @@ export class TokenError extends AppError {
     code: string = 'TOKEN_ERROR',
     statusCode: number = 401
   ) {
-    super(message, code, statusCode);
+    super(message, statusCode, code);
     this.name = 'TokenError';
   }
 }
@@ -60,31 +50,23 @@ export class RateLimitError extends AppError {
     code: string = 'RATE_LIMIT_ERROR',
     statusCode: number = 429
   ) {
-    super(message, code, statusCode);
+    super(message, statusCode, code);
     this.name = 'RateLimitError';
   }
 }
 
 // Validation errors
 export class ValidationError extends AppError {
-  constructor(
-    message: string,
-    code: string = 'VALIDATION_ERROR',
-    statusCode: number = 400
-  ) {
-    super(message, code, statusCode);
+  constructor(message: string) {
+    super(message, 400, 'VALIDATION_ERROR');
     this.name = 'ValidationError';
   }
 }
 
 // Not found errors
 export class NotFoundError extends AppError {
-  constructor(
-    message: string,
-    code: string = 'NOT_FOUND_ERROR',
-    statusCode: number = 404
-  ) {
-    super(message, code, statusCode);
+  constructor(message: string) {
+    super(message, 404, 'NOT_FOUND');
     this.name = 'NotFoundError';
   }
 }
@@ -121,4 +103,12 @@ export const errorStatusCodes: Record<string, number> = {
 // Get HTTP status code for error
 export function getErrorStatus(error: Error): number {
   return errorStatusCodes[error.constructor.name] || 500;
-} 
+}
+
+// Database errors
+export class DatabaseError extends AppError {
+  constructor(message: string) {
+    super(message, 500, 'DATABASE_ERROR');
+    this.name = 'DatabaseError';
+  }
+}

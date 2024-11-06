@@ -1,7 +1,16 @@
-import { UserRole } from './rbac';
 import { AuditAction } from './audit';
 
+// Define account status type
 export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
+
+// Define user roles
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  PROJECT_MANAGER = 'PROJECT_MANAGER',
+  TESTER = 'TESTER',
+  VIEWER = 'VIEWER',
+  USER = 'USER'
+}
 
 export interface AuthUser {
   id: string;

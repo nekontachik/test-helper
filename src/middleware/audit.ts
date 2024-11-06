@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { AuditService, AuditAction } from '@/lib/audit/auditService';
-import { AuditLogType } from '@/types/audit';
+import { AuditService } from '@/lib/audit/auditService';
+import { AuditAction, AuditLogType } from '@/types/audit';
 import type { JWT } from 'next-auth/jwt';
-import type { AuditLogData } from '@/lib/audit/auditService';
 
 export async function auditLogMiddleware(request: Request): Promise<Response> {
   try {
@@ -13,7 +12,7 @@ export async function auditLogMiddleware(request: Request): Promise<Response> {
       return NextResponse.next();
     }
 
-    const auditData: AuditLogData = {
+    const auditData = {
       type: AuditLogType.SYSTEM,
       userId: token.sub,
       action: AuditAction.API_REQUEST,

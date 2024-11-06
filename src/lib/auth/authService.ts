@@ -97,6 +97,20 @@ export class AuthService {
         expiresAt: session.expiresAt.getTime(),
       };
     } catch (error) {
+      // Log failed login attempt
+      if (error instanceof AuthenticationError) {
+        await AuditService.log({
+          type: AuditLogType.AUTH,
+          userId: credentials.email, // Use email as userId for failed attempts
+          action: AuditAction.USER_LOGIN_FAILED,
+          metadata: {
+            ip: credentials.ip,
+            userAgent: credentials.userAgent,
+            reason: error.message,
+          },
+        });
+      }
+
       logger.error('Login failed:', error);
       throw error;
     }

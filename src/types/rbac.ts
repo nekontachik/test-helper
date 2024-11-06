@@ -1,47 +1,42 @@
-export type UserRole = 'ADMIN' | 'PROJECT_MANAGER' | 'TESTER' | 'VIEWER';
-
-export const UserRoles = {
-  ADMIN: 'ADMIN',
-  PROJECT_MANAGER: 'PROJECT_MANAGER',
-  TESTER: 'TESTER',
-  VIEWER: 'VIEWER'
-} as const;
-
-export enum ResourceType {
-  PROJECT = 'project',
-  TEST_CASE = 'test-case',
-  TEST_RUN = 'test-run',
-  USER = 'user',
-  REPORT = 'report',
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  PROJECT_MANAGER = 'PROJECT_MANAGER',
+  TESTER = 'TESTER',
+  VIEWER = 'VIEWER',
+  USER = 'USER'
 }
 
-export enum ActionType {
+export enum Action {
   CREATE = 'create',
   READ = 'read',
   UPDATE = 'update',
   DELETE = 'delete',
-  MANAGE = 'manage',
+  MANAGE = 'manage'
+}
+
+export enum Resource {
+  PROJECT = 'project',
+  TEST_CASE = 'test_case',
+  TEST_RUN = 'test_run',
+  TEST_SUITE = 'test_suite',
+  USER = 'user',
+  REPORT = 'report',
+  SETTINGS = 'settings'
+}
+
+export interface RBACContext {
+  userId?: string;
+  projectId?: string;
+  teamId?: string;
 }
 
 export interface Permission {
-  action: ActionType;
-  resource: ResourceType;
-  conditions?: {
-    isOwner?: boolean;
-    teamMember?: boolean;
-    status?: string[];
-  };
+  action: Action;
+  resource: Resource;
+  conditions?: Record<string, unknown>;
 }
 
-export interface RBACRule {
-  role: UserRole;
+export interface Role {
+  name: UserRole;
   permissions: Permission[];
-}
-
-export interface ResourceContext {
-  userId?: string;
-  resourceOwnerId?: string;
-  teamMembers?: string[];
-  status?: string;
-  projectId?: string;
 } 
