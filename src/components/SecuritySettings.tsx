@@ -22,7 +22,7 @@ interface SecuritySettingsProps {
 
 export function SecuritySettings({ user }: SecuritySettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(user.twoFactorEnabled);
   const toast = useToast();
 
   const handleToggle2FA = async () => {

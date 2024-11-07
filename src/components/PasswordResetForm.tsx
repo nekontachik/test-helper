@@ -84,8 +84,8 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
             </AlertDescription>
           </Alert>
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form form={form} onSubmit={onSubmit}>
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="password"
@@ -119,7 +119,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
               >
                 Reset Password
               </Button>
-            </form>
+            </div>
           </Form>
         )}
       </CardContent>

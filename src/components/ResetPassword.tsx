@@ -13,7 +13,15 @@ import { useRouter } from 'next/navigation';
 import { PasswordInput } from './PasswordInput';
 import { AuthFormWrapper } from './AuthFormWrapper';
 
+/**
+ * ResetPassword Component
+ * 
+ * Allows users to reset their password using a reset token.
+ * Includes password validation and feedback.
+ */
+
 interface ResetPasswordProps {
+  /** The password reset token from the URL */
   token: string;
 }
 
@@ -69,8 +77,9 @@ export function ResetPassword({ token }: ResetPasswordProps) {
             <FormLabel>New Password</FormLabel>
             <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onValueChange={setPassword}
               placeholder="Enter your new password"
+              showStrengthMeter
             />
           </FormControl>
           <Button
@@ -86,3 +95,43 @@ export function ResetPassword({ token }: ResetPasswordProps) {
     </AuthFormWrapper>
   );
 }
+
+/**
+ * Usage Examples:
+ * 
+ * ```tsx
+ * // Basic usage with reset token
+ * <ResetPassword token="reset_token_123" />
+ * ```
+ */
+
+/**
+ * Accessibility Features:
+ * - Semantic form structure
+ * - Proper form labels
+ * - Loading state indication
+ * - Error feedback
+ * - Keyboard navigation
+ * 
+ * State Management:
+ * - Password input state
+ * - Loading state
+ * - Form submission state
+ * 
+ * Error Handling:
+ * - API error handling
+ * - User feedback via toast
+ * - Form validation
+ * 
+ * Security Considerations:
+ * - Password strength validation
+ * - Token validation
+ * - CSRF protection
+ * - Rate limiting
+ * 
+ * Dependencies:
+ * - @chakra-ui/react
+ * - next/navigation
+ * - PasswordInput component
+ * - AuthFormWrapper component
+ */

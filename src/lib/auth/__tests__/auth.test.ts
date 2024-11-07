@@ -4,6 +4,7 @@ import { TokenService } from '../tokens/tokenService';
 import { SecurityService } from '../securityService';
 import { compare } from 'bcrypt';
 import { UserRole } from '@/types/auth';
+import { TokenType, TokenPayload } from '@/types/token';
 
 jest.mock('@/lib/prisma');
 jest.mock('bcrypt');
@@ -57,37 +58,45 @@ describe('AuthService', () => {
     });
   });
 
-  describe('initiateEmailVerification', () => {
+  describe('email verification', () => {
     it('should generate token and send email', async () => {
       const mockToken = 'mock-token-123';
-      (TokenService.createEmailVerificationToken as jest.Mock).mockResolvedValue(mockToken);
+      (TokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
 
-      await AuthService.initiateEmailVerification(
-        mockUser.id,
-        mockUser.email,
-        mockUser.name
-      );
+      await AuthService.initiateEmailVerification({
+        userId: mockUser.id,
+        email: mockUser.email,
+        name: mockUser.name
+      });
 
-      expect(TokenService.createEmailVerificationToken).toHaveBeenCalledWith(mockUser.email);
+      expect(TokenService.generateToken).toHaveBeenCalledWith({
+        userId: mockUser.id,
+        email: mockUser.email,
+        type: TokenType.EMAIL_VERIFICATION
+      });
     });
 
     it('should handle email sending failure', async () => {
-      (TokenService.createEmailVerificationToken as jest.Mock).mockRejectedValue(new Error('Failed to send'));
+      (TokenService.generateToken as jest.Mock).mockRejectedValue(new Error('Failed to send'));
 
       await expect(
-        AuthService.initiateEmailVerification(mockUser.id, mockUser.email, mockUser.name)
+        AuthService.initiateEmailVerification({
+          userId: mockUser.id,
+          email: mockUser.email,
+          name: mockUser.name
+        })
       ).rejects.toThrow('Failed to send');
     });
-  });
-
-  describe('verifyEmail', () => {
-    const mockToken = 'valid-token-123';
 
     it('should verify email with valid token', async () => {
-      (TokenService.verifyToken as jest.Mock).mockResolvedValue({
+      const mockToken = 'valid-token-123';
+      const mockPayload = {
+        userId: mockUser.id,
         email: mockUser.email,
-        type: 'EMAIL_VERIFICATION',
-      });
+        type: TokenType.EMAIL_VERIFICATION
+      };
+
+      (TokenService.validateToken as jest.Mock).mockResolvedValue(mockPayload);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockUser,
         emailVerified: new Date(),
@@ -98,39 +107,45 @@ describe('AuthService', () => {
     });
 
     it('should handle invalid token', async () => {
-      (TokenService.verifyToken as jest.Mock).mockResolvedValue(null);
+      const mockToken = 'invalid-token';
+      (TokenService.validateToken as jest.Mock).mockResolvedValue(null);
 
-      await expect(AuthService.verifyEmail(mockToken)).rejects.toThrow('Invalid verification token');
+      await expect(AuthService.verifyEmail(mockToken))
+        .rejects.toThrow('Invalid verification token');
     });
   });
 
-  describe('initiatePasswordReset', () => {
+  describe('password reset', () => {
     it('should not reveal user existence for non-existent email', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await AuthService.initiatePasswordReset('nonexistent@example.com');
-      expect(TokenService.createToken).not.toHaveBeenCalled();
+      expect(TokenService.generateToken).not.toHaveBeenCalled();
     });
 
     it('should generate reset token for existing user', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       const mockToken = 'reset-token-123';
-      (TokenService.createToken as jest.Mock).mockResolvedValue(mockToken);
+      (TokenService.generateToken as jest.Mock).mockResolvedValue(mockToken);
 
       await AuthService.initiatePasswordReset(mockUser.email);
-      expect(TokenService.createToken).toHaveBeenCalled();
+      expect(TokenService.generateToken).toHaveBeenCalledWith({
+        userId: mockUser.id,
+        email: mockUser.email,
+        type: TokenType.PASSWORD_RESET
+      });
     });
-  });
-
-  describe('resetPassword', () => {
-    const mockToken = 'valid-reset-token';
-    const newPassword = 'newPassword123';
 
     it('should reset password with valid token', async () => {
-      (TokenService.verifyToken as jest.Mock).mockResolvedValue({
+      const mockToken = 'valid-reset-token';
+      const newPassword = 'newPassword123';
+      const mockPayload = {
+        userId: mockUser.id,
         email: mockUser.email,
-        type: 'PASSWORD_RESET',
-      });
+        type: TokenType.PASSWORD_RESET
+      };
+
+      (TokenService.validateToken as jest.Mock).mockResolvedValue(mockPayload);
       (SecurityService.hashPassword as jest.Mock).mockResolvedValue('newHashedPassword');
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockUser,
@@ -139,11 +154,13 @@ describe('AuthService', () => {
 
       const result = await AuthService.resetPassword(mockToken, newPassword);
       expect(result).toBeDefined();
-      expect(TokenService.revokeToken).toHaveBeenCalled();
+      expect(TokenService.invalidateToken).toHaveBeenCalledWith(mockToken);
     });
 
     it('should handle invalid reset token', async () => {
-      (TokenService.verifyToken as jest.Mock).mockResolvedValue(null);
+      const mockToken = 'invalid-token';
+      const newPassword = 'newPassword123';
+      (TokenService.validateToken as jest.Mock).mockResolvedValue(null);
 
       await expect(AuthService.resetPassword(mockToken, newPassword))
         .rejects.toThrow('Invalid reset token');
@@ -152,22 +169,28 @@ describe('AuthService', () => {
 });
 
 describe('TokenService', () => {
-  it('should create and verify tokens', async () => {
-    const payload = { email: 'test@example.com', type: TokenType.EMAIL_VERIFICATION };
-    const token = await TokenService.createToken(payload);
-    const verified = await TokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+  it('should generate and validate tokens', async () => {
+    const payload: TokenPayload = {
+      userId: '1',
+      email: 'test@example.com',
+      type: TokenType.EMAIL_VERIFICATION
+    };
+    
+    const token = await TokenService.generateToken(payload);
+    const verified = await TokenService.validateToken(token);
     expect(verified).toMatchObject(payload);
   });
-});
 
-describe('Token Revocation', () => {
-  it('should revoke tokens', async () => {
-    const token = await TokenService.createToken({
-      type: TokenType.PASSWORD_RESET,
-      email: 'test@example.com'
-    });
-    await TokenService.revokeToken(token, TokenType.PASSWORD_RESET);
-    const verified = await TokenService.verifyToken(token, TokenType.PASSWORD_RESET);
+  it('should invalidate tokens', async () => {
+    const payload: TokenPayload = {
+      userId: '1',
+      email: 'test@example.com',
+      type: TokenType.PASSWORD_RESET
+    };
+    
+    const token = await TokenService.generateToken(payload);
+    await TokenService.invalidateToken(token);
+    const verified = await TokenService.validateToken(token);
     expect(verified).toBeNull();
   });
 }); 

@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AuthUser } from '@/types/auth';
+import type { AuthUser } from '@/types/auth';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -73,8 +73,8 @@ export function ProfileInformation({ user }: ProfileInformationProps) {
           </Alert>
         )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form form={form} onSubmit={onSubmit}>
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -111,7 +111,7 @@ export function ProfileInformation({ user }: ProfileInformationProps) {
                 Save Changes
               </Button>
             </div>
-          </form>
+          </div>
         </Form>
       </CardContent>
     </Card>

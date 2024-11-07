@@ -1,6 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { RBACService } from '@/lib/auth/rbac/service';
-import { ActionType, ResourceType, UserRole } from '@/types/rbac';
+import { Action, Resource } from '@/types/rbac';
 import type { Session, AuthUser } from '@/lib/auth/types';
 
 interface ExtendedSession extends Session {
@@ -11,8 +11,8 @@ export function usePermissions() {
   const { data: session } = useSession() as { data: ExtendedSession | null };
 
   const can = async (
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: {
       userId?: string;
       resourceOwnerId?: string;

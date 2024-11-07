@@ -1,46 +1,79 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
-import { AuthError } from '@/lib/errors/AuthError';
-import type { Permission } from '@/types/rbac';
-import type { JWT } from 'next-auth/jwt';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { RBACService } from '@/lib/auth/rbac/service';
+import { Action, Resource, UserRole } from '@/types/rbac';
+import logger from '@/lib/logger';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { Session } from 'next-auth';
 
-interface AuthMiddlewareConfig {
-  permissions?: Permission[];
+interface AuthOptions {
+  requireVerified?: boolean;
+  require2FA?: boolean;
+  allowedRoles?: UserRole[];
+  action?: Action;
+  resource?: Resource;
 }
 
-interface AuthToken extends JWT {
-  permissions: Permission[];
+interface AuthMiddlewareParams {
+  session: Session | null;
+  requireAuth?: boolean;
+  requireVerified?: boolean;
+  require2FA?: boolean;
+  allowedRoles?: string[];
+  action: Action;
+  resource: Resource;
+}
+
+interface AuthResult {
+  success: boolean;
+  error?: string;
+  status?: number;
 }
 
 export async function authMiddleware(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  next: () => void,
-  config: AuthMiddlewareConfig = {}
-) {
+  params: AuthMiddlewareParams
+): Promise<AuthResult> {
   try {
-    const token = await getToken({ req }) as AuthToken | null;
-
-    if (!token) {
-      throw new AuthError('Unauthorized', 'UNAUTHORIZED', 401);
+    const session = params.session;
+    if (!session?.user) {
+      return { success: false, error: 'Unauthorized', status: 401 };
     }
 
-    if (config.permissions?.length) {
-      const hasPermission = config.permissions.every(permission =>
-        token.permissions?.includes(permission)
-      );
+    // Check email verification
+    if (params.requireVerified && !session.user.emailVerified) {
+      return { success: false, error: 'Email verification required', status: 403 };
+    }
 
-      if (!hasPermission) {
-        throw new AuthError('Insufficient permissions', 'FORBIDDEN', 403);
+    // Check 2FA
+    if (params.require2FA && !session.user.twoFactorAuthenticated) {
+      return { success: false, error: '2FA verification required', status: 403 };
+    }
+
+    // Check roles
+    if (params.allowedRoles?.length) {
+      const hasRole = params.allowedRoles.includes(session.user.role as UserRole);
+      if (!hasRole) {
+        return { success: false, error: 'Insufficient permissions', status: 403 };
       }
     }
 
-    next();
-  } catch (error) {
-    if (error instanceof AuthError) {
-      res.status(error.status).json({ error: error.message, code: error.code });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
+    // Check RBAC permissions
+    if (params.action && params.resource) {
+      const hasPermission = await RBACService.can(
+        session.user.role as UserRole,
+        params.action,
+        params.resource
+      );
+
+      if (!hasPermission) {
+        return { success: false, error: 'Insufficient permissions', status: 403 };
+      }
     }
+
+    return { success: true };
+  } catch (error) {
+    logger.error('Auth middleware error:', error);
+    return { success: false, error: 'Internal server error', status: 500 };
   }
 }

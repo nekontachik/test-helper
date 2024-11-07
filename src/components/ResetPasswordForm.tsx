@@ -90,7 +90,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             <FormLabel>New Password</FormLabel>
             <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onValueChange={setPassword}
               placeholder="Enter your new password"
             />
           </FormControl>
@@ -98,7 +98,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             <FormLabel>Confirm Password</FormLabel>
             <PasswordInput
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onValueChange={setConfirmPassword}
               placeholder="Confirm your new password"
             />
           </FormControl>

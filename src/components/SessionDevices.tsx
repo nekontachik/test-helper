@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@chakra-ui/react';
+import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Laptop, Smartphone, Globe } from 'lucide-react';
 
@@ -108,7 +108,7 @@ export function SessionDevices() {
             </div>
             {!device.isCurrent && (
               <Button
-                variant="destructive"
+                colorScheme="red"
                 size="sm"
                 onClick={() => handleRevokeSession(device.id)}
               >

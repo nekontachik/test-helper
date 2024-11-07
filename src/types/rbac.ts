@@ -15,13 +15,12 @@ export enum Action {
 }
 
 export enum Resource {
-  PROJECT = 'project',
-  TEST_CASE = 'test_case',
-  TEST_RUN = 'test_run',
-  TEST_SUITE = 'test_suite',
-  USER = 'user',
-  REPORT = 'report',
-  SETTINGS = 'settings'
+  PROJECT = 'PROJECT',
+  TEST_CASE = 'TEST_CASE',
+  TEST_RUN = 'TEST_RUN',
+  REPORT = 'REPORT',
+  ACCOUNT = 'ACCOUNT',
+  USER = 'USER'
 }
 
 export interface Permission {

@@ -11,9 +11,9 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import {
-  CopyIcon,
-  ViewIcon,
-  RepeatIcon,
+  DuplicateIcon,
+  ViewOffIcon,
+  RepeatClockIcon,
   SettingsIcon,
 } from '@chakra-ui/icons';
 import NextLink from 'next/link';
@@ -37,9 +37,9 @@ interface SidebarProps {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Projects', href: '/projects', icon: CopyIcon },
-  { label: 'Test Cases', href: '/test-cases', icon: ViewIcon },
-  { label: 'Test Runs', href: '/test-runs', icon: RepeatIcon },
+  { label: 'Projects', href: '/projects', icon: DuplicateIcon },
+  { label: 'Test Cases', href: '/test-cases', icon: ViewOffIcon },
+  { label: 'Test Runs', href: '/test-runs', icon: RepeatClockIcon },
   { label: 'Reports', href: '/reports', icon: SettingsIcon },
 ];
 

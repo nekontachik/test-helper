@@ -49,4 +49,9 @@ export class SecurityService {
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     };
   }
+
+  static async hashPassword(password: string): Promise<string> {
+    // Mock implementation for hashing password
+    return `hashed-${password}`;
+  }
 } 

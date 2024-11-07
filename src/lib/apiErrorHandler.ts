@@ -1,29 +1,42 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
-import { AuthError } from '@/lib/errors/AuthError';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import logger from '@/lib/logger';
 
-export function handleApiError(error: unknown) {
-  console.error('API Error:', error);
+export interface ApiErrorResponse {
+  error: string;
+  details?: unknown;
+  code?: string;
+}
+
+export function apiErrorHandler(error: unknown): NextResponse<ApiErrorResponse> {
+  logger.error('API Error:', error);
 
   if (error instanceof ZodError) {
     return NextResponse.json(
-      { error: 'Validation error', details: error.errors },
+      { 
+        error: 'Validation error', 
+        details: error.errors 
+      },
       { status: 400 }
     );
   }
 
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (error instanceof PrismaClientKnownRequestError) {
     return NextResponse.json(
-      { error: 'Database error', code: error.code },
-      { status: 400 }
+      { 
+        error: 'Database error',
+        code: error.code,
+        details: error.message
+      },
+      { status: 500 }
     );
   }
 
-  if (error instanceof AuthError) {
+  if (error instanceof Error) {
     return NextResponse.json(
-      { error: error.message, code: error.code },
-      { status: error.status }
+      { error: error.message },
+      { status: 500 }
     );
   }
 

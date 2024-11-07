@@ -5,10 +5,18 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { AuthUser } from '@/types/auth';
 import { useRouter } from 'next/navigation';
+import type { AuthUser } from '@/types/auth';
+
+/**
+ * SecuritySettings Component
+ * 
+ * Provides user security management features including password changes,
+ * two-factor authentication setup, and email notification preferences.
+ */
 
 interface SecuritySettingsProps {
+  /** The authenticated user object */
   user: AuthUser;
 }
 
@@ -38,7 +46,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
       }
 
       setStatus('success');
-      setMessage('Notification settings updated');
+      setMessage('Notification settings updated successfully');
     } catch (error) {
       setStatus('error');
       setMessage('Failed to update notification settings');
@@ -57,7 +65,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
           </Alert>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="font-semibold">Password</h3>
@@ -100,4 +108,36 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
       </CardContent>
     </Card>
   );
-} 
+}
+
+/**
+ * Usage Examples:
+ * 
+ * ```tsx
+ * // Basic usage
+ * <SecuritySettings user={currentUser} />
+ * ```
+ */
+
+/**
+ * Accessibility Features:
+ * - Semantic HTML structure
+ * - ARIA labels and roles
+ * - Keyboard navigation support
+ * - High contrast text
+ * 
+ * State Management:
+ * - Status state for operation feedback
+ * - Message state for user notifications
+ * - User settings state from props
+ * 
+ * Error Handling:
+ * - API error handling
+ * - User feedback for failures
+ * - Graceful degradation
+ * 
+ * Security Considerations:
+ * - Protected routes for sensitive operations
+ * - Proper API request handling
+ * - User verification for changes
+ */ 

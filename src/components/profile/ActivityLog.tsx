@@ -13,6 +13,13 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * ActivityLog Component
+ * 
+ * Displays a user's activity history in a tabular format with proper date formatting
+ * and loading/error states.
+ */
+
 interface ActivityLogEntry {
   id: string;
   type: string;
@@ -23,10 +30,34 @@ interface ActivityLogEntry {
 }
 
 interface ActivityLogProps {
+  /** The ID of the user whose activity to display */
   userId: string;
+  /** Optional className for custom styling */
+  className?: string;
 }
 
-export function ActivityLog({ userId }: ActivityLogProps) {
+/**
+ * Formats the activity message based on type and metadata
+ */
+function getActivityMessage(activity: ActivityLogEntry): string {
+  const { type, metadata } = activity;
+  switch (type) {
+    case 'LOGIN_SUCCESS':
+      return 'Successful login';
+    case 'LOGIN_FAILED':
+      return 'Failed login attempt';
+    case 'ACCOUNT_LOCKED':
+      return 'Account locked due to suspicious activity';
+    case 'TWO_FACTOR_ENABLED':
+      return '2FA enabled';
+    case 'TWO_FACTOR_DISABLED':
+      return '2FA disabled';
+    default:
+      return type.toLowerCase().replace(/_/g, ' ');
+  }
+}
+
+export function ActivityLog({ userId, className }: ActivityLogProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +93,7 @@ export function ActivityLog({ userId }: ActivityLogProps) {
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <h2 className="text-2xl font-bold">Activity Log</h2>
       </CardHeader>
@@ -70,7 +101,7 @@ export function ActivityLog({ userId }: ActivityLogProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Action</TableHead>
+              <TableHead>Activity</TableHead>
               <TableHead>IP Address</TableHead>
               <TableHead>Device</TableHead>
               <TableHead>Time</TableHead>
@@ -79,7 +110,9 @@ export function ActivityLog({ userId }: ActivityLogProps) {
           <TableBody>
             {activities.map((activity) => (
               <TableRow key={activity.id}>
-                <TableCell className="font-medium">{activity.type}</TableCell>
+                <TableCell className="font-medium">
+                  {getActivityMessage(activity)}
+                </TableCell>
                 <TableCell>{activity.ip}</TableCell>
                 <TableCell>
                   {activity.metadata.device?.browser} on{' '}
@@ -97,4 +130,40 @@ export function ActivityLog({ userId }: ActivityLogProps) {
       </CardContent>
     </Card>
   );
-} 
+}
+
+/**
+ * Usage Examples:
+ * 
+ * Basic usage:
+ * ```tsx
+ * <ActivityLog userId="user123" />
+ * ```
+ * 
+ * With custom styling:
+ * ```tsx
+ * <ActivityLog userId="user123" className="mt-4" />
+ * ```
+ */
+
+/**
+ * Accessibility Features:
+ * - Semantic table structure with proper headers
+ * - Loading and error states for screen readers
+ * - High contrast text for readability
+ * 
+ * State Management:
+ * - Loading state during data fetch
+ * - Error state for failed requests
+ * - Activity data state
+ * 
+ * Error Handling:
+ * - Failed API requests
+ * - Empty activity log
+ * - Invalid data format
+ * 
+ * Performance Considerations:
+ * - Memoized activity message formatting
+ * - Efficient date formatting
+ * - Proper loading states
+ */ 

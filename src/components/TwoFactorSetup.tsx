@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,9 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 
@@ -25,10 +24,10 @@ const verifySchema = z.object({
 type FormData = z.infer<typeof verifySchema>;
 
 interface TwoFactorSetupProps {
-  onComplete: () => void;
+  onComplete?: string; // URL to redirect to or action identifier
 }
 
-export function TwoFactorSetup({ onComplete }: TwoFactorSetupProps) {
+export function TwoFactorSetup({ onComplete = '/settings' }: TwoFactorSetupProps) {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [status, setStatus] = useState<'initial' | 'configuring' | 'success' | 'error'>('initial');
@@ -57,7 +56,7 @@ export function TwoFactorSetup({ onComplete }: TwoFactorSetupProps) {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
       const response = await fetch('/api/auth/2fa/setup', {
         method: 'PUT',
@@ -68,7 +67,16 @@ export function TwoFactorSetup({ onComplete }: TwoFactorSetupProps) {
       if (!response.ok) throw new Error('Failed to verify 2FA code');
 
       setStatus('success');
-      onComplete();
+      
+      // Handle completion
+      if (onComplete.startsWith('/')) {
+        window.location.href = onComplete;
+      } else {
+        // Emit custom event for parent components
+        window.dispatchEvent(new CustomEvent('2faSetupComplete', {
+          detail: { action: onComplete }
+        }));
+      }
     } catch (error) {
       setStatus('error');
     }
@@ -109,33 +117,31 @@ export function TwoFactorSetup({ onComplete }: TwoFactorSetupProps) {
               <p className="mt-4">2. Enter the verification code from your app:</p>
             </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter 6-digit code"
-                          maxLength={6}
-                          className="text-center text-2xl tracking-widest"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={form.formState.isSubmitting}
-                >
-                  Verify and Enable
-                </Button>
-              </form>
+            <Form form={form} onSubmit={onSubmit} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                        className="text-center text-2xl tracking-widest"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+              >
+                Verify and Enable
+              </Button>
             </Form>
           </>
         )}

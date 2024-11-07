@@ -7,10 +7,19 @@ import { ProfileInformation } from './ProfileInformation';
 import { SecuritySettings } from './SecuritySettings';
 import { SessionsOverview } from './SessionsOverview';
 import { ActivityLog } from './ActivityLog';
-import { AuthUser } from '@/types/auth';
+import type { AuthUser } from '@/types/auth';
+
+/**
+ * ProfileManagement Component  
+ * 
+ * A tabbed interface for managing user profile settings, security, sessions,
+ * and activity logs.
+ */
 
 interface ProfileManagementProps {
+  /** The authenticated user object */
   user: AuthUser;
+  /** The current session ID */
   currentSessionId: string;
 }
 
@@ -49,4 +58,31 @@ export function ProfileManagement({ user, currentSessionId }: ProfileManagementP
       </Tabs>
     </div>
   );
-} 
+}
+
+/**
+ * Usage Examples:
+ * 
+ * ```tsx
+ * // Basic usage
+ * <ProfileManagement user={currentUser} currentSessionId="session_123" />
+ * ```
+ */
+
+/**
+ * Accessibility Features:
+ * - ARIA roles through Tabs components
+ * - Keyboard navigation support
+ * - Focus management between tabs
+ * - Screen reader announcements for tab changes
+ * 
+ * State Management:
+ * - Active tab state
+ * - Form states in child components
+ * - Session tracking
+ * 
+ * Dependencies:
+ * - @/components/ui/tabs
+ * - @/components/ui/card
+ * - Child components for each tab
+ */ 

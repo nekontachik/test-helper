@@ -1,14 +1,12 @@
 // src/app/api/projects/[projectId]/test-cases/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createTestCaseSchema } from '@/lib/validation/schemas';
-import { handleApiError } from '@/lib/apiErrorHandler';
 import { withAuthorization } from '@/middleware/authorize';
 import { withProtect } from '@/middleware/apiProtect';
-import { ActionType, ResourceType } from '@/types/rbac';
+import { Action, Resource } from '@/types/rbac';
 import logger from '@/lib/logger';
-import type { NextRequest } from 'next/server';
 import type { Session } from 'next-auth';
 import type { TestCase, Prisma } from '@prisma/client';
 
@@ -54,8 +52,8 @@ async function handleGET(
       ...(priority && { priority }),
       ...(search && {
         OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } }
+          { title: { contains: search } },
+          { description: { contains: search } }
         ]
       })
     };
@@ -73,7 +71,7 @@ async function handleGET(
               name: true
             }
           },
-          user: {
+          createdBy: {
             select: {
               id: true,
               name: true,
@@ -120,8 +118,9 @@ async function handlePOST(
     const testCase = await prisma.testCase.create({
       data: {
         ...data,
-        userId: request.session?.user.id,
-        deleted: false, // Ensure this field exists in the schema
+        userId: request.session?.user.id || '',
+        deleted: false,
+        description: data.description || '',
       },
       include: {
         project: {
@@ -130,7 +129,7 @@ async function handlePOST(
             name: true
           }
         },
-        user: {
+        createdBy: {
           select: {
             id: true,
             name: true,
@@ -154,10 +153,18 @@ async function handlePOST(
   }
 }
 
+// Simple error handler function
+function handleApiError(error: unknown): Response {
+  return NextResponse.json(
+    { error: 'Internal server error' },
+    { status: 500 }
+  );
+}
+
 export const GET = withProtect(
   withAuthorization(handleGET, {
-    action: ActionType.READ,
-    resource: ResourceType.TEST_CASE,
+    action: Action.READ,
+    resource: Resource.TEST_CASE,
     allowTeamMembers: true,
     getProjectId: async (req: NextRequest) => {
       const url = new URL(req.url);
@@ -166,20 +173,20 @@ export const GET = withProtect(
     },
   }),
   {
-    action: ActionType.READ,
-    resource: ResourceType.TEST_CASE,
-    allowUnverified: false, // Updated based on previous config
+    action: Action.READ,
+    resource: Resource.TEST_CASE,
+    allowUnverified: false,
     rateLimit: {
       points: 100,
-      duration: 60 // 100 requests per minute
+      duration: 60
     }
   }
 );
 
 export const POST = withProtect(
   withAuthorization(handlePOST, {
-    action: ActionType.CREATE,
-    resource: ResourceType.TEST_CASE,
+    action: Action.CREATE,
+    resource: Resource.TEST_CASE,
     allowTeamMembers: true,
     getProjectId: async (req: NextRequest) => {
       const url = new URL(req.url);
@@ -188,12 +195,12 @@ export const POST = withProtect(
     },
   }),
   {
-    action: ActionType.CREATE,
-    resource: ResourceType.TEST_CASE,
-    allowUnverified: false, // Updated based on previous config
+    action: Action.CREATE,
+    resource: Resource.TEST_CASE,
+    allowUnverified: false,
     rateLimit: {
       points: 50,
-      duration: 60 // 50 requests per minute
+      duration: 60
     }
   }
 );

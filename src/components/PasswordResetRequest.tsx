@@ -61,8 +61,8 @@ export function PasswordResetRequest() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form form={form} onSubmit={onSubmit}>
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -83,7 +83,7 @@ export function PasswordResetRequest() {
               >
                 Send Reset Link
               </Button>
-            </form>
+            </div>
           </Form>
         )}
       </CardContent>

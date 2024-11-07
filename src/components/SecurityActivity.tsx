@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
-import { AlertTriangle, Shield, UserX } from 'lucide-react';
+import { AlertTriangle, Shield, UserMinus } from 'lucide-react';
 import { ActivityType } from '@/lib/auth/activityService';
 
 interface ActivityLog {
@@ -46,7 +46,7 @@ export function SecurityActivity() {
       case 'TWO_FACTOR_ENABLED':
         return <Shield className="h-4 w-4 text-green-500" />;
       default:
-        return <UserX className="h-4 w-4 text-gray-500" />;
+        return <UserMinus className="h-4 w-4 text-gray-500" />;
     }
   };
 

@@ -2,9 +2,9 @@
 
 import { Button, Flex } from '@chakra-ui/react';
 import { RoleGuard } from './RoleGuard';
-import { UserRole } from '@/types/auth';
 import { useRole } from '@/hooks/useRole';
 import { useCallback } from 'react';
+import { UserRole } from '@/types/rbac';
 
 interface ProjectActionsProps {
   projectId: string;

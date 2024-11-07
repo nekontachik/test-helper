@@ -1,26 +1,31 @@
+import { UserRole } from './rbac';
 import { AuditAction } from './audit';
+
+export { UserRole };
 
 // Define account status type
 export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
 
-// Define user roles
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  PROJECT_MANAGER = 'PROJECT_MANAGER',
-  TESTER = 'TESTER',
-  VIEWER = 'VIEWER',
-  USER = 'USER'
-}
-
-export interface AuthUser {
+export interface User {
   id: string;
   email: string;
-  name: string | null;
+  name?: string | null;
   role: UserRole;
-  twoFactorEnabled: boolean;
   emailVerified: Date | null;
+  twoFactorEnabled: boolean;
   twoFactorAuthenticated: boolean;
   status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+}
+
+export interface AuthUser extends User {
+  permissions: string[];
+}
+
+export interface AuthResult {
+  user: AuthUser;
+  token: string;
+  expiresAt: number;
 }
 
 export interface Session {

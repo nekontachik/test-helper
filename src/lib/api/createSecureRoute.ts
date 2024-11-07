@@ -1,54 +1,55 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/middleware/auth';
-import { withRateLimit } from '@/middleware/rateLimit';
-import { withAudit } from '@/middleware/audit';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { authMiddleware } from '@/middleware/auth';
+import { rateLimitMiddleware } from '@/middleware/rateLimit';
+import { auditLogMiddleware } from '@/middleware/audit';
 import { SecurityService } from '@/lib/security/securityService';
-import { Action, Resource } from '@/types/rbac';
+import { Action, Resource, UserRole } from '@/types/rbac';
 import { Session } from 'next-auth';
 
 interface SecureRouteConfig {
-  // Auth options
   requireAuth?: boolean;
   requireVerified?: boolean;
   require2FA?: boolean;
-  allowedRoles?: string[];
-
-  // RBAC options
+  allowedRoles?: UserRole[];
   action: Action;
   resource: Resource;
-
-  // Rate limiting options
   rateLimit?: {
     points: number;
     duration: number;
   };
-
-  // CSRF protection
   requireCsrf?: boolean;
-
-  // Audit options
   audit?: {
     action: string;
-    getMetadata?: (req: Request) => Promise<Record<string, any>>;
+    getMetadata?: (req: Request) => Promise<Record<string, unknown>>;
   };
 }
 
+type SecureRouteHandler = (
+  request: Request, 
+  context: { session: Session | null }
+) => Promise<Response>;
+
+type SecureRouteResponse = Response | NextResponse;
+
 export function createSecureRoute(
-  handler: (req: Request, session: Session) => Promise<Response>,
+  handler: SecureRouteHandler,
   config: SecureRouteConfig
 ) {
-  return async function(request: Request) {
+  return async function(request: Request): Promise<SecureRouteResponse> {
+    const headers = SecurityService.getSecurityHeaders();
+    
     try {
-      // Apply security headers
-      const headers = SecurityService.getSecurityHeaders();
-      
-      // Verify CSRF token if required
+      const session = await getServerSession(authOptions);
+
+      // CSRF Protection
       if (config.requireCsrf && request.method !== 'GET') {
         const csrfToken = request.headers.get('x-csrf-token');
-        const session = await getServerSession();
+        const userId = session?.user?.id;
         
-        if (!csrfToken || !session?.id || 
-            !await SecurityService.validateCsrfToken(session.id, csrfToken)) {
+        if (!csrfToken || !userId || 
+            !await SecurityService.validateCsrfToken(userId, csrfToken)) {
           return NextResponse.json(
             { error: 'Invalid CSRF token' },
             { status: 403, headers }
@@ -56,53 +57,80 @@ export function createSecureRoute(
         }
       }
 
-      // Apply rate limiting
+      // Rate Limiting
       if (config.rateLimit) {
-        const rateLimitResponse = await withRateLimit(
-          () => Promise.resolve(null),
-          {
-            points: config.rateLimit.points,
-            duration: config.rateLimit.duration,
-          }
-        )(request);
+        const rateLimitResult = await rateLimitMiddleware({
+          request,
+          points: config.rateLimit.points,
+          duration: config.rateLimit.duration
+        });
 
-        if (rateLimitResponse.status !== 200) {
-          return new Response(rateLimitResponse.body, {
-            status: rateLimitResponse.status,
-            headers: { ...headers, ...rateLimitResponse.headers },
-          });
+        if (!rateLimitResult.success) {
+          return NextResponse.json(
+            { error: 'Rate limit exceeded' },
+            { 
+              status: 429, 
+              headers: { 
+                ...headers,
+                'Retry-After': String(rateLimitResult.retryAfter ?? 60)
+              }
+            }
+          );
         }
       }
 
-      // Apply authentication and authorization
-      const protectedHandler = withAuth(handler, {
+      // Authentication & Authorization
+      const authResult = await authMiddleware({
+        session,
+        requireAuth: config.requireAuth,
         requireVerified: config.requireVerified,
         require2FA: config.require2FA,
         allowedRoles: config.allowedRoles,
         action: config.action,
-        resource: config.resource,
+        resource: config.resource
       });
 
-      // Apply audit logging
-      const auditedHandler = withAudit(protectedHandler, {
-        action: config.audit?.action || config.action,
-        getMetadata: config.audit?.getMetadata,
-      });
+      if (!authResult.success) {
+        return NextResponse.json(
+          { error: authResult.error },
+          { status: authResult.status ?? 401, headers }
+        );
+      }
 
-      // Execute the handler
-      const response = await auditedHandler(request);
+      // Execute Handler
+      const response = await handler(request, { session });
 
-      // Add security headers to response
+      // Audit Logging
+      if (config.audit) {
+        const metadata = config.audit.getMetadata 
+          ? await config.audit.getMetadata(request)
+          : undefined;
+
+        await auditLogMiddleware({
+          request,
+          session,
+          action: config.audit.action,
+          metadata
+        });
+      }
+
+      // Add Security Headers to Response
+      const finalHeaders = new Headers(response.headers);
       Object.entries(headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
+        finalHeaders.set(key, value);
       });
 
-      return response;
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: finalHeaders
+      });
+
     } catch (error) {
       console.error('Secure route error:', error);
       return NextResponse.json(
         { error: 'Internal server error' },
-        { status: 500 }
+        { status: 500, headers }
       );
     }
   };

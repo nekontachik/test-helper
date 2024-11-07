@@ -8,8 +8,9 @@ import type { Session } from 'next-auth';
 interface ExtendedSession extends Session {
   user: {
     id: string;
-    email: string;
-    name?: string | null;
+    email: string | null;
+    name: string | null;
+    image: string | null;
     role: UserRole;
     twoFactorEnabled: boolean;
     emailVerified: Date | null;
@@ -20,7 +21,8 @@ interface ExtendedSession extends Session {
 interface AuthUser {
   id: string;
   name: string | null;
-  email: string;
+  email: string | null;
+  image: string | null;
   role: UserRole;
   twoFactorEnabled?: boolean;
   emailVerified?: Date | null;
@@ -46,8 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const user: AuthUser | null = session?.user ? {
     id: session.user.id,
-    name: session.user.name ?? null,
+    name: session.user.name,
     email: session.user.email,
+    image: session.user.image,
     role: session.user.role as UserRole,
     twoFactorEnabled: session.user.twoFactorEnabled,
     emailVerified: session.user.emailVerified,

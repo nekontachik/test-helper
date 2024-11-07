@@ -8,28 +8,32 @@ import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 
 interface PasswordInputProps {
   value: string;
-  onChange: (value: string) => void;
-  showStrengthMeter?: boolean;
   name?: string;
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
   autoComplete?: string;
   error?: string;
+  showStrengthMeter?: boolean;
+  onValueChange?: (value: string) => void;
 }
 
 export function PasswordInput({
   value,
-  onChange,
-  showStrengthMeter = true,
   name = 'password',
   placeholder = '••••••••',
   disabled = false,
   required = false,
   autoComplete = 'current-password',
   error,
+  showStrengthMeter = true,
+  onValueChange,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onValueChange?.(e.target.value);
+  };
 
   return (
     <div className="space-y-2">
@@ -38,7 +42,7 @@ export function PasswordInput({
           type={showPassword ? 'text' : 'password'}
           name={name}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleChange}
           placeholder={placeholder}
           disabled={disabled}
           required={required}

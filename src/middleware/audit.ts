@@ -1,37 +1,36 @@
-import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { AuditService } from '@/lib/audit/auditService';
-import { AuditAction, AuditLogType } from '@/types/audit';
-import type { JWT } from 'next-auth/jwt';
+import { AuditLogType } from '@/types/audit';
+import logger from '@/lib/logger';
+import { Session } from 'next-auth';
 
-export async function auditLogMiddleware(request: Request): Promise<Response> {
+interface AuditParams {
+  request: Request;
+  session: Session | null;
+  action: string;
+  metadata?: ((req: Request) => Promise<Record<string, unknown>>) | Record<string, unknown>;
+}
+
+export async function auditLogMiddleware(
+  params: AuditParams
+): Promise<void> {
   try {
-    const token = await getToken({ req: request as any }) as JWT & { sub: string };
-    
-    if (!token?.sub) {
-      return NextResponse.next();
-    }
+    const metadata = typeof params.metadata === 'function'
+      ? await params.metadata(params.request)
+      : params.metadata ?? {
+          method: params.request.method,
+          path: params.request.url,
+          ip: params.request.headers.get('x-forwarded-for'),
+          userAgent: params.request.headers.get('user-agent'),
+        };
 
-    const auditData = {
+    await AuditService.log({
       type: AuditLogType.SYSTEM,
-      userId: token.sub,
-      action: AuditAction.API_REQUEST,
-      metadata: {
-        method: request.method,
-        path: new URL(request.url).pathname,
-      },
-      context: {
-        ip: request.headers.get('x-forwarded-for') || undefined,
-        userAgent: request.headers.get('user-agent') || undefined,
-      }
-    };
-
-    await AuditService.log(auditData);
-
-    return NextResponse.next();
+      userId: params.session?.user?.id || 'system',
+      action: params.action,
+      metadata,
+    });
   } catch (error) {
-    console.error('Audit logging error:', error);
-    // Don't block the request if audit logging fails
-    return NextResponse.next();
+    logger.error('Audit middleware error:', error);
   }
 } 

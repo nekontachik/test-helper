@@ -8,12 +8,22 @@ import { UserRole } from '@/types/rbac';
 import { AccountStatus } from './types';
 import logger from '@/lib/logger';
 import type { AuthResult } from './types';
+import { User } from '@prisma/client';
+import { TokenType } from '@/types/token';
+import { TokenService } from '@/lib/auth/tokens/tokenService';
+import { SecurityService } from '@/lib/security/securityService';
 
 interface LoginCredentials {
   email: string;
   password: string;
   ip?: string;
   userAgent?: string;
+}
+
+interface EmailVerificationParams {
+  userId: string;
+  email: string;
+  name: string;
 }
 
 export class AuthService {
@@ -130,6 +140,71 @@ export class AuthService {
       data: {
         failedLoginAttempts: attempts,
         lockedUntil: shouldLock ? new Date(Date.now() + 15 * 60 * 1000) : null, // Lock for 15 minutes
+      },
+    });
+  }
+
+  static async validateCredentials(email: string, password: string): Promise<Partial<User> | null> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        password: true,
+        role: true,
+        twoFactorEnabled: true,
+        emailVerified: true,
+      },
+    });
+
+    if (!user || !await compare(password, user.password)) {
+      return null;
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  static async initiateEmailVerification(params: EmailVerificationParams): Promise<void> {
+    // Implementation here
+  }
+
+  static async verifyEmail(token: string): Promise<Partial<User>> {
+    const payload = await TokenService.validateToken(token);
+    if (!payload || payload.type !== TokenType.EMAIL_VERIFICATION) {
+      throw new Error('Invalid verification token');
+    }
+
+    return await prisma.user.update({
+      where: { id: payload.userId },
+      data: { emailVerified: new Date() },
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+      },
+    });
+  }
+
+  static async initiatePasswordReset(email: string): Promise<void> {
+    // Implementation here
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<Partial<User>> {
+    const payload = await TokenService.validateToken(token);
+    if (!payload || payload.type !== TokenType.PASSWORD_RESET) {
+      throw new Error('Invalid reset token');
+    }
+
+    const hashedPassword = await SecurityService.hashPassword(newPassword);
+    return await prisma.user.update({
+      where: { id: payload.userId },
+      data: { password: hashedPassword },
+      select: {
+        id: true,
+        email: true,
+        updatedAt: true,
       },
     });
   }

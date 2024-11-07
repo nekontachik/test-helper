@@ -1,5 +1,25 @@
 declare module 'lucide-react' {
-  import React from 'react';
-  export const X: React.FC<React.SVGProps<SVGSVGElement>>;
-  // Add other icon components as needed
+  import type { SVGProps, ComponentType } from 'react';
+
+  interface IconProps extends SVGProps<SVGSVGElement> {
+    size?: number | string;
+    absoluteStrokeWidth?: boolean;
+  }
+
+  // Common icons
+  export const X: ComponentType<IconProps>;
+  
+  // Security Activity icons
+  export const AlertTriangle: ComponentType<IconProps>;
+  export const Shield: ComponentType<IconProps>;
+  export const UserMinus: ComponentType<IconProps>;
+  
+  // Session Devices icons
+  export const Laptop: ComponentType<IconProps>;
+  export const Smartphone: ComponentType<IconProps>;
+  export const Globe: ComponentType<IconProps>;
+
+  // Password visibility icons
+  export const Eye: ComponentType<IconProps>;
+  export const EyeOff: ComponentType<IconProps>;
 }

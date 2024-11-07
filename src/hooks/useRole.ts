@@ -1,16 +1,20 @@
 import { useSession } from 'next-auth/react';
-import { UserRole, UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import type { Session } from 'next-auth';
 
+interface ExtendedUser {
+  id: string;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
+}
+
 interface ExtendedSession extends Session {
-  user: {
-    id: string;
-    email: string;
-    role: UserRole;
-    twoFactorEnabled: boolean;
-    emailVerified: Date | null;
-    twoFactorAuthenticated: boolean;
-  };
+  user: ExtendedUser;
 }
 
 interface UseRoleReturn {
@@ -37,9 +41,9 @@ export function useRole(): UseRoleReturn {
 
   return {
     hasRole,
-    isAdmin: () => session?.user?.role === UserRoles.ADMIN,
-    isProjectManager: () => session?.user?.role === UserRoles.PROJECT_MANAGER,
-    isTester: () => session?.user?.role === UserRoles.TESTER,
+    isAdmin: () => session?.user?.role === UserRole.ADMIN,
+    isProjectManager: () => session?.user?.role === UserRole.PROJECT_MANAGER,
+    isTester: () => session?.user?.role === UserRole.TESTER,
     role: session?.user?.role,
   };
 }
