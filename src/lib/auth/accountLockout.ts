@@ -93,14 +93,12 @@ export class AccountLockoutService {
 
         await AuditService.log({
           userId: identifier,
-          type: AuditLogType.AUTH,
+          type: AuditLogType.SECURITY,
           action: AuditAction.ACCOUNT_LOCKOUT,
           metadata: {
             attempts: newAttempts,
             lockoutUntil,
             reason: 'max_attempts_exceeded',
-          },
-          context: {
             ip,
           },
         });

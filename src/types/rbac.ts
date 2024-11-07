@@ -24,19 +24,23 @@ export enum Resource {
   SETTINGS = 'settings'
 }
 
-export interface RBACContext {
-  userId?: string;
-  projectId?: string;
-  teamId?: string;
-}
-
 export interface Permission {
   action: Action;
   resource: Resource;
-  conditions?: Record<string, unknown>;
+  conditions?: {
+    isOwner?: boolean;
+    teamMember?: boolean;
+  };
 }
 
-export interface Role {
-  name: UserRole;
+export interface ResourceContext {
+  userId?: string;
+  resourceOwnerId?: string;
+  projectId?: string;
+  teamMembers?: string[];
+}
+
+export interface RBACRule {
+  role: UserRole;
   permissions: Permission[];
 } 

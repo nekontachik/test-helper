@@ -1,44 +1,58 @@
-import { RBACRule, UserRole, ActionType, ResourceType } from '@/types/rbac';
+import { UserRole, Action, Resource } from '@/types/rbac';
+
+interface RBACRule {
+  role: UserRole;
+  permissions: Array<{
+    action: Action;
+    resource: Resource;
+  }>;
+}
 
 export const RBAC_RULES: RBACRule[] = [
   {
-    role: 'ADMIN',
+    role: UserRole.ADMIN,
     permissions: [
-      { action: ActionType.MANAGE, resource: ResourceType.PROJECT },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_RUN },
-      { action: ActionType.MANAGE, resource: ResourceType.USER },
-      { action: ActionType.MANAGE, resource: ResourceType.REPORT },
+      { action: Action.MANAGE, resource: Resource.PROJECT },
+      { action: Action.MANAGE, resource: Resource.TEST_CASE },
+      { action: Action.MANAGE, resource: Resource.TEST_RUN },
+      { action: Action.MANAGE, resource: Resource.USER },
+      { action: Action.MANAGE, resource: Resource.REPORT },
     ],
   },
   {
-    role: 'PROJECT_MANAGER',
+    role: UserRole.PROJECT_MANAGER,
     permissions: [
-      { action: ActionType.CREATE, resource: ResourceType.PROJECT },
-      { action: ActionType.READ, resource: ResourceType.PROJECT },
-      { action: ActionType.UPDATE, resource: ResourceType.PROJECT },
-      { action: ActionType.DELETE, resource: ResourceType.PROJECT },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_RUN },
+      { action: Action.CREATE, resource: Resource.PROJECT },
+      { action: Action.READ, resource: Resource.PROJECT },
+      { action: Action.UPDATE, resource: Resource.PROJECT },
+      { action: Action.DELETE, resource: Resource.PROJECT },
+      { action: Action.MANAGE, resource: Resource.TEST_CASE },
+      { action: Action.MANAGE, resource: Resource.TEST_RUN },
+      { action: Action.READ, resource: Resource.USER },
+      { action: Action.CREATE, resource: Resource.REPORT },
+      { action: Action.READ, resource: Resource.REPORT },
     ],
   },
   {
-    role: 'TESTER',
+    role: UserRole.TESTER,
     permissions: [
-      { action: ActionType.READ, resource: ResourceType.PROJECT },
-      { action: ActionType.CREATE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.READ, resource: ResourceType.TEST_CASE },
-      { action: ActionType.UPDATE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.CREATE, resource: ResourceType.TEST_RUN },
-      { action: ActionType.READ, resource: ResourceType.TEST_RUN },
+      { action: Action.READ, resource: Resource.PROJECT },
+      { action: Action.CREATE, resource: Resource.TEST_CASE },
+      { action: Action.READ, resource: Resource.TEST_CASE },
+      { action: Action.UPDATE, resource: Resource.TEST_CASE },
+      { action: Action.CREATE, resource: Resource.TEST_RUN },
+      { action: Action.READ, resource: Resource.TEST_RUN },
+      { action: Action.UPDATE, resource: Resource.TEST_RUN },
+      { action: Action.READ, resource: Resource.REPORT },
     ],
   },
   {
-    role: 'VIEWER',
+    role: UserRole.VIEWER,
     permissions: [
-      { action: ActionType.READ, resource: ResourceType.PROJECT },
-      { action: ActionType.READ, resource: ResourceType.TEST_CASE },
-      { action: ActionType.READ, resource: ResourceType.TEST_RUN },
+      { action: Action.READ, resource: Resource.PROJECT },
+      { action: Action.READ, resource: Resource.TEST_CASE },
+      { action: Action.READ, resource: Resource.TEST_RUN },
+      { action: Action.READ, resource: Resource.REPORT },
     ],
   },
 ]; 

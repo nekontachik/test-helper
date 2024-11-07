@@ -5,7 +5,7 @@ import { UAParser } from 'ua-parser-js';
 import { AuditService } from '@/lib/audit/auditService';
 import { logger } from '@/lib/utils/logger';
 import { SessionError } from '@/lib/errors';
-import { AuditAction } from '@/types/audit';
+import { AuditAction, AuditLogType } from '@/types/audit';
 
 /**
  * Session Manager
@@ -84,7 +84,7 @@ export class SessionManager {
 
       await AuditService.log({
         userId: data.userId,
-        type: 'auth',
+        type: AuditLogType.SECURITY,
         action: AuditAction.SESSION_CREATED,
         metadata: {
           sessionId: session.id,
@@ -138,7 +138,7 @@ export class SessionManager {
         }),
         AuditService.log({
           userId: session.userId,
-          type: 'auth',
+          type: AuditLogType.SECURITY,
           action: AuditAction.SESSION_INVALIDATED,
           metadata: { 
             sessionId,
@@ -171,7 +171,7 @@ export class SessionManager {
         ...sessions.map(session =>
           AuditService.log({
             userId,
-            type: 'auth',
+            type: AuditLogType.SECURITY,
             action: AuditAction.SESSION_INVALIDATED,
             metadata: { 
               sessionId: session.id, 
@@ -208,7 +208,7 @@ export class SessionManager {
         ...expiredSessions.map(session =>
           AuditService.log({
             userId: session.userId,
-            type: 'auth',
+            type: AuditLogType.SECURITY,
             action: AuditAction.SESSION_EXPIRED,
             metadata: { 
               sessionId: session.id, 

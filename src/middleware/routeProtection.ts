@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRole, UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import type { JWT } from 'next-auth/jwt';
 
 interface RouteConfig {
   requireAuth?: boolean;
-  roles?: Array<keyof typeof UserRoles>;
+  roles?: UserRole[];
   requireVerified?: boolean;
   require2FA?: boolean;
 }
@@ -30,22 +30,22 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   // Role-specific routes
   '/projects/(.*)': { 
     requireAuth: true, 
-    roles: ['TESTER', 'PROJECT_MANAGER', 'ADMIN'],
+    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/test-cases/(.*)': { 
     requireAuth: true, 
-    roles: ['TESTER', 'PROJECT_MANAGER', 'ADMIN'],
+    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/reports/(.*)': { 
     requireAuth: true, 
-    roles: ['PROJECT_MANAGER', 'ADMIN'],
+    roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/admin/(.*)': { 
     requireAuth: true, 
-    roles: ['ADMIN'],
+    roles: [UserRole.ADMIN],
     requireVerified: true,
     require2FA: true 
   },
@@ -57,7 +57,7 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
  * @returns boolean indicating if role is valid
  */
 function isValidUserRole(role: string): role is UserRole {
-  return Object.values(UserRoles).includes(role as UserRole);
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 /**
@@ -109,11 +109,8 @@ export async function routeProtection(request: Request): Promise<Response> {
     }
 
     // Check role-based access
-    if (config.roles) {
-      const validRole = isValidUserRole(token.role) ? token.role : null;
-      if (!validRole || !config.roles.includes(validRole)) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-      }
+    if (config.roles && !config.roles.includes(userRole)) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
     return NextResponse.next();

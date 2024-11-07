@@ -4,7 +4,7 @@ import { MIDDLEWARE_CONFIG } from './config';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { SecurityService } from '@/lib/security/securityService';
 import { AuditService } from '@/lib/audit/auditService';
-import { UserRole, UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import { AuditAction, AuditLogType } from '@/types/audit';
 import type { JWT } from 'next-auth/jwt';
 import { logger } from '@/lib/utils/logger';
@@ -29,7 +29,7 @@ interface RequestMetadata {
 
 class RequestHandler {
   private static isValidUserRole(role: string): role is UserRole {
-    return Object.values(UserRoles).includes(role as UserRole);
+    return Object.values(UserRole).includes(role as UserRole);
   }
 
   private static isPublicPath(pathname: string): boolean {
@@ -52,7 +52,7 @@ class RequestHandler {
   private static async logRequest(token: AuthToken, metadata: RequestMetadata): Promise<void> {
     await AuditService.log({
       userId: token.sub,
-      type: 'system' as AuditLogType,
+      type: AuditLogType.SYSTEM,
       action: AuditAction.API_REQUEST,
       metadata: {
         path: metadata.path,
@@ -118,7 +118,13 @@ class RequestHandler {
         const ip = request.headers.get('x-forwarded-for') || 'anonymous';
         
         try {
-          await rateLimiter.checkLimit(ip);
+          const config = pathname.startsWith('/api/admin')
+            ? MIDDLEWARE_CONFIG.rateLimit.admin
+            : pathname.startsWith('/api/auth')
+            ? MIDDLEWARE_CONFIG.rateLimit.auth
+            : MIDDLEWARE_CONFIG.rateLimit.api;
+
+          await rateLimiter.checkLimit(ip, config);
         } catch (error) {
           logger.warn('Rate limit exceeded', { ip, path: pathname });
           return NextResponse.json(

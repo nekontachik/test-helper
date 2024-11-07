@@ -72,7 +72,7 @@ export class AuthService {
 
       // Log successful login
       await AuditService.log({
-        type: AuditLogType.AUTH,
+        type: AuditLogType.SECURITY,
         userId: user.id,
         action: AuditAction.USER_LOGIN,
         metadata: {
@@ -100,7 +100,7 @@ export class AuthService {
       // Log failed login attempt
       if (error instanceof AuthenticationError) {
         await AuditService.log({
-          type: AuditLogType.AUTH,
+          type: AuditLogType.SECURITY,
           userId: credentials.email, // Use email as userId for failed attempts
           action: AuditAction.USER_LOGIN_FAILED,
           metadata: {

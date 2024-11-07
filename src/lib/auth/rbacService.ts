@@ -1,8 +1,8 @@
 import { RBAC_RULES } from './rbac/config';
 import { 
   UserRole, 
-  ActionType, 
-  ResourceType, 
+  Action,
+  Resource,
   Permission,
   ResourceContext,
   RBACRule 
@@ -26,8 +26,8 @@ export class RBACService {
 
   private static getCacheKey(
     role: UserRole,
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: ResourceContext
   ): string {
     return `${role}:${action}:${resource}:${JSON.stringify(context || {})}`;
@@ -54,11 +54,11 @@ export class RBACService {
 
   private static findPermission(
     permissions: Permission[],
-    action: ActionType,
-    resource: ResourceType
+    action: Action,
+    resource: Resource
   ): Permission | undefined {
     return permissions.find(p => 
-      (p.action === action || p.action === ActionType.MANAGE) && 
+      (p.action === action || p.action === Action.MANAGE) && 
       p.resource === resource
     );
   }
@@ -105,8 +105,8 @@ export class RBACService {
 
   static async can(
     role: UserRole,
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: ResourceContext
   ): Promise<boolean> {
     try {
@@ -146,8 +146,8 @@ export class RBACService {
 
   static async hasPermission(
     userId: string,
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: Omit<ResourceContext, 'userId'>
   ): Promise<boolean> {
     try {

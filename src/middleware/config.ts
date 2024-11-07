@@ -1,4 +1,4 @@
-import { UserRole, UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 
 const ROLES = {
   ADMIN: 'ADMIN',
@@ -26,9 +26,9 @@ export const MIDDLEWARE_CONFIG = {
 
   // Role-based route access
   roleAccess: {
-    '/admin/(.*)': [UserRoles.ADMIN],
-    '/projects/manage/(.*)': [UserRoles.PROJECT_MANAGER, UserRoles.ADMIN],
-    '/reports/(.*)': [UserRoles.PROJECT_MANAGER, UserRoles.ADMIN],
+    '/admin/(.*)': [UserRole.ADMIN],
+    '/projects/manage/(.*)': [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    '/reports/(.*)': [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
   } as Record<string, UserRole[]>,
 
   // Rate limiting configurations

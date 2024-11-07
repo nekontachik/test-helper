@@ -1,58 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import { UserRole, ActionType, ResourceType } from '@/types/rbac';
+import { UserRole, Action, Resource } from '@/types/rbac';
+import { RBAC_RULES } from './config';
 import logger from '@/lib/logger';
 import type { Permission, ResourceContext } from '@/types/rbac';
-
-interface RBACRule {
-  role: UserRole;
-  permissions: Permission[];
-}
-
-const RBAC_RULES: RBACRule[] = [
-  {
-    role: 'ADMIN',
-    permissions: [
-      { action: ActionType.MANAGE, resource: ResourceType.PROJECT },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_RUN },
-      { action: ActionType.MANAGE, resource: ResourceType.USER },
-      { action: ActionType.MANAGE, resource: ResourceType.REPORT },
-    ],
-  },
-  {
-    role: 'PROJECT_MANAGER',
-    permissions: [
-      { action: ActionType.MANAGE, resource: ResourceType.PROJECT },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_RUN },
-      { action: ActionType.READ, resource: ResourceType.USER },
-      { action: ActionType.MANAGE, resource: ResourceType.REPORT },
-    ],
-  },
-  {
-    role: 'TESTER',
-    permissions: [
-      { action: ActionType.READ, resource: ResourceType.PROJECT },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_CASE },
-      { action: ActionType.MANAGE, resource: ResourceType.TEST_RUN },
-      { action: ActionType.READ, resource: ResourceType.USER },
-      { action: ActionType.CREATE, resource: ResourceType.REPORT },
-    ],
-  },
-  {
-    role: 'VIEWER',
-    permissions: [
-      { action: ActionType.READ, resource: ResourceType.PROJECT },
-      { action: ActionType.READ, resource: ResourceType.TEST_CASE },
-      { action: ActionType.READ, resource: ResourceType.TEST_RUN },
-      { action: ActionType.READ, resource: ResourceType.REPORT },
-    ],
-  },
-];
-
-interface ProjectMember {
-  userId: string;
-}
 
 export class RBACService {
   private static permissionCache = new Map<string, boolean>();
@@ -60,8 +10,8 @@ export class RBACService {
 
   private static getCacheKey(
     role: UserRole,
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: ResourceContext
   ): string {
     return `${role}:${action}:${resource}:${JSON.stringify(context || {})}`;
@@ -69,11 +19,11 @@ export class RBACService {
 
   private static findPermission(
     permissions: Permission[],
-    action: ActionType,
-    resource: ResourceType
+    action: Action,
+    resource: Resource
   ): Permission | undefined {
     return permissions.find(p => 
-      (p.action === action || p.action === ActionType.MANAGE) && 
+      (p.action === action || p.action === Action.MANAGE) && 
       p.resource === resource
     );
   }
@@ -91,8 +41,14 @@ export class RBACService {
       return false;
     }
 
-    if (teamMember && context.userId && context.teamMembers) {
-      return context.teamMembers.includes(context.userId);
+    if (teamMember && context.projectId && context.userId) {
+      const member = await prisma.projectMember.findFirst({
+        where: {
+          userId: context.userId,
+          projectId: context.projectId,
+        },
+      });
+      return !!member;
     }
 
     return true;
@@ -105,8 +61,8 @@ export class RBACService {
 
   static async can(
     role: UserRole,
-    action: ActionType,
-    resource: ResourceType,
+    action: Action,
+    resource: Resource,
     context?: ResourceContext
   ): Promise<boolean> {
     try {
@@ -132,23 +88,13 @@ export class RBACService {
       this.cacheResult(cacheKey, result);
       return result;
     } catch (error) {
-      logger.error('RBAC check failed:', error);
-      return false;
-    }
-  }
-
-  static async isTeamMember(userId: string, projectId: string): Promise<boolean> {
-    try {
-      const member = await prisma.projectMember.findFirst({
-        where: {
-          userId,
-          projectId,
-        },
+      logger.error('RBAC check failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        role,
+        action,
+        resource,
+        context
       });
-
-      return !!member;
-    } catch (error) {
-      logger.error('Team membership check failed:', error);
       return false;
     }
   }

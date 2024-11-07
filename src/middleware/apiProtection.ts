@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { RateLimitError, AppError } from '@/lib/errors';
-import { UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import logger from '@/lib/logger';
-import type { UserRole } from '@/types/rbac';
 import type { JWT } from 'next-auth/jwt';
 
 // Cache for route configs
@@ -42,21 +41,21 @@ const API_ROUTES: APIRouteConfig = {
 
   '/api/projects/(.*)': {
     requireAuth: true,
-    roles: [UserRoles.TESTER, UserRoles.PROJECT_MANAGER, UserRoles.ADMIN],
+    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 }, // 100 requests per minute
   },
 
   '/api/test-cases/(.*)': {
     requireAuth: true,
-    roles: [UserRoles.TESTER, UserRoles.PROJECT_MANAGER, UserRoles.ADMIN],
+    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 },
   },
 
   '/api/admin/(.*)': {
     requireAuth: true,
-    roles: [UserRoles.ADMIN],
+    roles: [UserRole.ADMIN],
     requireVerified: true,
     require2FA: true,
     rateLimit: { points: 50, duration: 60 },
@@ -90,7 +89,7 @@ function getRouteConfig(pathname: string): APIConfig | undefined {
  */
 function isValidUserRole(role: string | undefined): role is UserRole {
   if (!role) return false;
-  return Object.values(UserRoles).includes(role as UserRole);
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 /**

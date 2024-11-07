@@ -56,7 +56,7 @@ export class TwoFactorService {
     // Log successful 2FA verification
     await AuditService.log({
       userId,
-      type: AuditLogType.AUTH,
+      type: AuditLogType.SECURITY,
       action: AuditAction.TWO_FACTOR_VERIFY,
       metadata: {
         sessionId,
@@ -80,7 +80,7 @@ export class TwoFactorService {
 
     await AuditService.log({
       userId,
-      type: AuditLogType.AUTH,
+      type: AuditLogType.SECURITY,
       action: AuditAction.TWO_FACTOR_ENABLE,
       metadata: {
         event: '2fa_enabled',
@@ -101,7 +101,7 @@ export class TwoFactorService {
 
     await AuditService.log({
       userId,
-      type: AuditLogType.AUTH,
+      type: AuditLogType.SECURITY,
       action: AuditAction.TWO_FACTOR_DISABLE,
       metadata: {
         event: '2fa_disabled',

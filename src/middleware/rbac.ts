@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRole, UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
 
@@ -17,7 +17,7 @@ interface AuthToken extends JWT {
 
 function isValidUserRole(role: string | undefined): role is UserRole {
   if (!role) return false;
-  return Object.values(UserRoles).includes(role as UserRole);
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 export function withRBAC(handler: Function, options: RBACOptions) {

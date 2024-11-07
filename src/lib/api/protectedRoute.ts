@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
-import { Action, Resource, UserRole, type RBACContext } from '@/types/rbac';
+import { Action, Resource, UserRole, type ResourceContext } from '@/types/rbac';
 import { AuditAction, AuditLogType } from '@/types/audit';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { AuditService } from '@/lib/audit/auditService';
@@ -119,6 +119,8 @@ export function createProtectedRoute<T>(
           : {
               method: request.method,
               path: new URL(request.url).pathname,
+              ip: request.headers.get('x-forwarded-for') || undefined,
+              userAgent: request.headers.get('user-agent') || undefined,
             };
 
         await AuditService.log({
@@ -126,10 +128,6 @@ export function createProtectedRoute<T>(
           type: AuditLogType.SYSTEM,
           action: config.audit.action,
           metadata,
-          context: {
-            ip: request.headers.get('x-forwarded-for') || undefined,
-            userAgent: request.headers.get('user-agent') || undefined,
-          }
         });
       }
 

@@ -32,7 +32,7 @@ export class LockoutService {
       where: { id: userId },
       data: {
         lockedUntil: lockExpiry,
-        loginAttempts: 0,
+        failedLoginAttempts: 0,
       },
     });
 
@@ -58,7 +58,7 @@ export class LockoutService {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        loginAttempts: 0,
+        failedLoginAttempts: 0,
         lockedUntil: null,
       },
     });

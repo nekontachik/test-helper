@@ -10,8 +10,8 @@ export class TokenService {
     await prisma.user.update({
       where: { email },
       data: {
-        verifyToken: token,
-        verifyTokenExpiry: expires,
+        emailVerificationToken: token,
+        emailVerificationExpires: expires,
       },
     });
 
@@ -22,13 +22,12 @@ export class TokenService {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    await prisma.user.update({
-      where: { email },
-      data: {
-        resetToken: token,
-        resetTokenExpiry: expires,
-      },
-    });
+    await prisma.$executeRaw`
+      UPDATE User 
+      SET passwordResetToken = ${token}, 
+          passwordResetExpires = ${expires.toISOString()}
+      WHERE email = ${email}
+    `;
 
     return token;
   }
@@ -36,8 +35,8 @@ export class TokenService {
   static async validateEmailVerificationToken(token: string) {
     const user = await prisma.user.findFirst({
       where: {
-        verifyToken: token,
-        verifyTokenExpiry: {
+        emailVerificationToken: token,
+        emailVerificationExpires: {
           gt: new Date(),
         },
       },
@@ -49,8 +48,8 @@ export class TokenService {
       where: { id: user.id },
       data: {
         emailVerified: new Date(),
-        verifyToken: null,
-        verifyTokenExpiry: null,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
       },
     });
 
@@ -58,16 +57,15 @@ export class TokenService {
   }
 
   static async validatePasswordResetToken(token: string) {
-    const user = await prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-    });
+    const user = await prisma.$queryRaw<{ id: string; email: string }[]>`
+      SELECT id, email 
+      FROM User 
+      WHERE passwordResetToken = ${token}
+      AND passwordResetExpires > ${new Date().toISOString()}
+      LIMIT 1
+    `;
 
-    return user;
+    return user[0] || null;
   }
 
   static generateJWT(payload: any, expiresIn: string = '1d'): string {

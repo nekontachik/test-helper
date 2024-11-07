@@ -51,10 +51,14 @@ export class OwnershipService {
       },
     });
 
+    if (!project) {
+      return false;
+    }
+
     return (
-      project?.userId === userId ||
-      project?.testCases.length > 0 ||
-      project?.testRuns.length > 0
+      project.userId === userId ||
+      (project.testCases?.length ?? 0) > 0 ||
+      (project.testRuns?.length ?? 0) > 0
     );
   }
 } 

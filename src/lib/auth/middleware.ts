@@ -5,6 +5,12 @@ import { USER_ROLES } from '@/lib/constants/auth';
 import { hasPermission } from './permissions';
 import logger from '@/lib/logger';
 
+interface AuthUser {
+  id: string;
+  email: string;
+  role: keyof typeof USER_ROLES;
+}
+
 export async function authMiddleware(request: NextRequest) {
   try {
     const token = await getToken({ req: request });
@@ -20,10 +26,14 @@ export async function authMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/api/auth/signin', request.url));
     }
 
-    const userRole = (token.role as keyof typeof USER_ROLES) || USER_ROLES.USER;
+    const user: AuthUser = {
+      id: token.sub as string,
+      email: token.email as string,
+      role: (token.role as keyof typeof USER_ROLES) || USER_ROLES.USER
+    };
 
-    if (!hasPermission(path, userRole)) {
-      logger.warn('Permission denied', { path, userRole });
+    if (!hasPermission(user, path)) {
+      logger.warn('Permission denied', { path, userRole: user.role });
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 

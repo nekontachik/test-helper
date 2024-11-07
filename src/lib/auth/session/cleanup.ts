@@ -1,5 +1,6 @@
 import { SessionManager } from './sessionManager';
-import { AuditService, AuditAction } from '@/lib/audit/auditService';
+import { AuditService } from '@/lib/audit/auditService';
+import { AuditAction, AuditLogType } from '@/types/audit';
 
 export async function cleanupSessions() {
   try {
@@ -8,7 +9,8 @@ export async function cleanupSessions() {
     
     await AuditService.log({
       userId: 'system',
-      action: AuditAction.SYSTEM,
+      type: AuditLogType.SYSTEM,
+      action: AuditAction.SESSION_EXPIRED,
       metadata: {
         operation: 'session_cleanup',
         duration: Date.now() - startTime,
@@ -19,7 +21,8 @@ export async function cleanupSessions() {
     
     await AuditService.log({
       userId: 'system',
-      action: AuditAction.SYSTEM,
+      type: AuditLogType.SYSTEM,
+      action: AuditAction.SESSION_EXPIRED,
       metadata: {
         operation: 'session_cleanup',
         status: 'error',

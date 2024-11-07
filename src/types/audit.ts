@@ -17,19 +17,20 @@ export enum AuditAction {
 }
 
 export enum AuditLogType {
-  SYSTEM = 'system',
-  USER_ACTION = 'user_action',
-  EMAIL_VERIFICATION = 'email_verification',
-  AUTH = 'auth'
+  SECURITY = 'SECURITY',
+  USER = 'USER',
+  SYSTEM = 'SYSTEM',
+}
+
+export interface AuditContext {
+  ip?: string;
+  userAgent?: string;
 }
 
 export interface AuditLogData {
-  userId: string;
   type: AuditLogType;
-  action: AuditAction;
-  metadata: Record<string, unknown>;
-  context?: {
-    ip?: string;
-    userAgent?: string;
-  };
+  userId: string;
+  action: string;
+  metadata?: Record<string, unknown>;
+  context?: AuditContext;
 } 

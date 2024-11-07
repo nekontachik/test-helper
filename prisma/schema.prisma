@@ -55,6 +55,12 @@ model User {
   passwordHistory     PasswordHistory[]
   accounts            Account[]
   projectMemberships  ProjectMember[]
+  backupCodes BackupCode[]
+  backupCodesGeneratedAt DateTime?
+
+  // Password reset
+  passwordResetToken         String?
+  passwordResetExpires       DateTime?
 }
 
 model UserRoleMap {
@@ -320,4 +326,15 @@ model TestRunCase {
 
   @@index([testRunId])
   @@index([testCaseId])
+}
+
+model BackupCode {
+  id        String   @id @default(cuid())
+  code      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+
+  @@index([userId])
 }

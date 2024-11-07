@@ -10,9 +10,11 @@ export class AuditService {
           userId: data.userId,
           type: data.type,
           action: data.action,
-          metadata: JSON.stringify(data.metadata),
-          ipAddress: data.context?.ip,
-          userAgent: data.context?.userAgent,
+          metadata: JSON.stringify({
+            ...data.metadata,
+            ip: data.context?.ip,
+            userAgent: data.context?.userAgent,
+          }),
         },
       });
     } catch (error) {

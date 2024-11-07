@@ -1,11 +1,25 @@
 import { prisma } from '@/lib/prisma';
-import { TokenService, TokenType } from './tokens/tokenService';
-import { SecurityService } from './securityService';
+import { TokenService, TokenType, type TokenPayload } from './tokens/tokenService';
+import { PasswordPolicyService } from './passwordPolicy';
 import { sendPasswordResetEmail } from '../emailService';
-import { AuditService, AuditAction } from '../audit/auditService';
+import { AuditService } from '../audit/auditService';
+import { AuditLogType } from '@/types/audit';
+import { SecurityError } from '@/lib/errors';
+import * as bcrypt from 'bcrypt';
+
+export enum PasswordResetAction {
+  REQUEST = 'PASSWORD_RESET_REQUEST',
+  COMPLETE = 'PASSWORD_RESET_COMPLETE',
+}
+
+interface PasswordResetPayload extends TokenPayload {
+  email: string;
+}
 
 export class PasswordResetService {
-  static async initiateReset(email: string) {
+  private static readonly TOKEN_EXPIRY = '1h'; // 1 hour
+
+  static async initiateReset(email: string): Promise<void> {
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true, name: true },
@@ -13,64 +27,103 @@ export class PasswordResetService {
 
     if (!user) return;
 
-    // Generate reset token using TokenService
-    const token = await TokenService.createPasswordResetToken(email);
+    // Generate reset token
+    const payload: TokenPayload = {
+      type: TokenType.PASSWORD_RESET,
+      userId: user.id,
+      email,
+    };
+
+    const token = await TokenService.createToken(payload, this.TOKEN_EXPIRY);
 
     // Send reset email
     await sendPasswordResetEmail(email, user.name || 'User', token);
 
     // Log reset request
     await AuditService.log({
+      type: AuditLogType.SECURITY,
       userId: user.id,
-      action: AuditAction.PASSWORD_RESET_REQUEST,
+      action: PasswordResetAction.REQUEST,
       metadata: {
         email,
-        tokenExpiry: '1 hour',
+        tokenExpiry: this.TOKEN_EXPIRY,
       },
     });
   }
 
-  static async resetPassword(token: string, newPassword: string) {
-    const email = await TokenService.verifyPasswordResetToken(token);
+  static async resetPassword(token: string, newPassword: string): Promise<void> {
+    // Verify and decode token
+    const payload = await TokenService.verifyToken(token, TokenType.PASSWORD_RESET);
+    if (!payload?.email) {
+      throw new SecurityError('Invalid or expired reset token');
+    }
 
-    // Check password strength and breaches
-    const isBreached = await SecurityService.checkPasswordBreached(newPassword);
-    if (isBreached) {
-      throw new Error('This password has been exposed in data breaches');
+    // Validate password strength
+    const validationResult = await PasswordPolicyService.validatePassword(newPassword, {
+      email: payload.email,
+    });
+
+    if (!validationResult.isStrong) {
+      const errorMessage = 'Password is too weak: ' + 
+        validationResult.feedback.suggestions.join('. ');
+      throw new SecurityError(errorMessage);
+    }
+
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: payload.email },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      throw new SecurityError('User not found');
     }
 
     // Check password history
-    const isReused = await SecurityService.checkPasswordHistory(email, newPassword);
-    if (isReused) {
-      throw new Error('Cannot reuse recent passwords');
+    const isReused = await PasswordPolicyService.validatePasswordHistory(
+      user.id,
+      newPassword
+    );
+
+    if (!isReused) {
+      throw new SecurityError('Cannot reuse recent passwords');
     }
 
     // Hash new password
-    const hashedPassword = await SecurityService.hashPassword(newPassword);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    // Update user password
-    const user = await prisma.user.update({
-      where: { email },
-      data: { password: hashedPassword },
-    });
+    // Update user password in a transaction
+    await prisma.$transaction([
+      // Update password
+      prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      }),
 
-    // Add password to history
-    await SecurityService.addToPasswordHistory(user.id, hashedPassword);
+      // Add to password history
+      prisma.passwordHistory.create({
+        data: {
+          userId: user.id,
+          hash: hashedPassword,
+        },
+      }),
+
+      // Invalidate all sessions
+      prisma.session.deleteMany({
+        where: { userId: user.id },
+      }),
+    ]);
 
     // Revoke the reset token
     await TokenService.revokeToken(token, TokenType.PASSWORD_RESET);
 
-    // Invalidate all sessions
-    await prisma.session.deleteMany({
-      where: { userId: user.id },
-    });
-
     // Log password reset
     await AuditService.log({
+      type: AuditLogType.SECURITY,
       userId: user.id,
-      action: AuditAction.PASSWORD_RESET_COMPLETE,
+      action: PasswordResetAction.COMPLETE,
       metadata: {
-        email,
+        email: user.email,
       },
     });
   }

@@ -3,13 +3,12 @@ import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { OwnershipService } from '@/lib/auth/ownership/service';
-import { ActionType, ResourceType } from '@/types/rbac';
-import { UserRole } from '@/types/rbac';
+import { Action, Resource, UserRole } from '@/types/rbac';
 import { AuthorizationError } from '@/lib/errors';
 
 interface AuthorizeOptions {
-  action: ActionType;
-  resource: ResourceType;
+  action: Action;
+  resource: Resource;
   checkOwnership?: boolean;
   allowTeamMembers?: boolean;
   getResourceId?: (req: Request) => Promise<string | undefined>;
@@ -26,7 +25,7 @@ interface AuthToken {
 const permissionCache = new Map<string, boolean>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-function getCacheKey(role: UserRole, action: ActionType, resource: ResourceType): string {
+function getCacheKey(role: UserRole, action: Action, resource: Resource): string {
   return `${role}:${action}:${resource}`;
 }
 
@@ -78,7 +77,7 @@ export async function authorize(
 
       // Check resource ownership with Promise.race for performance
       switch (options.resource) {
-        case ResourceType.PROJECT:
+        case Resource.PROJECT:
           isAuthorized = await Promise.race([
             OwnershipService.isProjectOwner(token.sub, resourceId),
             new Promise<boolean>((_, reject) => 
@@ -86,7 +85,7 @@ export async function authorize(
             )
           ]);
           break;
-        case ResourceType.TEST_CASE:
+        case Resource.TEST_CASE:
           isAuthorized = await Promise.race([
             OwnershipService.isTestCaseOwner(token.sub, resourceId),
             new Promise<boolean>((_, reject) => 
@@ -94,7 +93,7 @@ export async function authorize(
             )
           ]);
           break;
-        case ResourceType.TEST_RUN:
+        case Resource.TEST_RUN:
           isAuthorized = await Promise.race([
             OwnershipService.isTestRunOwner(token.sub, resourceId),
             new Promise<boolean>((_, reject) => 

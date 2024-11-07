@@ -1,17 +1,23 @@
 import { prisma } from '@/lib/prisma';
 import { SecurityService } from './securityService';
-import { RateLimiter } from '@/middleware/rateLimit';
+import { createRateLimiter } from '@/middleware/rateLimit';
 import { RateLimitError } from '@/lib/errors';
+import type { RateLimitConfig } from '@/lib/rate-limit/RateLimiter';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
+const AUTH_RATE_LIMIT: RateLimitConfig = {
+  points: 5,
+  duration: 300, // 5 minutes
+};
+
 export class LoginService {
-  private static rateLimiter = new RateLimiter();
+  private static rateLimiter = createRateLimiter();
 
   static async attemptLogin(email: string, password: string, ip: string) {
     // Check rate limit first
-    await this.rateLimiter.checkLimit(ip, 'auth:login');
+    await this.rateLimiter.checkLimit(ip, AUTH_RATE_LIMIT);
 
     const user = await prisma.user.findUnique({
       where: { email },

@@ -18,11 +18,15 @@ export async function securityMiddleware(request: Request) {
     if (request.method !== 'GET') {
       // Apply CSRF protection
       const csrfResponse = await csrfMiddleware(request);
-      if (csrfResponse.status !== 200) return csrfResponse;
+      if (csrfResponse && csrfResponse instanceof Response && csrfResponse.status !== 200) {
+        return csrfResponse;
+      }
 
       // Apply rate limiting
       const rateLimitResponse = await rateLimitMiddleware(request);
-      if (rateLimitResponse.status !== 200) return rateLimitResponse;
+      if (rateLimitResponse && rateLimitResponse instanceof Response && rateLimitResponse.status !== 200) {
+        return rateLimitResponse;
+      }
     }
 
     // Log the request (audit logging)

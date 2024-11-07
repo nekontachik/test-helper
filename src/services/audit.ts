@@ -1,4 +1,4 @@
-import { AuditLogData } from '@/types/audit';
+import { AuditLogData, AuditLogType } from '@/types/audit';
 import { logger } from '@/lib/utils/logger';
 
 /**
@@ -50,7 +50,7 @@ export class AuditLogger {
   static async logSecurityEvent(data: AuditLogData): Promise<void> {
     await this.log({
       ...data,
-      type: 'system',
+      type: AuditLogType.SYSTEM,
       metadata: {
         ...data.metadata,
         securityEvent: true,
@@ -65,7 +65,7 @@ export class AuditLogger {
   static async logUserAction(data: AuditLogData): Promise<void> {
     await this.log({
       ...data,
-      type: 'user_action',
+      type: AuditLogType.USER,
     });
   }
 } 

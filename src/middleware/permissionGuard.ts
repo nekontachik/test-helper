@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRoles } from '@/types/rbac';
+import { UserRole } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
 
@@ -10,14 +10,14 @@ interface AuthToken extends JWT {
 }
 
 interface PermissionGuardConfig {
-  roles?: (keyof typeof UserRoles)[];
+  roles?: UserRole[];
   requireVerified?: boolean;
   require2FA?: boolean;
 }
 
-function isValidUserRole(role: string | undefined): role is keyof typeof UserRoles {
+function isValidUserRole(role: string | undefined): role is UserRole {
   if (!role) return false;
-  return Object.values(UserRoles).includes(role as keyof typeof UserRoles);
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 export async function permissionGuard(
@@ -47,7 +47,7 @@ export async function permissionGuard(
         );
       }
 
-      if (!config.roles.includes(token.role as keyof typeof UserRoles)) {
+      if (!config.roles.includes(token.role as UserRole)) {
         return NextResponse.json(
           { error: 'Insufficient permissions' },
           { status: 403 }

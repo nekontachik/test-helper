@@ -2,34 +2,50 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+interface BackupCodePair {
+  code: string;
+  hashedCode: string;
+}
+
+interface BackupCodeRecord {
+  id: string;
+  code: string;
+  userId: string;
+  createdAt: Date;
+  used: boolean;
+}
+
 export class BackupCodesService {
   private static readonly CODE_LENGTH = 8;
   private static readonly CODE_COUNT = 10;
   private static readonly CODE_PATTERN = /^[A-Z0-9]{8}$/;
 
-  static generateCode(): string {
-    return crypto.randomBytes(4).toString('hex').toUpperCase();
+  private static generateCode(): BackupCodePair {
+    const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const hashedCode = bcrypt.hashSync(code, 12);
+    return { code, hashedCode };
   }
 
   static async generateCodes(userId: string): Promise<string[]> {
-    const codes = Array.from(
+    const backupCodes = Array.from(
       { length: this.CODE_COUNT },
       () => this.generateCode()
     );
 
-    const hashedCodes = await Promise.all(
-      codes.map(code => bcrypt.hash(code, 12))
+    // Delete existing backup codes
+    await prisma.$transaction([
+      prisma.$executeRaw`DELETE FROM BackupCode WHERE userId = ${userId}`,
+      prisma.$executeRaw`UPDATE User SET backupCodesUpdatedAt = ${new Date().toISOString()} WHERE id = ${userId}`
+    ]);
+
+    // Create new backup codes
+    const createdCodes = await Promise.all(
+      backupCodes.map(({ hashedCode }) =>
+        prisma.$executeRaw`INSERT INTO BackupCode (id, code, userId, createdAt, used) VALUES (${crypto.randomUUID()}, ${hashedCode}, ${userId}, ${new Date().toISOString()}, false)`
+      )
     );
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        backupCodes: hashedCodes,
-        backupCodesGeneratedAt: new Date(),
-      },
-    });
-
-    return codes;
+    return backupCodes.map(({ code }) => code);
   }
 
   static async verifyCode(userId: string, code: string): Promise<boolean> {
@@ -37,26 +53,21 @@ export class BackupCodesService {
       return false;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { backupCodes: true },
-    });
+    const backupCodes = await prisma.$queryRaw<BackupCodeRecord[]>`
+      SELECT * FROM BackupCode 
+      WHERE userId = ${userId} 
+      AND used = false
+    `;
 
-    if (!user?.backupCodes?.length) {
-      return false;
-    }
-
-    const backupCodes = user.backupCodes;
-
-    for (let i = 0; i < backupCodes.length; i++) {
-      const isValid = await bcrypt.compare(code, backupCodes[i]);
+    for (const backupCode of backupCodes) {
+      const isValid = await bcrypt.compare(code, backupCode.code);
       if (isValid) {
-        // Remove used code
-        const updatedCodes = backupCodes.filter((_, index) => index !== i);
-        await prisma.user.update({
-          where: { id: userId },
-          data: { backupCodes: updatedCodes },
-        });
+        // Mark code as used
+        await prisma.$executeRaw`
+          UPDATE BackupCode 
+          SET used = true 
+          WHERE id = ${backupCode.id}
+        `;
         return true;
       }
     }
@@ -65,11 +76,12 @@ export class BackupCodesService {
   }
 
   static async getCodesCount(userId: string): Promise<number> {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { backupCodes: true },
-    });
-
-    return user?.backupCodes?.length || 0;
+    const result = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count 
+      FROM BackupCode 
+      WHERE userId = ${userId} 
+      AND used = false
+    `;
+    return Number(result[0].count);
   }
 } 

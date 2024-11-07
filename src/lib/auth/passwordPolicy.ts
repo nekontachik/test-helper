@@ -1,5 +1,7 @@
 import { pwnedPassword } from 'hibp';
 import zxcvbn from 'zxcvbn';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 export interface PasswordStrengthResult {
   score: number;
@@ -9,6 +11,11 @@ export interface PasswordStrengthResult {
   };
   isStrong: boolean;
   failedPolicies: string[];
+}
+
+interface PasswordHistory {
+  id: string;
+  hash: string;
 }
 
 export class PasswordPolicyService {
@@ -25,17 +32,17 @@ export class PasswordPolicyService {
     COMMON: 'common',
     BREACHED: 'breached',
     PERSONAL: 'personal',
-  };
+  } as const;
 
-  static readonly POLICY_MESSAGES = {
-    [PasswordPolicyService.POLICIES.LENGTH]: `Password must be between ${PasswordPolicyService.MIN_LENGTH} and ${PasswordPolicyService.MAX_LENGTH} characters`,
-    [PasswordPolicyService.POLICIES.UPPERCASE]: 'Password must contain at least one uppercase letter',
-    [PasswordPolicyService.POLICIES.LOWERCASE]: 'Password must contain at least one lowercase letter',
-    [PasswordPolicyService.POLICIES.NUMBER]: 'Password must contain at least one number',
-    [PasswordPolicyService.POLICIES.SPECIAL]: 'Password must contain at least one special character',
-    [PasswordPolicyService.POLICIES.COMMON]: 'Password is too common or easily guessable',
-    [PasswordPolicyService.POLICIES.BREACHED]: 'Password has been exposed in data breaches',
-    [PasswordPolicyService.POLICIES.PERSONAL]: 'Password contains personal information',
+  static readonly POLICY_MESSAGES: Record<keyof typeof PasswordPolicyService.POLICIES, string> = {
+    LENGTH: `Password must be between ${PasswordPolicyService.MIN_LENGTH} and ${PasswordPolicyService.MAX_LENGTH} characters`,
+    UPPERCASE: 'Password must contain at least one uppercase letter',
+    LOWERCASE: 'Password must contain at least one lowercase letter',
+    NUMBER: 'Password must contain at least one number',
+    SPECIAL: 'Password must contain at least one special character',
+    COMMON: 'Password is too common or easily guessable',
+    BREACHED: 'Password has been exposed in data breaches',
+    PERSONAL: 'Password contains personal information',
   };
 
   static async validatePassword(
@@ -75,7 +82,7 @@ export class PasswordPolicyService {
     const userInputs = [
       context?.email?.split('@')[0],
       context?.name,
-    ].filter(Boolean);
+    ].filter((input): input is string => Boolean(input));
 
     const result = zxcvbn(password, userInputs);
 
@@ -86,7 +93,7 @@ export class PasswordPolicyService {
 
     // Check for personal information
     if (userInputs.some(input => 
-      input && password.toLowerCase().includes(input.toLowerCase())
+      password.toLowerCase().includes(input.toLowerCase())
     )) {
       failedPolicies.push(this.POLICIES.PERSONAL);
     }
@@ -97,7 +104,7 @@ export class PasswordPolicyService {
         warning: result.feedback.warning,
         suggestions: [
           ...result.feedback.suggestions,
-          ...failedPolicies.map(policy => this.POLICY_MESSAGES[policy]),
+          ...failedPolicies.map(policy => this.POLICY_MESSAGES[policy as keyof typeof this.POLICIES]),
         ],
       },
       isStrong: failedPolicies.length === 0 && result.score >= this.MIN_SCORE,
@@ -114,6 +121,7 @@ export class PasswordPolicyService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: maxHistory,
+      select: { id: true, hash: true },
     });
 
     for (const historicPassword of passwordHistory) {
@@ -141,6 +149,7 @@ export class PasswordPolicyService {
     const history = await prisma.passwordHistory.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      select: { id: true },
     });
 
     if (history.length > 5) {
@@ -148,7 +157,7 @@ export class PasswordPolicyService {
         where: {
           userId,
           id: {
-            in: history.slice(5).map(p => p.id),
+            in: history.slice(5).map((p: { id: string }) => p.id),
           },
         },
       });
