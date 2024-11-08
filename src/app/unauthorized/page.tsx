@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function Unauthorized() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const user = session?.user;
 
   return (
     <Box textAlign="center" py={10} px={6}>
@@ -23,7 +24,7 @@ export default function Unauthorized() {
         You don&apos;t have permission to access this page
       </Text>
       <Text color={'gray.500'} mb={6}>
-        Current role: {user?.role}
+        Current role: {user?.role ?? 'Not authenticated'}
       </Text>
 
       <Button

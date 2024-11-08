@@ -1,6 +1,8 @@
 import { TokenService } from '@/services/token';
 import { AuditLogger } from '@/services/audit';
-import type { EmailVerificationData, EmailVerificationToken } from '@/types/auth';
+import { AuditLogType } from '@/types/audit';
+import type { EmailVerificationToken } from '@/types/auth';
+import type { AuditLogData } from '@/types/audit';
 
 export async function createVerificationToken(userId: string, email: string): Promise<EmailVerificationToken> {
   try {
@@ -13,13 +15,14 @@ export async function createVerificationToken(userId: string, email: string): Pr
     // Log the token creation
     await AuditLogger.log({
       userId,
-      type: 'email_verification',
+      type: AuditLogType.SECURITY,
       action: 'create_verification_token',
       metadata: {
         event: 'verification_token_created',
-        email
+        email,
+        type: 'email_verification'
       }
-    } as EmailVerificationData);
+    });
 
     return {
       value: token.value,
@@ -29,14 +32,15 @@ export async function createVerificationToken(userId: string, email: string): Pr
     // Log the error
     await AuditLogger.log({
       userId,
-      type: 'email_verification',
+      type: AuditLogType.SECURITY,
       action: 'create_verification_token_failed',
       metadata: {
         event: 'verification_token_creation_failed',
         email,
+        type: 'email_verification',
         error: error instanceof Error ? error.message : 'Unknown error'
       }
-    } as EmailVerificationData);
+    });
 
     throw error;
   }
@@ -52,27 +56,29 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
 
     await AuditLogger.log({
       userId: verifiedToken.userId,
-      type: 'email_verification',
+      type: AuditLogType.SECURITY,
       action: 'verify_email',
       metadata: {
         event: 'email_verified',
-        email: verifiedToken.email
+        email: verifiedToken.email,
+        type: 'email_verification'
       }
-    } as EmailVerificationData);
+    });
 
     return true;
   } catch (error) {
     // Log verification failure but don't throw
     await AuditLogger.log({
       userId: 'unknown',
-      type: 'email_verification',
+      type: AuditLogType.SECURITY,
       action: 'verify_email_failed',
       metadata: {
         event: 'email_verification_failed',
         email: 'unknown',
+        type: 'email_verification',
         error: error instanceof Error ? error.message : 'Unknown error'
       }
-    } as EmailVerificationData);
+    });
 
     return false;
   }

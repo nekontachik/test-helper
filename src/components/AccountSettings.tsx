@@ -22,7 +22,7 @@ import { Divider } from '@chakra-ui/layout';
 import { AuthCard } from './AuthCard';
 import { PasswordInput } from './PasswordInput';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ActionType, ResourceType } from '@/types/rbac';
+import { Action, Resource } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { AuthUser } from '@/lib/auth/types';
 
@@ -101,7 +101,7 @@ export function AccountSettings({ user }: AccountSettingsProps) {
   const handleUpdateProfile = async (data: ProfileFormData) => {
     try {
       setIsUpdating(true);
-      const canUpdate = await can(ActionType.UPDATE, ResourceType.USER);
+      const canUpdate = await can(Action.UPDATE, Resource.USER);
       if (!canUpdate) {
         throw new Error('Insufficient permissions');
       }

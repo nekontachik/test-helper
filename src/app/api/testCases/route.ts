@@ -1,5 +1,5 @@
 // src/app/api/projects/[projectId]/test-cases/route.ts
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createTestCaseSchema } from '@/lib/validation/schemas';
@@ -28,9 +28,7 @@ const querySchema = z.object({
   search: z.string().optional(),
 });
 
-async function handleGET(
-  request: NextRequest & { session?: Session }
-): Promise<Response> {
+async function handleGET(request: Request): Promise<Response> {
   try {
     const { searchParams, pathname } = new URL(request.url);
     const projectId = pathname.split('/')[3];
@@ -71,7 +69,7 @@ async function handleGET(
               name: true
             }
           },
-          createdBy: {
+          author: {
             select: {
               id: true,
               name: true,
@@ -85,7 +83,7 @@ async function handleGET(
 
     logger.info('Retrieved test cases', {
       projectId,
-      userId: request.session?.user.id,
+      userId: (request as any).session?.user.id,
       page,
       limit,
       totalCount,
@@ -106,21 +104,32 @@ async function handleGET(
   }
 }
 
-async function handlePOST(
-  request: NextRequest & { session?: Session }
-): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   try {
     const { pathname } = new URL(request.url);
     const projectId = pathname.split('/')[3];
     const body = await request.json();
     const data = createTestCaseSchema.parse(body);
+    const userId = (request as any).session?.user.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const testCase = await prisma.testCase.create({
       data: {
-        ...data,
-        userId: request.session?.user.id || '',
-        deleted: false,
+        title: data.title,
         description: data.description || '',
+        steps: data.steps,
+        expectedResult: data.expectedResult,
+        status: data.status,
+        priority: data.priority,
+        deleted: false,
+        userId,
+        projectId,
       },
       include: {
         project: {
@@ -129,7 +138,7 @@ async function handlePOST(
             name: true
           }
         },
-        createdBy: {
+        author: {
           select: {
             id: true,
             name: true,
@@ -142,7 +151,7 @@ async function handlePOST(
     logger.info('Created test case', {
       testCaseId: testCase.id,
       projectId,
-      userId: request.session?.user.id,
+      userId,
       title: testCase.title
     });
 
@@ -153,7 +162,6 @@ async function handlePOST(
   }
 }
 
-// Simple error handler function
 function handleApiError(error: unknown): Response {
   return NextResponse.json(
     { error: 'Internal server error' },
@@ -166,7 +174,7 @@ export const GET = withProtect(
     action: Action.READ,
     resource: Resource.TEST_CASE,
     allowTeamMembers: true,
-    getProjectId: async (req: NextRequest) => {
+    getProjectId: async (req: Request) => {
       const url = new URL(req.url);
       const parts = url.pathname.split('/');
       return parts[3];
@@ -188,7 +196,7 @@ export const POST = withProtect(
     action: Action.CREATE,
     resource: Resource.TEST_CASE,
     allowTeamMembers: true,
-    getProjectId: async (req: NextRequest) => {
+    getProjectId: async (req: Request) => {
       const url = new URL(req.url);
       const parts = url.pathname.split('/');
       return parts[3];

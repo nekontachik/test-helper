@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { RequestSigning } from '@/lib/auth/signing';
 import { apiKeyMiddleware } from '@/middleware/apiKey';
 import { corsMiddleware } from '@/middleware/cors';
-import { securityHeadersMiddleware } from '@/middleware/securityHeaders';
+import { securityHeaders } from '@/middleware/securityHeaders';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   // Apply security middlewares
   const corsResponse = await corsMiddleware(request);
   if (corsResponse.status === 204) return corsResponse;
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   const apiKeyResponse = await apiKeyMiddleware(request, ['write:data']);
   if (apiKeyResponse instanceof Response) return apiKeyResponse;
 
-  const headersResponse = await securityHeadersMiddleware(request);
+  const headersResponse = await securityHeaders(request);
   if (headersResponse instanceof Response) return headersResponse;
 
   try {

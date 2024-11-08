@@ -31,6 +31,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     logger.error('Error in test runs handler:', error);
-    return apiErrorHandler(error, 'test runs handler');  // Fixed: Pass error first, then context string
+    return apiErrorHandler(error);
   }
 }

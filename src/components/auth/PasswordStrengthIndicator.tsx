@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PasswordStrength } from '@/lib/auth/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
+  /** Password to check strength for */
   password: string;
+  /** Optional email for additional validation */
   email?: string;
+  /** Optional callback for strength changes */
   onStrengthChange?: (isStrong: boolean) => void;
 }
 
@@ -68,8 +71,11 @@ export function PasswordStrengthIndicator({
         className={`h-1 ${strengthColor}`}
       />
       {strength.feedback.warning && (
-        <Alert variant="warning" className="text-sm">
-          {strength.feedback.warning}
+        <Alert 
+          variant="default" 
+          className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10"
+        >
+          <AlertDescription>{strength.feedback.warning}</AlertDescription>
         </Alert>
       )}
       {strength.feedback.suggestions.length > 0 && (

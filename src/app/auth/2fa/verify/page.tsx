@@ -1,3 +1,5 @@
+'use client';
+
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -10,6 +12,10 @@ export default async function TwoFactorVerifyPage() {
     redirect('/auth/signin');
   }
 
+  if (!session.user.email) {
+    redirect('/auth/signin?error=EmailRequired');
+  }
+
   if (session.user.twoFactorAuthenticated) {
     redirect('/dashboard');
   }
@@ -18,9 +24,7 @@ export default async function TwoFactorVerifyPage() {
     <div className="container max-w-lg py-8">
       <TwoFactorVerify
         email={session.user.email}
-        onSuccess={() => {
-          redirect('/dashboard');
-        }}
+        onVerifyComplete={() => redirect('/dashboard')}
       />
     </div>
   );

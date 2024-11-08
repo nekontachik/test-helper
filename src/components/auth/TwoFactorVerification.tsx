@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +17,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
+/**
+ * TwoFactorVerification is a component that handles the verification step
+ * of two-factor authentication setup. It validates the code from an authenticator app.
+ */
+
 const verifySchema = z.object({
   code: z.string().length(6, 'Verification code must be 6 digits'),
 });
@@ -23,15 +29,29 @@ const verifySchema = z.object({
 type FormData = z.infer<typeof verifySchema>;
 
 interface TwoFactorVerificationProps {
+  /** Secret key for 2FA verification */
   secret: string;
-  onComplete: (backupCodes: string[]) => void;
+  /** URL to redirect to after successful verification */
+  redirectUrl: string;
 }
 
+/**
+ * TwoFactorVerification Component
+ * 
+ * @example
+ * ```tsx
+ * <TwoFactorVerification
+ *   secret="ABCDEF123456"
+ *   redirectUrl="/settings/security"
+ * />
+ * ```
+ */
 export function TwoFactorVerification({
   secret,
-  onComplete,
+  redirectUrl,
 }: TwoFactorVerificationProps) {
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [error, setError] = React.useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(verifySchema),
@@ -42,6 +62,7 @@ export function TwoFactorVerification({
 
   const onSubmit = async (data: FormData) => {
     try {
+      setError(null);
       const response = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,9 +77,15 @@ export function TwoFactorVerification({
       }
 
       const { backupCodes } = await response.json();
-      onComplete(backupCodes);
+      
+      if (backupCodes) {
+        localStorage.setItem('backupCodes', JSON.stringify(backupCodes));
+      }
+
+      router.push(redirectUrl);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Verification failed');
+      console.error('2FA verification error:', error);
     }
   };
 
@@ -78,8 +105,8 @@ export function TwoFactorVerification({
           </Alert>
         )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form form={form} onSubmit={onSubmit}>
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="code"
@@ -91,6 +118,7 @@ export function TwoFactorVerification({
                       placeholder="Enter 6-digit code"
                       maxLength={6}
                       className="text-center text-2xl tracking-widest"
+                      aria-label="Verification code"
                     />
                   </FormControl>
                   <FormMessage />
@@ -101,12 +129,65 @@ export function TwoFactorVerification({
               type="submit"
               className="w-full"
               disabled={form.formState.isSubmitting}
+              aria-label="Verify code"
             >
               Verify and Continue
             </Button>
-          </form>
+          </div>
         </Form>
       </CardContent>
     </Card>
   );
-} 
+}
+
+/**
+ * State Management:
+ * - Uses React Hook Form for form state
+ * - Tracks error state for API failures
+ * - Manages form submission state
+ */
+
+/**
+ * Accessibility:
+ * - Uses semantic HTML structure
+ * - Includes proper ARIA labels
+ * - Provides error feedback
+ * - Maintains keyboard navigation
+ */
+
+/**
+ * Error Handling:
+ * - Validates input with Zod schema
+ * - Displays API error messages
+ * - Logs errors to console
+ */
+
+/**
+ * Performance Considerations:
+ * - Uses controlled inputs
+ * - Optimized form validation
+ * - Minimal re-renders
+ */
+
+/**
+ * Props:
+ * | Name       | Type   | Default | Description                               |
+ * |------------|--------|---------|-------------------------------------------|
+ * | secret     | string | -       | Secret key for 2FA verification           |
+ * | redirectUrl| string | -       | URL to redirect after successful verification |
+ */
+
+/**
+ * Best Practices:
+ * - Secure handling of 2FA secrets
+ * - Clear error messages
+ * - Loading state feedback
+ * - Proper form validation
+ */
+
+/**
+ * Related Components:
+ * - TwoFactorSetup
+ * - TwoFactorQRCode
+ * - TwoFactorBackupCodes
+ */

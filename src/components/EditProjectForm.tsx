@@ -10,17 +10,13 @@ import {
 import { useForm } from 'react-hook-form';
 import type { Project } from '@prisma/client';
 
-interface ExtendedProject extends Project {
-  description?: string | null;
-}
-
 interface EditProjectFormData {
   name: string;
-  description?: string | null;
+  description: string | null;
 }
 
 interface EditProjectFormProps {
-  project: ExtendedProject;
+  project: Project;
   onSubmit: (data: EditProjectFormData) => void;
   isLoading?: boolean;
 }
@@ -33,7 +29,7 @@ export const EditProjectForm: React.FC<EditProjectFormProps> = ({
   const { register, handleSubmit, formState: { errors } } = useForm<EditProjectFormData>({
     defaultValues: {
       name: project.name,
-      description: project.description || ''
+      description: project.description
     }
   });
 

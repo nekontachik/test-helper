@@ -6,6 +6,13 @@ export { UserRole };
 // Define account status type
 export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
 
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 export interface User {
   id: string;
   email: string;

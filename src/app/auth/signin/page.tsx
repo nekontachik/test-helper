@@ -140,8 +140,9 @@ export default function SignIn() {
           <FormControl isRequired>
             <FormLabel>Password</FormLabel>
             <PasswordInput
+              name="password"
               value={formData.password}
-              onChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
               disabled={isLoading}
               autoComplete="current-password"
               showStrengthMeter={true}

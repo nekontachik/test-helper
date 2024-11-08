@@ -28,17 +28,17 @@ export default async function handler(
 
         const testCaseData: Prisma.TestCaseCreateInput = {
           title: validatedData.title,
-          description: validatedData.description ?? '', // Use nullish coalescing
-          expectedResult: validatedData.expectedResult ?? '', // Use nullish coalescing
-          priority:
-            (validatedData.priority as TestCasePriority)?.toString() ||
-            TestCasePriority.MEDIUM.toString(),
-          status:
-            (validatedData.status as TestCaseStatus)?.toString() ||
-            TestCaseStatus.ACTIVE.toString(),
-          project: {
-            connect: { id: validatedData.projectId },
+          description: validatedData.description ?? '',
+          steps: validatedData.steps,
+          expectedResult: validatedData.expectedResult ?? '',
+          priority: (validatedData.priority as TestCasePriority)?.toString() || TestCasePriority.MEDIUM.toString(),
+          status: (validatedData.status as TestCaseStatus)?.toString() || TestCaseStatus.ACTIVE.toString(),
+          author: {
+            connect: { id: req.body.userId }
           },
+          project: {
+            connect: { id: validatedData.projectId }
+          }
         };
 
         const testCase = await prisma.testCase.create({

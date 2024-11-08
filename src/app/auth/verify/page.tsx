@@ -10,6 +10,10 @@ export default async function VerifyPage() {
     redirect('/auth/signin');
   }
 
+  if (!session.user.email) {
+    redirect('/auth/signin?error=EmailRequired');
+  }
+
   if (session.user.emailVerified) {
     redirect('/dashboard');
   }
@@ -31,8 +35,8 @@ export default async function VerifyPage() {
   return (
     <div className="container max-w-lg py-8">
       <EmailVerification 
-        email={session.user.email} 
-        onResend={handleResendVerification} 
+        email={session.user.email}
+        resendUrl="/api/auth/verify-email/resend"
       />
     </div>
   );

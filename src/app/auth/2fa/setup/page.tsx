@@ -17,9 +17,7 @@ export default async function TwoFactorSetupPage() {
   return (
     <div className="container max-w-lg py-8">
       <TwoFactorSetup
-        onComplete={() => {
-          redirect('/settings/security');
-        }}
+        onComplete="/settings/security"
       />
     </div>
   );

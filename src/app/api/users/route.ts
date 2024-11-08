@@ -1,15 +1,20 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { validateRequest } from '@/middleware/validate';
 import { apiResponse, errorResponse } from '@/lib/api/response';
 import { paginationSchema } from '@/lib/validation/schema';
+import { prisma } from '@/lib/prisma';
+import { hashPassword } from '@/lib/auth/password';
 
 const createUserSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
+  password: z.string().min(8).max(100),
   role: z.enum(['USER', 'ADMIN']),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   // Validate request
   const validationResult = await validateRequest(request, {
     body: createUserSchema,
@@ -23,9 +28,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = createUserSchema.parse(body);
 
-    // Your business logic here
+    // Hash the password before storing
+    const hashedPassword = await hashPassword(data.password);
+
+    // Create user with hashed password
     const user = await prisma.user.create({
-      data,
+      data: {
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: data.role,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        // Don't return the password
+      }
     });
 
     return apiResponse(user);
@@ -34,7 +55,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   // Validate query parameters
   const validationResult = await validateRequest(request, {
     query: paginationSchema,
@@ -45,7 +66,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const { page, limit } = paginationSchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
@@ -55,6 +76,14 @@ export async function GET(request: Request) {
       prisma.user.findMany({
         take: limit,
         skip: (page - 1) * limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          // Don't return passwords
+        }
       }),
       prisma.user.count(),
     ]);

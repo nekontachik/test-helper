@@ -8,6 +8,14 @@ declare module 'lucide-react' {
 
   // Common icons
   export const X: ComponentType<IconProps>;
+  export const Check: ComponentType<IconProps>;
+  
+  // Loading icons
+  export const Loader: ComponentType<IconProps>;
+  
+  // Action icons
+  export const Copy: ComponentType<IconProps>;
+  export const Download: ComponentType<IconProps>;
   
   // Security Activity icons
   export const AlertTriangle: ComponentType<IconProps>;

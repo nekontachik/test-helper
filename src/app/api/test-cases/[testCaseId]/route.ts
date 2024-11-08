@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
-import { Action, Resource } from '@/lib/auth/rbac/types';
+import { Action, Resource } from '@/types/rbac';
 
 export async function PUT(
   request: Request,
@@ -45,8 +45,8 @@ export async function PUT(
       {
         userId: session.user.id,
         resourceOwnerId: testCase.userId,
-        projectOwnerId: testCase.project.userId,
-        status: testCase.status,
+        teamMembers: [],
+        projectId: testCase.project.userId
       }
     );
 

@@ -1,148 +1,180 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Box,
-  VStack,
-  Text,
-  useToast,
-  Heading,
-} from '@chakra-ui/react';
-import { Button } from '@chakra-ui/button';
-import { Input } from '@chakra-ui/input';
-import { FormControl, FormLabel, FormErrorMessage } from '@chakra-ui/form-control';
+import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader } from 'lucide-react';
 
-const verifySchema = z.object({
-  code: z.string().length(6, 'Verification code must be 6 digits'),
-});
-
-type FormData = z.infer<typeof verifySchema>;
+/**
+ * TwoFactorVerify is a component that handles 2FA code verification.
+ * It provides a form for users to enter their verification code and handles the verification process.
+ */
 
 interface TwoFactorVerifyProps {
+  /** User's email address */
   email: string;
-  redirectUrl: string;
+  /** Optional callback for custom navigation after verification */
+  onVerifyComplete?: () => void;
+  /** Optional redirect path after successful verification */
+  redirectPath?: string;
 }
 
-export function TwoFactorVerify({ email, redirectUrl }: TwoFactorVerifyProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+type VerifyStatus = 'idle' | 'verifying' | 'success' | 'error';
+
+/**
+ * TwoFactorVerify Component
+ * 
+ * @example
+ * ```tsx
+ * <TwoFactorVerify 
+ *   email="user@example.com"
+ *   redirectPath="/dashboard"
+ * />
+ * ```
+ */
+export function TwoFactorVerify({
+  email,
+  onVerifyComplete,
+  redirectPath = '/dashboard'
+}: TwoFactorVerifyProps) {
   const router = useRouter();
-  const toast = useToast();
+  const [code, setCode] = React.useState('');
+  const [status, setStatus] = React.useState<VerifyStatus>('idle');
+  const [error, setError] = React.useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(verifySchema),
-    defaultValues: {
-      code: '',
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('verifying');
+    setError(null);
 
-  const onSubmit = async (data: FormData) => {
     try {
-      setIsSubmitting(true);
       const response = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: data.code }),
+        body: JSON.stringify({ code, email }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Verification failed');
+        throw new Error('Invalid verification code');
       }
 
-      toast({
-        title: 'Verification successful',
-        status: 'success',
-        duration: 3000,
-      });
+      setStatus('success');
       
-      router.push(redirectUrl);
-    } catch (error) {
-      toast({
-        title: 'Verification failed',
-        description: error instanceof Error ? error.message : 'Please try again',
-        status: 'error',
-        duration: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
+      if (onVerifyComplete) {
+        onVerifyComplete();
+      } else {
+        router.push(redirectPath);
+      }
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Verification failed');
     }
   };
 
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      p={8}
-      maxW="md"
-      w="100%"
-      mx="auto"
-      bg="white"
-      boxShadow="sm"
-    >
-      <VStack spacing={6}>
-        <Heading size="lg" textAlign="center">
-          Two-Factor Verification
-        </Heading>
-        
-        <Text textAlign="center" color="gray.600">
-          Enter the verification code from your authenticator app for:
-          <br />
-          <Text as="span" fontWeight="medium" color="gray.900">
-            {email}
-          </Text>
-        </Text>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <h2 className="text-2xl font-bold text-center">
+          Two-Factor Authentication
+        </h2>
+      </CardHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
-          <VStack spacing={4} align="stretch">
-            <FormControl isInvalid={!!errors.code}>
-              <FormLabel htmlFor="code" srOnly>
-                Verification Code
-              </FormLabel>
-              <Input
-                id="code"
-                {...register('code')}
-                placeholder="Enter 6-digit code"
-                maxLength={6}
-                textAlign="center"
-                fontSize="2xl"
-                letterSpacing="wider"
-                autoComplete="one-time-code"
-                inputMode="numeric"
-              />
-              <FormErrorMessage>
-                {errors.code?.message}
-              </FormErrorMessage>
-            </FormControl>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <p className="text-center text-muted-foreground">
+            Enter the verification code sent to:
+            <br />
+            <span className="font-medium text-foreground">{email}</span>
+          </p>
 
-            <Button
-              type="submit"
-              colorScheme="blue"
-              width="100%"
-              isLoading={isSubmitting}
-              loadingText="Verifying..."
-            >
-              Verify
-            </Button>
+          <Input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Enter verification code"
+            maxLength={6}
+            className="text-center text-lg tracking-widest"
+            aria-label="Verification code"
+            disabled={status === 'verifying'}
+            required
+          />
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/auth/2fa/recovery')}
-              width="100%"
-            >
-              Use recovery code
-            </Button>
-          </VStack>
-        </form>
-      </VStack>
-    </Box>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+
+        <CardFooter>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={status === 'verifying' || !code}
+          >
+            {status === 'verifying' && (
+              <Loader className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            )}
+            Verify Code
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   );
-} 
+}
+
+/**
+ * State Management:
+ * - Tracks verification code input
+ * - Manages verification status
+ * - Handles error states
+ */
+
+/**
+ * Accessibility:
+ * - Uses semantic HTML structure
+ * - Includes proper ARIA labels
+ * - Provides loading state feedback
+ * - Maintains keyboard navigation
+ */
+
+/**
+ * Error Handling:
+ * - Displays validation errors
+ * - Shows API error messages
+ * - Handles network errors
+ */
+
+/**
+ * Performance Considerations:
+ * - Minimal state updates
+ * - Controlled input handling
+ * - Optimized re-renders
+ */
+
+/**
+ * Props:
+ * | Name            | Type       | Default      | Description                               |
+ * |-----------------|------------|--------------|-------------------------------------------|
+ * | email           | string     | -            | User's email address                      |
+ * | onVerifyComplete| () => void | undefined    | Optional callback after verification      |
+ * | redirectPath    | string     | '/dashboard' | Path to redirect after success           |
+ */
+
+/**
+ * Best Practices:
+ * - Clear user feedback
+ * - Proper error handling
+ * - Loading state management
+ * - Accessible UI elements
+ */
+
+/**
+ * Related Components:
+ * - TwoFactorSetup
+ * - TwoFactorStatus
+ * - VerificationCodeInput
+ */

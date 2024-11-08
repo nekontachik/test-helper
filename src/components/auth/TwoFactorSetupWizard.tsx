@@ -1,18 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TwoFactorQRCode } from './TwoFactorQRCode';
 import { TwoFactorVerification } from './TwoFactorVerification';
 import { TwoFactorBackupCodes } from './TwoFactorBackupCodes';
-import { Steps } from '@/components/ui/steps';
+import { Steps } from '../ui/steps';
 
 interface TwoFactorSetupWizardProps {
-  onComplete: () => void;
+  /** URL to redirect to after completion */
+  redirectUrl: string;
 }
 
-type SetupStep = 'qr-code' | 'verification' | 'backup-codes' | 'complete';
+type SetupStep = 'qr-code' | 'verification' | 'backup-codes';
 
-export function TwoFactorSetupWizard({ onComplete }: TwoFactorSetupWizardProps) {
+export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<SetupStep>('qr-code');
   const [setupData, setSetupData] = useState<{
     secret?: string;
@@ -31,14 +34,10 @@ export function TwoFactorSetupWizard({ onComplete }: TwoFactorSetupWizardProps) 
     setCurrentStep('verification');
   };
 
-  const handleVerificationComplete = (backupCodes: string[]) => {
+  // Store backup codes in state when verification is complete
+  const handleVerificationSuccess = (backupCodes: string[]) => {
     setSetupData(prev => ({ ...prev, backupCodes }));
     setCurrentStep('backup-codes');
-  };
-
-  const handleBackupCodesComplete = () => {
-    setCurrentStep('complete');
-    onComplete();
   };
 
   return (
@@ -55,14 +54,14 @@ export function TwoFactorSetupWizard({ onComplete }: TwoFactorSetupWizardProps) 
       {currentStep === 'verification' && setupData.secret && (
         <TwoFactorVerification
           secret={setupData.secret}
-          onComplete={handleVerificationComplete}
+          redirectUrl={`/api/auth/2fa/verify-success?next=${encodeURIComponent(window.location.pathname)}`}
         />
       )}
 
       {currentStep === 'backup-codes' && setupData.backupCodes && (
         <TwoFactorBackupCodes
           codes={setupData.backupCodes}
-          onComplete={handleBackupCodesComplete}
+          redirectUrl={redirectUrl}
         />
       )}
     </div>

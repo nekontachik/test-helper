@@ -10,10 +10,12 @@ export default async function SessionsPage() {
     redirect('/auth/signin');
   }
 
+  const sessionToken = session.user?.email || 'unknown';
+
   return (
     <div className="container max-w-4xl py-8">
       <h1 className="text-3xl font-bold mb-8">Session Management</h1>
-      <SessionManagement currentSessionId={session.id} />
+      <SessionManagement currentSessionId={sessionToken} />
     </div>
   );
 } 

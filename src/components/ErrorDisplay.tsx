@@ -1,6 +1,6 @@
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { XCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface ErrorDisplayProps {
   error: {
@@ -15,8 +15,10 @@ interface ErrorDisplayProps {
 export function ErrorDisplay({ error, onRetry, onDismiss }: ErrorDisplayProps) {
   return (
     <Alert variant="destructive">
-      <XCircle className="h-4 w-4" />
-      <AlertTitle>Error {error.code && `(${error.code})`}</AlertTitle>
+      <X className="h-4 w-4" />
+      <div className="font-medium">
+        Error {error.code && `(${error.code})`}
+      </div>
       <AlertDescription className="mt-2">
         <p>{error.message}</p>
         {error.details && (

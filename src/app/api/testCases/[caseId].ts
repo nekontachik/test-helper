@@ -33,6 +33,6 @@ export default async function handler(
     res.status(200).json({ success: true, data: testCase });
   } catch (error) {
     logger.error('Error in test case handler:', error);
-    apiErrorHandler(error, 'test case handler');  // Fixed: Swapped arguments to match function signature
+    return apiErrorHandler(error);
   }
 }

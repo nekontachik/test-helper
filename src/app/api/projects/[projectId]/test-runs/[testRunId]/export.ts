@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { apiErrorHandler } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
+import type { TestCase } from '@prisma/client';
+
+interface TestRunWithCases {
+  id: string;
+  name: string;
+  status: string;
+  testRunCases: Array<{
+    testCase: TestCase;
+  }>;
+}
 
 export async function GET(
   request: Request,
@@ -13,8 +23,14 @@ export async function GET(
         id: String(params.testRunId),
         projectId: String(params.projectId),
       },
-      include: { testCases: true },
-    });
+      include: {
+        testRunCases: {
+          include: {
+            testCase: true
+          }
+        }
+      },
+    }) as TestRunWithCases | null;
 
     if (!testRun) {
       return NextResponse.json({ error: 'Test run not found' }, { status: 404 });
@@ -24,10 +40,10 @@ export async function GET(
       id: testRun.id,
       name: testRun.name,
       status: testRun.status,
-      testCases: testRun.testCases.map((tc) => ({
-        id: tc.id,
-        title: tc.title,
-        status: tc.status,
+      testCases: testRun.testRunCases.map(({ testCase }) => ({
+        id: testCase.id,
+        title: testCase.title,
+        status: testCase.status,
       })),
     };
 
@@ -35,6 +51,6 @@ export async function GET(
     return NextResponse.json(exportData);
   } catch (error) {
     logger.error('Error exporting test run:', error);
-    return apiErrorHandler(error, 'test run export handler');
+    return apiErrorHandler(error);
   }
 }
