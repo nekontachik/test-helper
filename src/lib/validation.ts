@@ -11,6 +11,17 @@ const testCaseSchema = z.object({
   projectId: z.string().uuid()
 });
 
+export const testSuiteSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  testCaseIds: z.array(z.string().uuid()).optional()
+});
+
+export const testRunSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  testCaseIds: z.array(z.string().uuid()).min(1, 'At least one test case is required')
+});
+
 export async function validateTestCase(data: unknown) {
   return testCaseSchema.parseAsync(data);
 }

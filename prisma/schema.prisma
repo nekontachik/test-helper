@@ -143,6 +143,7 @@ model Project {
   testRuns    TestRun[]
   testReports TestReport[]
   members     ProjectMember[]
+  testSuites  TestSuite[]
 
   @@index([userId])
 }
@@ -166,6 +167,7 @@ model TestCase {
   author         User             @relation("AuthoredTestCases", fields: [userId], references: [id])
   testRunCases   TestRunCase[]
   results        TestCaseResult[]
+  testSuites     TestSuite[]
 
   @@index([projectId])
   @@index([userId])
@@ -338,4 +340,18 @@ model BackupCode {
   used      Boolean  @default(false)
 
   @@index([userId])
+}
+
+model TestSuite {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  projectId   String
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testCases   TestCase[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("test_suite")
+  @@index([projectId])
 }

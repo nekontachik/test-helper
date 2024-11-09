@@ -24,7 +24,7 @@ export async function GET(
 
     const testRun = await prisma.testRun.findUnique({
       where: { id: testRunId },
-      include: { testCases: true },
+      include: { testRunCases: true },
     });
 
     if (!testRun) {

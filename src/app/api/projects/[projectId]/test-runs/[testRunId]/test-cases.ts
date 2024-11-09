@@ -16,7 +16,7 @@ export default async function handler(
     try {
       const testCases = await prisma.testCase.findMany({
         where: {
-          testRuns: { some: { id: testRunId } },
+          testRunCases: { some: { testRunId: testRunId } },
           projectId: projectId,
         },
       });
