@@ -15,8 +15,7 @@ export async function GET(request: Request) {
     }
 
     const verificationToken = await prisma.verificationToken.findUnique({
-      where: { token },
-      include: { user: true },
+      where: { token }
     });
 
     if (!verificationToken) {
@@ -28,7 +27,12 @@ export async function GET(request: Request) {
 
     if (verificationToken.expires < new Date()) {
       await prisma.verificationToken.delete({
-        where: { id: verificationToken.id },
+        where: { 
+          identifier_token: {
+            identifier: verificationToken.identifier,
+            token: verificationToken.token
+          }
+        }
       });
       return NextResponse.json(
         { error: AUTH_ERRORS.TOKEN_EXPIRED },
@@ -38,12 +42,17 @@ export async function GET(request: Request) {
 
     await prisma.$transaction([
       prisma.user.update({
-        where: { id: verificationToken.userId },
-        data: { emailVerified: new Date() },
+        where: { email: verificationToken.identifier },
+        data: { emailVerified: new Date() }
       }),
       prisma.verificationToken.delete({
-        where: { id: verificationToken.id },
-      }),
+        where: { 
+          identifier_token: {
+            identifier: verificationToken.identifier,
+            token: verificationToken.token
+          }
+        }
+      })
     ]);
 
     return NextResponse.redirect(new URL('/auth/signin', request.url));

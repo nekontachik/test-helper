@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { Session } from '@prisma/client';
 import logger from '@/lib/logger';
 
 interface SessionTrackingData {
@@ -33,5 +34,33 @@ export class SessionTrackingService {
         userId: data.userId,
       });
     }
+  }
+
+  static async cleanupExpiredSessions(): Promise<void> {
+    const now = new Date();
+    
+    await prisma.session.deleteMany({
+      where: {
+        OR: [
+          { expiresAt: { lt: now } },
+          {
+            lastActive: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) }, // 24 hours inactive
+          }
+        ]
+      }
+    });
+  }
+
+  static async updateSessionActivity(sessionId: string): Promise<void> {
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { lastActive: new Date() }
+    });
+  }
+
+  static async getSession(sessionId: string): Promise<Session | null> {
+    return prisma.session.findUnique({
+      where: { id: sessionId }
+    });
   }
 } 

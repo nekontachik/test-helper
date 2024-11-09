@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await SessionManager.updateSessionActivity(session.id);
+    await SessionManager.updateSessionActivity(session.user.id);
 
     return NextResponse.json({
       message: 'Session activity updated',

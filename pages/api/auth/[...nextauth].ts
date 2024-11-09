@@ -8,6 +8,9 @@ import type { RequestInternal } from 'next-auth';
 
 interface CustomUser extends User {
   role: UserRole;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -28,7 +31,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            role: true,
+            twoFactorEnabled: true,
+            emailVerified: true,
+          }
         });
 
         if (!user) {
@@ -46,7 +58,10 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role as UserRole,
-          image: null
+          image: null,
+          twoFactorEnabled: user.twoFactorEnabled,
+          twoFactorAuthenticated: false,
+          emailVerified: user.emailVerified,
         };
       }
     })
@@ -58,12 +73,18 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.twoFactorEnabled = user.twoFactorEnabled;
+        token.twoFactorAuthenticated = user.twoFactorAuthenticated;
+        token.emailVerified = user.emailVerified;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role as UserRole;
+        session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
+        session.user.twoFactorAuthenticated = token.twoFactorAuthenticated as boolean;
+        session.user.emailVerified = token.emailVerified as Date | null;
       }
       return session;
     }

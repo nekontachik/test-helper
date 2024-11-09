@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { UAParser } from 'ua-parser-js';
+import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
 
 export async function GET(request: Request) {
   try {
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
         ipAddress: true,
         createdAt: true,
         lastActive: true,
-        expires: true,
+        expiresAt: true,
       },
     });
 
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
           os: device.os.name,
           device: device.device.type || 'desktop',
         },
-        isExpired: activity.expires < new Date(),
+        isExpired: activity.expiresAt < new Date(),
       };
     });
 
@@ -79,17 +80,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, details } = body;
+    const { sessionId } = body;
 
-    const activity = await SessionService.logSessionActivity(
-      session.user.id,
-      type,
-      details,
-      request.headers.get('user-agent') || undefined,
-      request.headers.get('x-forwarded-for') || undefined
-    );
+    await SessionTrackingService.trackSession({
+      sessionId,
+      userId: session.user.id,
+      ip: request.headers.get('x-forwarded-for') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    });
 
-    return NextResponse.json(activity);
+    return NextResponse.json({
+      message: 'Activity logged successfully'
+    });
   } catch (error) {
     console.error('Session activity log error:', error);
     return NextResponse.json(

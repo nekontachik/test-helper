@@ -43,7 +43,10 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await SessionService.terminateAllSessions(session.user.id, session.id);
+    // Convert null to undefined for type compatibility
+    const currentSessionToken = request.headers.get('x-session-token') || undefined;
+
+    await SessionService.terminateAllSessions(session.user.id, currentSessionToken);
 
     return NextResponse.json({
       message: 'All other sessions terminated',

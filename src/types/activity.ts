@@ -1,20 +1,16 @@
 import { Role } from '../lib/auth/types';
 
-export type ActivityEventType = 
-  | 'ROLE_CHANGE'
-  | 'LOGIN'
-  | 'LOGOUT'
-  | 'PASSWORD_CHANGE'
-  | 'TWO_FACTOR_ENABLE'
-  | 'TWO_FACTOR_DISABLE';
-
-export interface ActivityContext {
-  ip?: string;
-  userAgent?: string;
-  location?: string;
+export enum ActivityEventType {
+  SESSIONS_REVOKED = 'SESSIONS_REVOKED',
+  SESSION_ACTIVITY = 'SESSION_ACTIVITY',
+  LOGIN_SUCCESS = 'LOGIN_SUCCESS',
+  LOGIN_FAILED = 'LOGIN_FAILED',
+  LOGOUT = 'LOGOUT',
+  PASSWORD_CHANGED = 'PASSWORD_CHANGED',
+  PROFILE_UPDATED = 'PROFILE_UPDATED',
 }
 
-export interface ActivityType {
+export interface ActivityLogEntry {
   type: ActivityEventType;
   userId: string;
   details: {
@@ -28,4 +24,10 @@ export interface ActivityType {
     metadata?: Record<string, unknown>;
   };
   context?: ActivityContext;
+}
+
+export interface ActivityContext {
+  ip?: string;
+  userAgent?: string;
+  location?: string;
 } 

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = await SessionService.validateSession(sessionId, session.user.id);
+    const isValid = await SessionService.validateSession(sessionId);
 
     if (!isValid) {
       return NextResponse.json(

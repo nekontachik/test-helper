@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authRateLimitMiddleware } from '@/middleware/authRateLimit';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
+import { ActivityEventType } from '@/types/activity';
 import { AUTH_ERRORS } from '@/lib/utils/error';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   // Apply rate limiting
   const rateLimit = await authRateLimitMiddleware(request);
   if (rateLimit instanceof Response) return rateLimit;
 
   try {
     const { email, password } = await request.json();
-    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const userAgent = request.headers.get('user-agent');
+    // Convert null to undefined for type compatibility
+    const ip = request.headers.get('x-forwarded-for') || undefined;
+    const userAgent = request.headers.get('user-agent') || undefined;
 
     // Check for breached password
     const isBreached = await SecurityService.checkPasswordBreached(password);
     if (isBreached) {
-      await ActivityService.log('UNKNOWN', 'LOGIN_FAILED', {
+      await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
         ip,
         userAgent,
         metadata: { reason: 'breached_password' },
@@ -28,8 +31,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Record the attempt
-    await SecurityService.recordFailedAttempt(ip);
+    // Record the attempt with type
+    await SecurityService.recordFailedAttempt(ip || 'anonymous', 'login');
     
     return NextResponse.json({ success: true });
   } catch (error) {

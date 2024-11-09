@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { ActivityService } from '@/lib/auth/activityService';
 import { authOptions } from '../../[...nextauth]/route';
+import { ActivityEventType } from '@/types/activity';
 
 const revokeSchema = z.object({
   sessionIds: z.array(z.string()),
@@ -20,8 +21,8 @@ export async function POST(request: Request) {
     }
 
     const { sessionIds } = revokeSchema.parse(await request.json());
-    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const userAgent = request.headers.get('user-agent');
+    const ip = request.headers.get('x-forwarded-for') || undefined;
+    const userAgent = request.headers.get('user-agent') || undefined;
 
     // Verify ownership of sessions
     const sessions = await prisma.session.findMany({
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await ActivityService.log(session.user.id, 'SESSIONS_REVOKED', {
+    await ActivityService.log(session.user.id, ActivityEventType.SESSIONS_REVOKED, {
       ip,
       userAgent,
       metadata: { sessionIds },

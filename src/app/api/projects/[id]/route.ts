@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { permissionGuard } from '@/middleware/permissionGuard';
 import { prisma } from '@/lib/prisma';
+import { UserRole } from '@/types/auth';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // Check permissions
-  const permissionCheck = await permissionGuard(request, 'read', 'project');
+  // Check permissions with correct number of arguments
+  const permissionCheck = await permissionGuard(request, {
+    roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+    requireVerified: true
+  });
+  
   if (permissionCheck instanceof Response) return permissionCheck;
 
   try {

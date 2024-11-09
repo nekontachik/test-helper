@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { sessionId } = verifySchema.parse(body);
 
-    const isValid = await SessionService.validateSession(sessionId, session.user.id);
+    const isValid = await SessionService.validateSession(sessionId);
 
     if (!isValid) {
       return NextResponse.json(

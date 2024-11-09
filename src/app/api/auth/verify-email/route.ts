@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/authService';
-import { withRateLimit } from '@/middleware/rateLimit';
+import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { z } from 'zod';
 
 const verifySchema = z.object({
   token: z.string(),
 });
 
-async function handler(request: Request) {
+export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResult = await checkRateLimit(`verify_email_${ip}`);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { message: 'Too many requests' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { token } = verifySchema.parse(body);
 
@@ -25,5 +35,3 @@ async function handler(request: Request) {
     );
   }
 }
-
-export const POST = withRateLimit(handler, 'auth:verify');
