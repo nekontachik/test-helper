@@ -11,82 +11,74 @@ datasource db {
 }
 
 model Role {
-  id        String       @id @default(cuid())
-  type      String       // Will store: 'ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER'
+  id        String        @id @default(cuid())
+  type      String // Will store: 'ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER'
   userRoles UserRoleMap[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@unique([type])
 }
 
 model User {
-  id                    String    @id @default(cuid())
-  email                 String    @unique
-  password              String
-  name                  String?
-  role                  String    @default("USER")
-  emailVerified         DateTime?
-  emailVerificationToken      String?
-  emailVerificationExpires    DateTime?
-  image                 String?
-  status               String    @default("ACTIVE")
-  twoFactorEnabled      Boolean   @default(false)
-  twoFactorSecret       String?
-  backupCodesData       String?
-  backupCodesUpdatedAt  DateTime?
-  currentChallenge      String?
-  failedLoginAttempts   Int       @default(0)
-  lockedUntil          DateTime?
-  lastLogin            DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  emailNotificationsEnabled Boolean @default(true)
+  id                        String    @id @default(cuid())
+  name                      String?
+  email                     String    @unique
+  password                  String
+  role                      String    @default("USER")
+  image                     String?
+  emailVerified             DateTime?
+  emailVerificationToken    String?   @unique
+  emailVerificationExpires  DateTime?
+  twoFactorEnabled          Boolean   @default(false)
+  twoFactorSecret           String?
+  status                    String    @default("ACTIVE")
+  emailNotificationsEnabled Boolean   @default(true)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
-  sessions            Session[]
-  webAuthnCredentials WebAuthnCredential[]
-  testReports         TestReport[]
+  // Relations
+  userPermissions     UserPermission[]
   userRoles           UserRoleMap[]
+  sessions            Session[]
+  accounts            Account[]
   projects            Project[]
-  testCases           TestCase[]  @relation("AuthoredTestCases")
+  authoredTestCases   TestCase[]           @relation("AuthoredTestCases")
   testRuns            TestRun[]
-  activities          ActivityLog[]
+  activityLogs        ActivityLog[]
   trustedDevices      TrustedDevice[]
+  webAuthnCredentials WebAuthnCredential[]
   apiKeys             ApiKey[]
   passwordHistory     PasswordHistory[]
-  accounts            Account[]
+  testReports         TestReport[]
   projectMemberships  ProjectMember[]
-  backupCodes BackupCode[]
-  backupCodesGeneratedAt DateTime?
-
-  // Password reset
-  passwordResetToken         String?
-  passwordResetExpires       DateTime?
+  backupCodes         BackupCode[]
+  activities          UserActivity[]
 }
 
 model UserRoleMap {
-  id     String   @id @default(uuid())
-  userId String   @map("user_id")
-  roleId String   @map("role_id")
-  user   User     @relation(fields: [userId], references: [id])
-  role   Role     @relation(fields: [roleId], references: [id])
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  roleId String @map("role_id")
+  user   User   @relation(fields: [userId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
 
   @@index([userId])
   @@index([roleId])
 }
 
 model Session {
-  id           String           @id @default(cuid())
-  sessionToken String           @unique
+  id           String            @id @default(cuid())
+  sessionToken String            @unique
   userId       String
   expiresAt    DateTime
-  lastActive   DateTime         @default(now())
+  lastActive   DateTime          @default(now())
   userAgent    String?
   ipAddress    String?
   deviceInfo   String?
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime          @default(now())
   activities   SessionActivity[]
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -131,14 +123,14 @@ model VerificationToken {
 }
 
 model Project {
-  id          String     @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
-  status      String     @default("ACTIVE")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  status      String          @default("ACTIVE")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   userId      String
-  user        User       @relation(fields: [userId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
   testCases   TestCase[]
   testRuns    TestRun[]
   testReports TestReport[]
@@ -165,6 +157,7 @@ model TestCase {
   updatedAt      DateTime         @updatedAt
   project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   author         User             @relation("AuthoredTestCases", fields: [userId], references: [id])
+  versions       Version[]
   testRunCases   TestRunCase[]
   results        TestCaseResult[]
   testSuites     TestSuite[]
@@ -173,18 +166,34 @@ model TestCase {
   @@index([userId])
 }
 
+model Version {
+  id             String   @id @default(cuid())
+  versionNumber  Int
+  title          String
+  description    String
+  steps          String
+  expectedResult String
+  status         String
+  priority       String
+  testCase       TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testCaseId     String
+  createdAt      DateTime @default(now())
+
+  @@index([testCaseId])
+}
+
 model TestRun {
-  id          String           @id @default(cuid())
-  name        String
-  status      String
-  projectId   String
-  userId      String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user        User             @relation(fields: [userId], references: [id])
+  id           String           @id @default(cuid())
+  name         String
+  status       String
+  projectId    String
+  userId       String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id])
   testRunCases TestRunCase[]
-  results     TestCaseResult[]
+  results      TestCaseResult[]
 
   @@index([projectId])
   @@index([userId])
@@ -206,17 +215,17 @@ model TestCaseResult {
 }
 
 model ActivityLog {
-  id          String    @id @default(cuid())
-  type        String    // 'AUTH' | 'USER' | 'SYSTEM'
-  action      String    // Store the audit action
-  userId      String    @map("user_id")
-  targetId    String?   @map("target_id")
-  metadata    String?   // JSON string
-  ipAddress   String?   @map("ip_address")
-  userAgent   String?   @map("user_agent")
-  location    String?
-  createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  type      String // 'AUTH' | 'USER' | 'SYSTEM'
+  action    String // Store the audit action
+  userId    String   @map("user_id")
+  targetId  String?  @map("target_id")
+  metadata  String? // JSON string
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  location  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([type])
@@ -243,7 +252,7 @@ model WebAuthnCredential {
   credentialID        String   @unique
   credentialPublicKey String
   counter             Int
-  transportsData      String   // Store array as JSON string
+  transportsData      String // Store array as JSON string
   createdAt           DateTime @default(now())
   lastUsed            DateTime @updatedAt
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -252,15 +261,15 @@ model WebAuthnCredential {
 }
 
 model ApiKey {
-  id          String    @id @default(cuid())
-  userId      String
-  hashedKey   String    @unique
-  name        String
-  scopesData  String    // Store array as JSON string
-  expiresAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  userId     String
+  hashedKey  String    @unique
+  name       String
+  scopesData String // Store array as JSON string
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([hashedKey])
@@ -277,15 +286,15 @@ model PasswordHistory {
 }
 
 model TestReport {
-  id          String   @id @default(cuid())
-  title       String
-  content     String
-  projectId   String
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  projectId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([projectId])
   @@index([userId])
@@ -294,7 +303,7 @@ model TestReport {
 model RevokedToken {
   id        String    @id @default(cuid())
   token     String    @unique
-  type      String    // TokenType enum value
+  type      String // TokenType enum value
   revokedAt DateTime  @default(now())
   expiresAt DateTime?
 
@@ -343,15 +352,49 @@ model BackupCode {
 }
 
 model TestSuite {
-  id          String      @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String?
   projectId   String
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   testCases   TestCase[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  @@map("test_suite")
   @@index([projectId])
+  @@map("test_suite")
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  userPermissions UserPermission[]
+}
+
+model UserPermission {
+  id           String     @id @default(cuid())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  ipAddress String?
+  userAgent String?
+  details   String?  // JSON string for flexible metadata
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("user_activity")
 }

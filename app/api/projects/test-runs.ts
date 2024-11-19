@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
 import { AppError } from '@/lib/errors';
 
@@ -31,6 +30,17 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     logger.error('Error in test runs handler:', error);
-    return handleApiError(error);
+    
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
+    );
   }
 }

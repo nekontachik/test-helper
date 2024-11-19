@@ -32,12 +32,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // First delete all backup codes
+    await prisma.backupCode.deleteMany({
+      where: { userId: session.user.id }
+    });
+
+    // Then update user
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
         twoFactorEnabled: false,
         twoFactorSecret: null,
-        backupCodes: null,
       },
     });
 

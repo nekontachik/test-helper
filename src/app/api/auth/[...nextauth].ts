@@ -1,107 +1,245 @@
-import NextAuth, { NextAuthOptions, User } from 'next-auth';
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import GitHubProvider from 'next-auth/providers/github';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
-import { compare } from 'bcrypt';
-import { UserRole } from '@/types/auth';
-import type { RequestInternal } from 'next-auth';
+import { compare } from 'bcryptjs';
+import { UserRole, AccountStatus, Permission } from '@/types/auth';
+import { SecurityService } from '@/lib/auth/securityService';
+import { ActivityService } from '@/lib/auth/activityService';
+import { ActivityEventType } from '@/types/activity';
+import type { NextAuthOptions, User } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import type { Prisma } from '@prisma/client';
 
-// Extend the User type to include our custom fields
+// Define custom user type that includes our additional properties
 interface CustomUser extends User {
   role: UserRole;
-  emailVerified?: Date | null;
+  permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
 }
 
-// Define select fields for better reusability and performance
+// Define user select fields for consistent querying
 const userSelect = {
   id: true,
   email: true,
   name: true,
   password: true,
   role: true,
+  status: true,
+  image: true,
+  emailVerified: true,
+  twoFactorEnabled: true,
+  twoFactorSecret: true,
+  emailNotificationsEnabled: true,
+  userPermissions: {
+    select: {
+      permission: {
+        select: {
+          id: true,
+          name: true,
+          description: true
+        }
+      }
+    }
+  }
 } satisfies Prisma.UserSelect;
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  
+  // Configure session handling
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60 // 24 hours
+  },
+
+  // Configure providers
   providers: [
+    // OAuth Providers
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID!,
+      clientSecret: process.env.GITHUB_SECRET!
+    }),
+    
+    // Credentials Provider
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'text' },
+        email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(
-        credentials: Record<"email" | "password", string> | undefined,
-        req: Pick<RequestInternal, "body" | "query" | "headers" | "method">
-      ): Promise<CustomUser | null> {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        // Use a single database query with specific field selection
+        const headers = req.headers as Record<string, string | undefined>;
+        const ip = headers['x-forwarded-for'] || 'unknown';
+        const userAgent = headers['user-agent'];
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           select: userSelect
         });
 
-        if (!user) {
+        if (!user || !user.password) {
+          await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
+            ip,
+            userAgent,
+            metadata: {
+              reason: 'user_not_found',
+              email: credentials.email
+            }
+          });
           return null;
         }
 
-        const isPasswordValid = await compare(credentials.password, user.password);
-
-        if (!isPasswordValid) {
+        const isValid = await compare(credentials.password, user.password);
+        if (!isValid) {
+          await ActivityService.log(user.id, ActivityEventType.LOGIN_FAILED, {
+            ip,
+            userAgent,
+            metadata: {
+              reason: 'invalid_password'
+            }
+          });
           return null;
         }
 
-        // Remove sensitive data before returning
-        const { password: _, ...userWithoutPassword } = user;
+        if (user.status !== 'ACTIVE') {
+          await ActivityService.log(user.id, ActivityEventType.LOGIN_FAILED, {
+            ip,
+            userAgent,
+            metadata: {
+              reason: 'account_inactive',
+              status: user.status
+            }
+          });
+          return null;
+        }
+
+        const permissions = user.userPermissions.map(up => ({
+          id: up.permission.id,
+          name: up.permission.name,
+          description: up.permission.description
+        }));
+
+        await ActivityService.log(user.id, ActivityEventType.LOGIN_SUCCESS, {
+            ip,
+            userAgent,
+            metadata: {
+              provider: 'credentials',
+              email: user.email
+            }
+        });
 
         return {
-          ...userWithoutPassword,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
           role: user.role as UserRole,
-          image: null // Required by User type
+          permissions,
+          status: user.status as AccountStatus,
+          emailNotificationsEnabled: Boolean(user.emailNotificationsEnabled),
+          twoFactorEnabled: Boolean(user.twoFactorEnabled),
+          twoFactorAuthenticated: false,
+          emailVerified: user.emailVerified
         };
       }
     })
   ],
-  session: {
-    strategy: 'jwt',
-    // Optimize session duration
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
-  },
+
+  // Configure callbacks
   callbacks: {
-    async jwt({ token, user }) {
-      // Only update token if new user data is provided
+    async signIn({ user, account }) {
+      // Skip email verification for OAuth
+      if (account?.provider !== 'credentials') {
+        return true;
+      }
+
+      // Check email verification
+      if (!user.emailVerified) {
+        return '/auth/verify-email';
+      }
+
+      // Handle 2FA
+      if (user.twoFactorEnabled && !user.twoFactorAuthenticated) {
+        return '/auth/2fa';
+      }
+
+      return true;
+    },
+    async jwt({ token, user }): Promise<JWT> {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        const customUser = user as CustomUser;
+        return {
+          ...token,
+          id: customUser.id,
+          email: customUser.email,
+          name: customUser.name,
+          role: customUser.role,
+          permissions: customUser.permissions,
+          status: customUser.status,
+          emailNotificationsEnabled: customUser.emailNotificationsEnabled,
+          twoFactorEnabled: customUser.twoFactorEnabled,
+          twoFactorAuthenticated: customUser.twoFactorAuthenticated,
+          emailVerified: customUser.emailVerified
+        };
       }
       return token;
     },
     async session({ session, token }) {
-      // Type assertion to avoid unnecessary checks
-      if (session?.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
+      if (session.user) {
+        session.user = {
+          ...session.user,
+          id: token.id,
+          email: token.email,
+          name: token.name,
+          role: token.role as UserRole,
+          permissions: token.permissions,
+          status: token.status as AccountStatus,
+          emailNotificationsEnabled: Boolean(token.emailNotificationsEnabled),
+          twoFactorEnabled: Boolean(token.twoFactorEnabled),
+          twoFactorAuthenticated: Boolean(token.twoFactorAuthenticated),
+          emailVerified: token.emailVerified
+        };
       }
       return session;
     }
   },
+
+  // Configure pages
   pages: {
     signIn: '/auth/signin',
-    error: '/auth/error'
+    signOut: '/auth/signout',
+    error: '/auth/error',
+    verifyRequest: '/auth/verify-request',
   },
-  // Add security options
-  jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  // Enable debug messages in development
-  debug: process.env.NODE_ENV === 'development',
+
+  // Security options
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development'
 };
 
-// Use constant for handler to enable better caching
+// Export handler
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

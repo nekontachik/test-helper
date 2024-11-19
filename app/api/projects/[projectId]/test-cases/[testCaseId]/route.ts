@@ -4,11 +4,23 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AppError, NotFoundError } from '@/lib/errors';
 import logger from '@/lib/logger';
+import type { Prisma, TestCase } from '@prisma/client';
+
+// Define the Version type inline since we can't import it directly
+type Version = Prisma.VersionGetPayload<{
+  select: {
+    id: true;
+    versionNumber: true;
+    title: true;
+    status: true;
+    createdAt: true;
+  }
+}>;
 
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string; testCaseId: string } }
-) {
+): Promise<NextResponse<TestCase & { versions: Version[] } | { error: string }>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -16,9 +28,12 @@ export async function GET(
     }
 
     const testCase = await prisma.testCase.findUnique({
-      where: { id: params.testCaseId },
+      where: { 
+        id: params.testCaseId,
+        projectId: params.projectId
+      },
       include: {
-        versions: {  // Lowercase because it's the relation name
+        versions: {
           orderBy: { versionNumber: 'desc' },
           take: 10,
           select: {
@@ -26,7 +41,7 @@ export async function GET(
             versionNumber: true,
             title: true,
             status: true,
-            createdAt: true  // Changed from updatedAt to createdAt which exists in schema
+            createdAt: true
           }
         }
       },
@@ -36,12 +51,13 @@ export async function GET(
       throw new NotFoundError('Test case not found');
     }
 
-    if (testCase.projectId !== params.projectId) {
-      throw new AppError('Test case does not belong to this project', 403);
-    }
+    const response = {
+      ...testCase,
+      versions: testCase.versions || []
+    };
 
     logger.info(`Retrieved test case: ${params.testCaseId}`);
-    return NextResponse.json(testCase);
+    return NextResponse.json(response);
   } catch (error) {
     if (error instanceof AppError) {
       logger.warn(`AppError in GET test case: ${error.message}`, { statusCode: error.statusCode });

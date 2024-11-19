@@ -7,15 +7,15 @@ export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
 
 export interface AuthUser {
   id: string;
-  email: string;
+  email: string | null;
   name: string | null;
   role: UserRole;
-  roles?: UserRole[];
   permissions: RBACPermission[];
-  twoFactorEnabled: boolean;
-  emailVerified: Date | null;
-  twoFactorAuthenticated: boolean;
   status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
 }
 
 export interface Session {
@@ -67,6 +67,6 @@ export interface AuthError {
   status: number;
 }
 
-// Remove duplicate definitions and use types from rbac
+// Export UserRole directly instead of aliasing
+export { UserRole };
 export type { RBACPermission as Permission };
-export type { UserRole as Role };

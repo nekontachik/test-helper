@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { TestRun } from '@prisma/client';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(
   request: Request,
@@ -17,6 +19,11 @@ export async function GET(
   const [sortField, sortOrder] = sort.split('_');
 
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const allTestRuns = await prisma.testRun.findMany({
       where: {
         projectId: params.projectId,
@@ -61,12 +68,35 @@ export async function POST(
   { params }: { params: { projectId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check if runs are disabled using status field instead
+    const project = await prisma.project.findUnique({
+      where: { id: params.projectId },
+      select: { status: true }
+    });
+
+    if (project?.status === 'DISABLED') {
+      return NextResponse.json(
+        { error: 'Test runs are disabled for this project' },
+        { status: 403 }
+      );
+    }
+
     const { name } = await request.json();
     const testRun = await prisma.testRun.create({
       data: {
         name,
         projectId: params.projectId,
         status: 'PENDING',
+        userId: session.user.id,
       },
     });
     return NextResponse.json(testRun, { status: 201 });

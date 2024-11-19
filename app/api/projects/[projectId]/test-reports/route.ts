@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 interface TestReportInput {
   title: string;
@@ -38,16 +40,27 @@ export async function POST(
   request: Request,
   { params }: { params: { projectId: string } }
 ) {
-  const { projectId } = params;
-  const body = await request.json() as TestReportInput;
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { projectId } = params;
+    const body = await request.json() as TestReportInput;
+
     const newTestReport = await prisma.testReport.create({
       data: {
         title: body.title,
         content: body.content,
         project: {
           connect: { id: projectId }
+        },
+        user: {
+          connect: { id: session.user.id }
         }
       },
       select: {

@@ -25,8 +25,17 @@ export interface User {
   emailNotificationsEnabled: boolean;
 }
 
-export interface AuthUser extends User {
-  permissions: string[];
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: UserRole;
+  permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
 }
 
 export interface AuthResult {
@@ -72,4 +81,10 @@ export interface EmailVerificationData {
     email: string;
     error?: string;
   };
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  description: string | null;
 }

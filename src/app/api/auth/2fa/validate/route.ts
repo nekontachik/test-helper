@@ -10,6 +10,13 @@ const validateSchema = z.object({
   code: z.string().length(6),
 });
 
+interface SessionDeviceInfo {
+  twoFactorAuthenticated?: boolean;
+  twoFactorAuthenticatedAt?: string;
+  deviceId?: string;
+  lastActivity?: string;
+}
+
 export async function POST(request: Request) {
   try {
     // Check rate limit
@@ -44,15 +51,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update session to mark 2FA as completed
+    // Get existing deviceInfo or create new
+    const sessionId = request.headers.get('x-session-id');
+    const existingSession = sessionId ? await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { deviceInfo: true }
+    }) : null;
+
+    const existingDeviceInfo: SessionDeviceInfo = existingSession?.deviceInfo 
+      ? JSON.parse(existingSession.deviceInfo)
+      : {};
+
+    // Update session with deviceInfo
     await prisma.session.update({
       where: { 
-        id: request.headers.get('x-session-id') || undefined,
+        id: sessionId || undefined,
         userId: session.user.id,
       },
       data: { 
-        twoFactorAuthenticated: true,
         lastActive: new Date(),
+        deviceInfo: JSON.stringify({
+          ...existingDeviceInfo,
+          twoFactorAuthenticated: true,
+          twoFactorAuthenticatedAt: new Date().toISOString(),
+          deviceId: request.headers.get('x-device-id') || undefined,
+          lastActivity: new Date().toISOString()
+        })
       },
     });
 

@@ -4,9 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import logger from '@/lib/logger';
 import { AppError, NotFoundError } from '@/lib/errors';
-
-// Add debug logging
-console.log('Available Prisma models:', Object.keys(prisma));
+import type { TestCase, Version } from '@prisma/client';
 
 export async function GET(
   req: Request,
@@ -18,52 +16,49 @@ export async function GET(
       throw new AppError('Unauthorized', 401);
     }
 
-    // Debug log Prisma client
-    console.log('Prisma client:', prisma);
-
-    // Add pagination for better performance
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    // Use Promise.all for concurrent queries and add index for better performance
-    const [versions, totalCount] = await Promise.all([
-      prisma.version.findMany({
-        where: { 
-          testCaseId: params.testCaseId,
-          testCase: {
-            projectId: params.projectId
-          }
-        },
-        orderBy: { versionNumber: 'desc' },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          versionNumber: true,
-          title: true,
-          status: true,
-          createdAt: true  // Changed from updatedAt to createdAt which exists in schema
-        }
-      }),
-      prisma.version.count({
-        where: {
-          testCaseId: params.testCaseId,
-          testCase: {
-            projectId: params.projectId
+    const testCase = await prisma.testCase.findUnique({
+      where: { 
+        id: params.testCaseId,
+        projectId: params.projectId
+      },
+      include: {
+        versions: {
+          orderBy: { versionNumber: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            versionNumber: true,
+            title: true,
+            status: true,
+            createdAt: true
           }
         }
-      })
-    ]);
+      }
+    });
 
-    if (!versions.length) {
+    if (!testCase) {
+      throw new NotFoundError('Test case not found');
+    }
+
+    const totalCount = await prisma.version.count({
+      where: {
+        testCaseId: params.testCaseId
+      }
+    });
+
+    if (!testCase.versions?.length) {
       throw new NotFoundError('No versions found for this test case');
     }
 
     logger.info(`Retrieved versions for test case: ${params.testCaseId}`);
     return NextResponse.json({
-      data: versions,
+      data: testCase.versions,
       pagination: {
         total: totalCount,
         page,

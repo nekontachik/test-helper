@@ -3,15 +3,26 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { TwoFactorService } from '@/lib/auth/twoFactorService';
 import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
-import { withRateLimit } from '@/middleware/rateLimit';
+import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { z } from 'zod';
 
 const verifySchema = z.object({
   token: z.string().length(6),
 });
 
-async function handler(request: Request) {
+export async function POST(request: Request) {
   try {
+    // Check rate limit
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitResult = await checkRateLimit(`2fa_verify_${ip}`);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
@@ -35,9 +46,18 @@ async function handler(request: Request) {
       );
     }
 
+    // Get session ID from headers
+    const sessionId = request.headers.get('x-session-id');
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      );
+    }
+
     // Mark session as 2FA verified
     await TwoFactorService.markSessionVerified(
-      session.id,
+      sessionId,
       session.user.id,
       request.headers.get('x-forwarded-for') || undefined,
       request.headers.get('user-agent') || undefined
@@ -45,7 +65,7 @@ async function handler(request: Request) {
 
     // Track session
     await SessionTrackingService.trackSession({
-      sessionId: session.id,
+      sessionId,
       userId: session.user.id,
       ip: request.headers.get('x-forwarded-for') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
@@ -57,11 +77,17 @@ async function handler(request: Request) {
     });
   } catch (error) {
     console.error('2FA verification error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid code format' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Verification failed' },
       { status: 500 }
     );
   }
 }
-
-export const POST = withRateLimit(handler, 'auth:2fa');

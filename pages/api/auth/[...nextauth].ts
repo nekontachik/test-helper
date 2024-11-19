@@ -3,15 +3,19 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { compare } from 'bcrypt';
-import { UserRole } from '@/types/auth';
-import type { RequestInternal } from 'next-auth';
+import { UserRole, AccountStatus, Permission } from '@/types/auth';
+import type { JWT } from 'next-auth/jwt';
 
-interface CustomUser extends User {
+// Define a type that extends User from next-auth
+type CustomUser = User & {
   role: UserRole;
+  permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
   twoFactorEnabled: boolean;
   twoFactorAuthenticated: boolean;
   emailVerified: Date | null;
-}
+};
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -22,10 +26,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(
-        credentials: Record<"email" | "password", string> | undefined,
-        req: Pick<RequestInternal, "body" | "query" | "headers" | "method">
-      ): Promise<CustomUser | null> {
+      async authorize(credentials, req): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -40,6 +41,19 @@ export const authOptions: NextAuthOptions = {
             role: true,
             twoFactorEnabled: true,
             emailVerified: true,
+            status: true,
+            emailNotificationsEnabled: true,
+            userPermissions: {
+              select: {
+                permission: {
+                  select: {
+                    id: true,
+                    name: true,
+                    description: true
+                  }
+                }
+              }
+            }
           }
         });
 
@@ -53,38 +67,65 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const permissions = user.userPermissions.map(up => ({
+          id: up.permission.id,
+          name: up.permission.name,
+          description: up.permission.description
+        }));
+
+        // Return the user with the correct type
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as UserRole,
           image: null,
+          role: user.role as UserRole,
+          permissions,
+          status: user.status as AccountStatus,
+          emailNotificationsEnabled: Boolean(user.emailNotificationsEnabled),
           twoFactorEnabled: user.twoFactorEnabled,
           twoFactorAuthenticated: false,
-          emailVerified: user.emailVerified,
-        };
+          emailVerified: user.emailVerified
+        } as CustomUser;
       }
     })
   ],
-  session: {
-    strategy: 'jwt'
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.twoFactorEnabled = user.twoFactorEnabled;
-        token.twoFactorAuthenticated = user.twoFactorAuthenticated;
-        token.emailVerified = user.emailVerified;
+        const customUser = user as CustomUser;
+        const jwtToken: JWT = {
+          ...token,
+          id: customUser.id,
+          email: customUser.email,
+          name: customUser.name,
+          role: customUser.role,
+          permissions: customUser.permissions,
+          status: customUser.status,
+          emailNotificationsEnabled: customUser.emailNotificationsEnabled,
+          twoFactorEnabled: customUser.twoFactorEnabled,
+          twoFactorAuthenticated: customUser.twoFactorAuthenticated,
+          emailVerified: customUser.emailVerified
+        };
+        return jwtToken;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as UserRole;
-        session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
-        session.user.twoFactorAuthenticated = token.twoFactorAuthenticated as boolean;
-        session.user.emailVerified = token.emailVerified as Date | null;
+        session.user = {
+          ...session.user,
+          id: token.id,
+          email: token.email,
+          name: token.name,
+          role: token.role as UserRole,
+          permissions: token.permissions,
+          status: token.status as AccountStatus,
+          emailNotificationsEnabled: Boolean(token.emailNotificationsEnabled),
+          twoFactorEnabled: Boolean(token.twoFactorEnabled),
+          twoFactorAuthenticated: Boolean(token.twoFactorAuthenticated),
+          emailVerified: token.emailVerified
+        };
       }
       return session;
     }

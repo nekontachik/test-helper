@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
 import { validateTestCase } from '@/lib/validationSchemas';
 import { TestCase } from '@prisma/client';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { AppError, NotFoundError } from '@/lib/errors';
+import logger from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -19,6 +23,11 @@ export async function GET(
   const [sortField, sortOrder] = sort.split('_');
 
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      throw new AppError('Unauthorized', 401);
+    }
+
     const allTestCases = await prisma.testCase.findMany({
       where: {
         projectId: params.projectId,
@@ -49,11 +58,12 @@ export async function GET(
       totalPages: Math.ceil(totalCount / limit),
     });
   } catch (error) {
-    console.error('Failed to fetch test cases:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch test cases' },
-      { status: 500 }
-    );
+    if (error instanceof AppError) {
+      logger.warn(`AppError in GET test cases: ${error.message}`);
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+    logger.error('Failed to fetch test cases:', error);
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
 
@@ -65,6 +75,15 @@ export async function POST(
   const body = await req.json();
 
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const validationResult = await validateTestCase(body);
     if (!validationResult.isValid) {
       return NextResponse.json(
@@ -73,9 +92,10 @@ export async function POST(
       );
     }
 
-    const testCaseData: TestCaseFormData = {
+    const testCaseData = {
       ...body,
       projectId,
+      userId: session.user.id,
       priority: body.priority || TestCasePriority.MEDIUM,
       status: body.status || TestCaseStatus.ACTIVE,
     };

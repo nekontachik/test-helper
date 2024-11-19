@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get user's recent activity
+    // Get user's recent activity using the correct model name
     const activities = await prisma.userActivity.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
@@ -65,12 +65,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { type, details } = body;
 
-    // Log new activity
+    // Log new activity using the correct model name
     const activity = await prisma.userActivity.create({
       data: {
         userId: session.user.id,
         type,
-        details,
+        details: typeof details === 'string' ? details : JSON.stringify(details),
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       },

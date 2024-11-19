@@ -25,7 +25,8 @@
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@chakra-ui/react/dist/types",
-      "./src/types"
+      "./src/types",
+      "./types"
     ],
     "types": ["yup"]
   },
@@ -34,7 +35,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/types/**/*.d.ts"
+    "src/types/**/*.d.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": ["node_modules"]
 }

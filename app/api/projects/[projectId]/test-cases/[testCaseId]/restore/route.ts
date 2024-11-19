@@ -33,6 +33,7 @@ export async function POST(
         select: {
           title: true,
           description: true,
+          steps: true,
           expectedResult: true,
           status: true,
           priority: true,
@@ -54,7 +55,12 @@ export async function POST(
           versions: {
             create: {
               versionNumber: versionCount + 1,
-              ...currentVersion
+              steps: currentVersion.steps,
+              title: currentVersion.title,
+              description: currentVersion.description,
+              expectedResult: currentVersion.expectedResult,
+              status: currentVersion.status,
+              priority: currentVersion.priority
             }
           }
         },

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { code } = recoverySchema.parse(body);
 
-    const isValid = await SecurityService.verifyBackupCode(session.user.id, code);
+    const isValid = await SecurityService.validateBackupCode(session.user.id, code);
 
     if (!isValid) {
       return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     // Generate new backup codes after successful recovery
-    const newBackupCodes = SecurityService.generateBackupCodes();
+    const newBackupCodes = await SecurityService.generateBackupCodes();
     await SecurityService.storeBackupCodes(session.user.id, newBackupCodes);
 
     return NextResponse.json({

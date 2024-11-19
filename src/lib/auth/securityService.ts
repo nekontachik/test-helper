@@ -124,22 +124,25 @@ export class SecurityService {
    */
   static async storeBackupCodes(userId: string, codes: string[]): Promise<void> {
     try {
-      const hashedCodes = await Promise.all(
-        codes.map(code => bcrypt.hash(code, SALT_ROUNDS))
-      );
-
-      const backupCodesData: BackupCodesData = {
-        codes: hashedCodes,
-        updatedAt: new Date()
-      };
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          backupCodesData: JSON.stringify(backupCodesData),
-          backupCodesUpdatedAt: new Date()
-        }
-      });
+      await prisma.$transaction([
+        // Delete existing unused codes
+        prisma.backupCode.deleteMany({
+          where: {
+            userId,
+            used: false
+          }
+        }),
+        // Create new backup codes
+        ...codes.map(code => 
+          prisma.backupCode.create({
+            data: {
+              userId,
+              code,
+              used: false
+            }
+          })
+        )
+      ]);
     } catch (error) {
       logger.error('Failed to store backup codes:', error);
       throw new SecurityError('Failed to store backup codes');
@@ -244,5 +247,36 @@ export class SecurityService {
   static async resetAttempts(ip: string, type: 'login' | 'password'): Promise<void> {
     const key = `attempt:${type}:${ip}`;
     await redisClient.del(key);
+  }
+
+  /**
+   * Validates a backup code for a user
+   */
+  static async validateBackupCode(userId: string, code: string): Promise<boolean> {
+    try {
+      // Find unused backup code
+      const backupCode = await prisma.backupCode.findFirst({
+        where: {
+          userId,
+          code,
+          used: false
+        }
+      });
+
+      if (!backupCode) {
+        return false;
+      }
+
+      // Mark code as used
+      await prisma.backupCode.update({
+        where: { id: backupCode.id },
+        data: { used: true }
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('Backup code validation failed:', error);
+      throw new SecurityError('Failed to validate backup code');
+    }
   }
 }
