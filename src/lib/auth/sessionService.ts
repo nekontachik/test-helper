@@ -96,11 +96,15 @@ export class SessionService {
     });
   }
 
-  static async cleanupExpiredSessions(): Promise<void> {
-    await prisma.session.deleteMany({
+  static async cleanupExpiredSessions(): Promise<{ count: number }> {
+    const result = await prisma.session.deleteMany({
       where: {
-        expiresAt: { lt: new Date() },
-      },
+        expiresAt: {
+          lt: new Date()
+        }
+      }
     });
+
+    return { count: result.count };
   }
 }

@@ -4,7 +4,12 @@ import { AuditAction } from './audit';
 export { UserRole };
 
 // Define account status type
-export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED';
+export enum AccountStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  PENDING = 'PENDING'
+}
 
 export interface RegisterData {
   name: string;
@@ -29,6 +34,7 @@ export interface AuthUser {
   id: string;
   email: string | null;
   name: string | null;
+  image: string | null;
   role: UserRole;
   permissions: Permission[];
   status: AccountStatus;

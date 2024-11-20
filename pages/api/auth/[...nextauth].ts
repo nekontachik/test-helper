@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions, User } from 'next-auth';
+import NextAuth, { NextAuthOptions, User, Session } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
@@ -6,7 +6,7 @@ import { compare } from 'bcrypt';
 import { UserRole, AccountStatus, Permission } from '@/types/auth';
 import type { JWT } from 'next-auth/jwt';
 
-// Define a type that extends User from next-auth
+// Define custom user type that matches IUser from next-auth.d.ts
 type CustomUser = User & {
   role: UserRole;
   permissions: Permission[];
@@ -17,6 +17,11 @@ type CustomUser = User & {
   emailVerified: Date | null;
 };
 
+// Define a custom session user type
+interface CustomSessionUser extends User {
+  permissions: Permission[];
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -26,7 +31,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials, req): Promise<User | null> {
+      async authorize(credentials): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -57,7 +62,7 @@ export const authOptions: NextAuthOptions = {
           }
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           return null;
         }
 
@@ -73,7 +78,7 @@ export const authOptions: NextAuthOptions = {
           description: up.permission.description
         }));
 
-        // Return the user with the correct type
+        // Return user with the correct type
         return {
           id: user.id,
           email: user.email,
@@ -86,19 +91,19 @@ export const authOptions: NextAuthOptions = {
           twoFactorEnabled: user.twoFactorEnabled,
           twoFactorAuthenticated: false,
           emailVerified: user.emailVerified
-        } as CustomUser;
+        } as unknown as User;
       }
     })
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const customUser = user as CustomUser;
-        const jwtToken: JWT = {
+        const customUser = user as unknown as CustomUser;
+        return {
           ...token,
           id: customUser.id,
-          email: customUser.email,
-          name: customUser.name,
+          email: customUser.email ?? null,
+          name: customUser.name ?? null,
           role: customUser.role,
           permissions: customUser.permissions,
           status: customUser.status,
@@ -106,8 +111,7 @@ export const authOptions: NextAuthOptions = {
           twoFactorEnabled: customUser.twoFactorEnabled,
           twoFactorAuthenticated: customUser.twoFactorAuthenticated,
           emailVerified: customUser.emailVerified
-        };
-        return jwtToken;
+        } as JWT;
       }
       return token;
     },
@@ -116,8 +120,8 @@ export const authOptions: NextAuthOptions = {
         session.user = {
           ...session.user,
           id: token.id,
-          email: token.email,
-          name: token.name,
+          email: token.email ?? null,
+          name: token.name ?? null,
           role: token.role as UserRole,
           permissions: token.permissions,
           status: token.status as AccountStatus,
@@ -125,7 +129,7 @@ export const authOptions: NextAuthOptions = {
           twoFactorEnabled: Boolean(token.twoFactorEnabled),
           twoFactorAuthenticated: Boolean(token.twoFactorAuthenticated),
           emailVerified: token.emailVerified
-        };
+        } as CustomSessionUser;
       }
       return session;
     }

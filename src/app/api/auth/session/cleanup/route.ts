@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     // Clean up expired sessions
-    const result = await SessionService.cleanupExpiredSessions(session.user.id);
+    const result = await SessionService.cleanupExpiredSessions();
 
     return NextResponse.json({
       message: `Cleaned up ${result.count} expired sessions`,

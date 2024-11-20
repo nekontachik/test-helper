@@ -10,9 +10,10 @@ interface RouteConfig {
   require2FA?: boolean;
 }
 
-interface AuthToken extends JWT {
+// Update AuthToken interface to properly extend JWT
+interface AuthToken extends Omit<JWT, 'role'> {
   sub?: string;
-  role: string;
+  role: UserRole; // Change from string to UserRole
   emailVerified?: boolean;
   twoFactorAuthenticated?: boolean;
 }
@@ -96,8 +97,6 @@ export async function routeProtection(request: Request): Promise<Response> {
       );
     }
 
-    const userRole = token.role as UserRole;
-
     // Check email verification
     if (config.requireVerified && !token.emailVerified) {
       return NextResponse.redirect(new URL('/auth/verify', request.url));
@@ -109,7 +108,7 @@ export async function routeProtection(request: Request): Promise<Response> {
     }
 
     // Check role-based access
-    if (config.roles && !config.roles.includes(userRole)) {
+    if (config.roles && !config.roles.includes(token.role)) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 

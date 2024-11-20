@@ -7,7 +7,7 @@ import { createTestCaseSchema } from '@/lib/validation/schemas';
 import { handleApiError } from '@/lib/apiErrorHandler';
 import { withAuthorization } from '@/middleware/authorize';
 import { withProtect } from '@/middleware/apiProtect';
-import { ActionType, ResourceType } from '@/types/rbac';
+import { Action, Resource } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { TestCase, Prisma } from '@prisma/client';
 
@@ -229,8 +229,8 @@ async function handlePOST(request: Request): Promise<Response> {
 // Export protected route handlers
 export const GET = withProtect(
   withAuthorization(handleGET, {
-    action: ActionType.READ,
-    resource: ResourceType.TEST_CASE,
+    action: Action.READ,
+    resource: Resource.TEST_CASE,
     allowTeamMembers: true,
     getProjectId: async (req: Request) => {
       const url = new URL(req.url);
@@ -239,8 +239,8 @@ export const GET = withProtect(
     },
   }),
   {
-    action: ActionType.READ,
-    resource: ResourceType.TEST_CASE,
+    action: Action.READ,
+    resource: Resource.TEST_CASE,
     allowUnverified: false,
     rateLimit: {
       points: 100,
@@ -251,8 +251,8 @@ export const GET = withProtect(
 
 export const POST = withProtect(
   withAuthorization(handlePOST, {
-    action: ActionType.CREATE,
-    resource: ResourceType.TEST_CASE,
+    action: Action.CREATE,
+    resource: Resource.TEST_CASE,
     allowTeamMembers: true,
     getProjectId: async (req: Request) => {
       const url = new URL(req.url);
@@ -261,8 +261,8 @@ export const POST = withProtect(
     },
   }),
   {
-    action: ActionType.CREATE,
-    resource: ResourceType.TEST_CASE,
+    action: Action.CREATE,
+    resource: Resource.TEST_CASE,
     allowUnverified: false,
     rateLimit: {
       points: 50,

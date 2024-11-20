@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { SecurityService } from '@/lib/auth/securityService';
 import { sendVerificationEmail } from '@/lib/emailService';
 import { AUTH_ERRORS } from '@/lib/utils/error';
+import logger from '@/lib/logger';
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
     // Send verification email
     await sendVerificationEmail(email, name);
 
+    logger.info('User registered successfully', { userId: user.id });
     return NextResponse.json(
       {
         message: 'Registration successful',
@@ -67,7 +69,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     return NextResponse.json(
       { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }

@@ -22,6 +22,18 @@ export const testRunSchema = z.object({
   testCaseIds: z.array(z.string().uuid()).min(1, 'At least one test case is required')
 });
 
+export const testRunNoteSchema = z.object({
+  content: z.string()
+    .min(1, 'Note content is required')
+    .max(2000, 'Note content cannot exceed 2000 characters')
+});
+
+export const commentSchema = z.object({
+  content: z.string()
+    .min(1, 'Comment cannot be empty')
+    .max(1000, 'Comment cannot exceed 1000 characters'),
+});
+
 export async function validateTestCase(data: unknown) {
   return testCaseSchema.parseAsync(data);
 }

@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/types/auth';
-import { TestCaseResultStatus } from '@/types';
-import { Prisma } from '@prisma/client';
+import { TestRunStatus } from '@/types';
+import type { TestRun, TestCase, TestCaseResult, Prisma } from '@prisma/client';
 
-interface TestRunResult {
+// Define the exact shape of the data we're getting from Prisma
+interface TestRunWithRelations {
   id: string;
   name: string;
   status: string;
@@ -13,15 +14,26 @@ interface TestRunResult {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  testCases: Array<{
+  testRunCases: Array<{
     id: string;
-    title: string;
+    testRunId: string;
+    testCaseId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    testCase: {
+      id: string;
+      title: string;
+    };
   }>;
-  testCaseResults: Array<{
+  results: Array<{
     id: string;
-    status: TestCaseResultStatus;
+    status: string;
     notes: string | null;
     testCaseId: string;
+    testRunId: string;
+    createdAt: Date;
+    updatedAt: Date;
     testCase: {
       id: string;
       title: string;
@@ -36,44 +48,37 @@ async function handler(req: Request, { params }: { params: { projectId: string }
     const testRuns = await prisma.testRun.findMany({
       where: { 
         projectId,
-        status: 'COMPLETED',
+        status: TestRunStatus.COMPLETED,
       },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        projectId: true,
-        completedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        testCases: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        testCaseResults: {
-          select: {
-            id: true,
-            status: true,
-            notes: true,
-            testCaseId: true,
+      include: {
+        testRunCases: {
+          include: {
             testCase: {
               select: {
                 id: true,
                 title: true,
-              },
-            },
-          },
+              }
+            }
+          }
         },
-      },
-    }) as unknown as TestRunResult[];
+        results: {
+          include: {
+            testCase: {
+              select: {
+                id: true,
+                title: true,
+              }
+            }
+          }
+        }
+      }
+    }) as TestRunWithRelations[];
 
     // Performance optimization: Use Map for O(1) lookups
-    const reports = testRuns.map((run: TestRunResult) => {
-      const resultStatusMap = new Map<TestCaseResultStatus, number>();
+    const reports = testRuns.map((run) => {
+      const resultStatusMap = new Map<string, number>();
       
-      run.testCaseResults.forEach(result => {
+      run.results.forEach(result => {
         const currentCount = resultStatusMap.get(result.status) || 0;
         resultStatusMap.set(result.status, currentCount + 1);
       });
@@ -82,11 +87,11 @@ async function handler(req: Request, { params }: { params: { projectId: string }
         id: run.id,
         name: run.name,
         executedAt: run.completedAt,
-        totalTests: run.testCases.length,
-        passedTests: resultStatusMap.get(TestCaseResultStatus.PASSED) || 0,
-        failedTests: resultStatusMap.get(TestCaseResultStatus.FAILED) || 0,
-        skippedTests: resultStatusMap.get(TestCaseResultStatus.SKIPPED) || 0,
-        results: run.testCaseResults.map(result => ({
+        totalTests: run.testRunCases.length,
+        passedTests: resultStatusMap.get('PASSED') || 0,
+        failedTests: resultStatusMap.get('FAILED') || 0,
+        skippedTests: resultStatusMap.get('SKIPPED') || 0,
+        results: run.results.map(result => ({
           testCase: result.testCase,
           status: result.status,
           notes: result.notes,

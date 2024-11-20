@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { token, newPassword } = verifySchema.parse(body);
 
-    const user = await TokenService.validateRecoveryToken(token);
+    const user = await TokenService.validatePasswordResetToken(token);
 
     if (!user) {
       return NextResponse.json(
@@ -28,9 +28,9 @@ export async function POST(request: Request) {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        hashedPassword,
-        recoveryToken: null,
-        recoveryTokenExpiry: null,
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
       },
     });
 

@@ -34,7 +34,7 @@ export class PasswordResetService {
       email,
     };
 
-    const token = await TokenService.createToken(payload, this.TOKEN_EXPIRY);
+    const token = await TokenService.generateToken(payload);
 
     // Send reset email
     await sendPasswordResetEmail(email, user.name || 'User', token);

@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { SecurityService } from './securityService';
-import { createRateLimiter } from '@/middleware/rateLimit';
+import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { RateLimitError } from '@/lib/errors';
 import type { RateLimitConfig } from '@/lib/rate-limit/RateLimiter';
+import logger from '@/lib/logger';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -13,7 +14,7 @@ const AUTH_RATE_LIMIT: RateLimitConfig = {
 };
 
 export class LoginService {
-  private static rateLimiter = createRateLimiter();
+  private static rateLimiter = new RateLimiter();
 
   static async attemptLogin(email: string, password: string, ip: string) {
     // Check rate limit first
@@ -55,12 +56,12 @@ export class LoginService {
     if (!isValidPassword) {
       // Increment failed attempts
       const failedAttempts = (user.failedLoginAttempts || 0) + 1;
-      const updates: any = { failedLoginAttempts: failedAttempts };
-
-      // Lock account if max attempts exceeded
-      if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
-        updates.lockedUntil = new Date(Date.now() + LOCKOUT_DURATION);
-      }
+      const updates = {
+        failedLoginAttempts: failedAttempts,
+        lockedUntil: failedAttempts >= MAX_LOGIN_ATTEMPTS 
+          ? new Date(Date.now() + LOCKOUT_DURATION)
+          : null
+      };
 
       await prisma.user.update({
         where: { id: user.id },
@@ -68,6 +69,7 @@ export class LoginService {
       });
 
       await this.rateLimiter.recordFailedAttempt(ip, 'auth:login');
+      logger.warn('Failed login attempt', { email, ip });
       throw new Error('Invalid credentials');
     }
 
@@ -76,14 +78,14 @@ export class LoginService {
       where: { id: user.id },
       data: {
         failedLoginAttempts: 0,
-        lockedUntil: null,
-        lastLogin: new Date(),
+        lockedUntil: null
       },
     });
 
     // Reset rate limit attempts
     await this.rateLimiter.resetAttempts(ip, 'auth:login');
 
+    logger.info('Successful login', { userId: user.id, ip });
     return {
       id: user.id,
       email: user.email,

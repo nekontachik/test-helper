@@ -5,7 +5,7 @@ import GitHubProvider from 'next-auth/providers/github';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { compare } from 'bcryptjs';
-import { UserRole, AccountStatus, Permission } from '@/types/auth';
+import { UserRole, AccountStatus, Permission, AuthUser } from '@/types/auth';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
@@ -14,14 +14,8 @@ import type { JWT } from 'next-auth/jwt';
 import type { Prisma } from '@prisma/client';
 
 // Define custom user type that includes our additional properties
-interface CustomUser extends User {
-  role: UserRole;
+interface CustomUser extends Omit<AuthUser, 'permissions'> {
   permissions: Permission[];
-  status: AccountStatus;
-  emailNotificationsEnabled: boolean;
-  twoFactorEnabled: boolean;
-  twoFactorAuthenticated: boolean;
-  emailVerified: Date | null;
 }
 
 // Define user select fields for consistent querying
@@ -49,6 +43,21 @@ const userSelect = {
     }
   }
 } satisfies Prisma.UserSelect;
+
+// Define a custom session user type
+interface CustomSessionUser {
+  id: string;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+  permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -136,7 +145,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const permissions = user.userPermissions.map(up => ({
+        const permissions: Permission[] = user.userPermissions.map(up => ({
           id: up.permission.id,
           name: up.permission.name,
           description: up.permission.description
@@ -212,8 +221,8 @@ export const authOptions: NextAuthOptions = {
         session.user = {
           ...session.user,
           id: token.id,
-          email: token.email,
-          name: token.name,
+          email: token.email ?? null,
+          name: token.name ?? null,
           role: token.role as UserRole,
           permissions: token.permissions,
           status: token.status as AccountStatus,
@@ -221,7 +230,7 @@ export const authOptions: NextAuthOptions = {
           twoFactorEnabled: Boolean(token.twoFactorEnabled),
           twoFactorAuthenticated: Boolean(token.twoFactorAuthenticated),
           emailVerified: token.emailVerified
-        };
+        } as CustomSessionUser;
       }
       return session;
     }

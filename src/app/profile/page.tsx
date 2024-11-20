@@ -3,15 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ProfileManagement } from '@/components/profile/ProfileManagement';
-import type { AuthUser, UserRole, AccountStatus } from '@/types/auth';
+import type { AuthUser, UserRole, AccountStatus, Permission } from '@/types/auth';
 import { cache } from 'react';
 import logger from '@/lib/logger';
-
-interface UserPermission {
-  permission: {
-    name: string;
-  };
-}
 
 /**
  * Cached database query for user data with optimized field selection
@@ -29,13 +23,13 @@ const getUserData = cache(async (userId: string) => {
         emailVerified: true,
         twoFactorEnabled: true,
         emailNotificationsEnabled: true,
-        projectMemberships: {
+        userPermissions: {
           select: {
-            role: true,
-            project: {
+            permission: {
               select: {
                 id: true,
-                name: true
+                name: true,
+                description: true
               }
             }
           }
@@ -45,10 +39,12 @@ const getUserData = cache(async (userId: string) => {
 
     if (!user) return null;
 
-    // Transform project memberships to permissions
-    const permissions = user.projectMemberships.map(membership => 
-      `${membership.role}:${membership.project.id}`
-    );
+    // Transform permissions to match Permission type
+    const permissions: Permission[] = user.userPermissions.map(up => ({
+      id: up.permission.id,
+      name: up.permission.name,
+      description: up.permission.description || '' // Convert null to empty string
+    }));
 
     return {
       ...user,
@@ -80,6 +76,7 @@ export default async function ProfilePage() {
       id: user.id,
       email: user.email,
       name: user.name,
+      image: null,
       role: user.role as UserRole,
       status: user.status as AccountStatus,
       emailVerified: user.emailVerified,

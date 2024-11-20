@@ -1,16 +1,16 @@
-import { apiErrorHandler } from './apiErrorHandler';
+import { handleApiError } from './apiErrorHandler';
 import { ZodError, z } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { NextResponse } from 'next/server';
 
-describe('apiErrorHandler', () => {
+describe('handleApiError', () => {
   it('should handle ZodError correctly', () => {
     const schema = z.object({ name: z.string() });
     const parseResult = schema.safeParse({ name: 123 });
     
     if (!parseResult.success) {
       const error = new ZodError(parseResult.error.errors);
-      const response = apiErrorHandler(error);
+      const response = handleApiError(error);
       const data = response.json();
 
       expect(response.status).toBe(400);
@@ -32,7 +32,7 @@ describe('apiErrorHandler', () => {
       }
     );
 
-    const response = apiErrorHandler(error);
+    const response = handleApiError(error);
     const data = response.json();
 
     expect(response.status).toBe(500);
@@ -46,7 +46,7 @@ describe('apiErrorHandler', () => {
   it('should handle standard Error correctly', () => {
     const error = new Error('Something went wrong');
     
-    const response = apiErrorHandler(error);
+    const response = handleApiError(error);
     const data = response.json();
 
     expect(response.status).toBe(500);
@@ -58,7 +58,7 @@ describe('apiErrorHandler', () => {
   it('should handle unknown errors correctly', () => {
     const error = 'unexpected error';
     
-    const response = apiErrorHandler(error);
+    const response = handleApiError(error);
     const data = response.json();
 
     expect(response.status).toBe(500);

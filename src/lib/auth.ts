@@ -6,6 +6,7 @@ import { compare } from 'bcrypt';
 import { UserRole } from '@/types/auth';
 import { logger } from '@/lib/utils/logger';
 import type { JWT } from 'next-auth/jwt';
+import type { User } from 'next-auth';
 
 interface ExtendedJWT extends JWT {
   id: string;
@@ -35,7 +36,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req): Promise<User | null> {
         try {
           if (!credentials?.email || !credentials?.password) {
             return null;
@@ -52,9 +53,18 @@ export const authOptions: NextAuthOptions = {
               twoFactorEnabled: true,
               emailVerified: true,
               status: true,
-              failedLoginAttempts: true,
-              lockedUntil: true,
-              image: true,
+              emailNotificationsEnabled: true,
+              userPermissions: {
+                select: {
+                  permission: {
+                    select: {
+                      id: true,
+                      name: true,
+                      description: true
+                    }
+                  }
+                }
+              }
             },
           });
 
@@ -65,53 +75,21 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          // Check account status
-          if (user.status !== 'ACTIVE') {
-            logger.warn('Login attempt on inactive account', {
-              userId: user.id,
-              status: user.status,
-            });
-            return null;
-          }
-
-          // Check account lockout
-          if (user.lockedUntil && user.lockedUntil > new Date()) {
-            logger.warn('Login attempt on locked account', {
-              userId: user.id,
-              lockedUntil: user.lockedUntil,
-            });
-            return null;
-          }
-
           const isPasswordValid = await compare(credentials.password, user.password);
 
           if (!isPasswordValid) {
-            // Increment failed login attempts
-            await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                failedLoginAttempts: {
-                  increment: 1,
-                },
-              },
-            });
-
             logger.warn('Failed login attempt', {
               userId: user.id,
-              failedAttempts: user.failedLoginAttempts + 1,
             });
             return null;
           }
 
-          // Reset failed login attempts on successful login
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              failedLoginAttempts: 0,
-              lockedUntil: null,
-              lastLogin: new Date(),
-            },
-          });
+          // Get permissions from user permissions
+          const permissions = user.userPermissions.map(up => ({
+            id: up.permission.id,
+            name: up.permission.name,
+            description: up.permission.description
+          }));
 
           logger.info('Successful login', { userId: user.id });
 
@@ -119,12 +97,15 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            image: user.image,
+            image: null,
             role: user.role as UserRole,
+            permissions,
+            status: user.status,
+            emailNotificationsEnabled: Boolean(user.emailNotificationsEnabled),
             twoFactorEnabled: user.twoFactorEnabled,
             twoFactorAuthenticated: false,
-            emailVerified: user.emailVerified,
-          };
+            emailVerified: user.emailVerified
+          } as User;
         } catch (error) {
           logger.error('Authorization error:', error);
           return null;
@@ -161,21 +142,5 @@ export const authOptions: NextAuthOptions = {
       };
       return session;
     }
-  },
-  events: {
-    async signIn({ user }) {
-      logger.info('User signed in', { userId: user.id });
-    },
-    async signOut({ token }) {
-      logger.info('User signed out', { userId: token.sub });
-    },
-  },
-  logger: {
-    error: (code, metadata) => {
-      logger.error('Auth error:', { code, metadata });
-    },
-    warn: (code) => {
-      logger.warn('Auth warning:', { code });
-    },
   },
 };

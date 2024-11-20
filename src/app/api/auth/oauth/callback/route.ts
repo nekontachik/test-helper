@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import logger from '@/lib/logger';
+import type { Prisma } from '@prisma/client';
 
 export async function GET(request: Request) {
   try {
@@ -23,21 +25,34 @@ export async function GET(request: Request) {
       );
     }
 
-    // Log OAuth login attempt
-    await prisma.userActivity.create({
-      data: {
-        userId: session?.user?.id,
+    if (session?.user?.id) {
+      // Log OAuth login attempt
+      const activityData: Prisma.UserActivityCreateInput = {
+        user: {
+          connect: {
+            id: session.user.id
+          }
+        },
         type: 'OAUTH_LOGIN',
-        details: {
+        details: JSON.stringify({
           provider,
           success: true,
-        },
-      },
-    });
+        }),
+      };
+
+      await prisma.userActivity.create({
+        data: activityData
+      });
+
+      logger.info('OAuth login successful', {
+        userId: session.user.id,
+        provider,
+      });
+    }
 
     return NextResponse.redirect('/');
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    logger.error('OAuth callback error:', error);
     return NextResponse.redirect('/auth/error?error=OAuthCallback');
   }
 }

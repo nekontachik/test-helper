@@ -4,6 +4,7 @@ import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/apiErrorHandler';
+import logger from '@/lib/logger';
 
 // Validation schema
 const loginSchema = z.object({
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
 
     // Log successful login
     await AuditService.log({
-      type: AuditLogType.AUTH,
+      type: AuditLogType.SECURITY,
       userId: result.user.id,
       action: AuditAction.USER_LOGIN,
       metadata: {
@@ -41,8 +42,14 @@ export async function POST(req: Request) {
       }
     });
 
+    logger.info('User logged in successfully', {
+      userId: result.user.id,
+      ip: metadata?.ip
+    });
+
     return NextResponse.json(result);
   } catch (error) {
+    logger.error('Login failed:', error);
     return handleApiError(error);
   }
 } 

@@ -39,11 +39,11 @@ export function SecurityActivity() {
 
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
-      case 'LOGIN_FAILED':
-      case 'ACCOUNT_LOCKED':
+      case ActivityType.LOGIN_FAILED:
+      case ActivityType.ACCOUNT_LOCKED:
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'LOGIN_SUCCESS':
-      case 'TWO_FACTOR_ENABLED':
+      case ActivityType.LOGIN_SUCCESS:
+      case ActivityType.TWO_FACTOR_ENABLED:
         return <Shield className="h-4 w-4 text-green-500" />;
       default:
         return <UserMinus className="h-4 w-4 text-gray-500" />;
@@ -52,15 +52,15 @@ export function SecurityActivity() {
 
   const getActivityMessage = (activity: ActivityLog) => {
     switch (activity.type) {
-      case 'LOGIN_SUCCESS':
+      case ActivityType.LOGIN_SUCCESS:
         return 'Successful login';
-      case 'LOGIN_FAILED':
+      case ActivityType.LOGIN_FAILED:
         return 'Failed login attempt';
-      case 'ACCOUNT_LOCKED':
+      case ActivityType.ACCOUNT_LOCKED:
         return 'Account locked due to suspicious activity';
-      case 'TWO_FACTOR_ENABLED':
+      case ActivityType.TWO_FACTOR_ENABLED:
         return '2FA enabled';
-      case 'TWO_FACTOR_DISABLED':
+      case ActivityType.TWO_FACTOR_DISABLED:
         return '2FA disabled';
       default:
         return activity.type.toLowerCase().replace(/_/g, ' ');

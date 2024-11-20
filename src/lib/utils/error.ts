@@ -39,4 +39,6 @@ export const AUTH_ERRORS = {
   INVALID_TOKEN: 'Invalid verification token',
   TOKEN_EXPIRED: 'Verification token has expired',
   EMAIL_NOT_VERIFIED: 'Please verify your email address',
+  PASSWORD_COMPROMISED: 'This password has been found in data breaches. Please choose a different password.',
+  USER_EXISTS: 'A user with this email already exists',
 } as const; 

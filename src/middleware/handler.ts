@@ -15,9 +15,9 @@ import { logger } from '@/lib/utils/logger';
  * Handles authentication, authorization, rate limiting, and request auditing.
  */
 
-interface AuthToken extends JWT {
+interface AuthToken extends Omit<JWT, 'role'> {
   sub: string;
-  role: string;
+  role: UserRole;
 }
 
 interface RequestMetadata {

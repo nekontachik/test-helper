@@ -10,11 +10,12 @@ import type { JWT } from 'next-auth/jwt';
 const routeConfigCache = new Map<string, APIConfig>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-interface AuthToken extends JWT {
+// Update AuthToken interface to properly extend JWT
+interface AuthToken extends Omit<JWT, 'role'> {
   sub: string;
-  role?: string;
-  emailVerified?: boolean;
-  twoFactorAuthenticated?: boolean;
+  role: UserRole; // Make role required and of type UserRole
+  emailVerified: boolean | null;
+  twoFactorAuthenticated: boolean | null;
 }
 
 interface APIConfig {

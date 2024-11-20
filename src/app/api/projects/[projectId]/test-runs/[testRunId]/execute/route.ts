@@ -53,8 +53,12 @@ async function handler(
           completedAt: new Date(),
         },
         include: {
-          testCases: true,
-          testCaseResults: true,
+          testRunCases: {
+            include: {
+              testCase: true
+            }
+          },
+          results: true,
         },
       });
     });

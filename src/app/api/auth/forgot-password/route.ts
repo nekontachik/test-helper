@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generatePasswordResetToken } from '@/lib/tokens';
+import { TokenService, TokenType } from '@/lib/auth/tokens/tokenService';
 import { sendPasswordResetEmail } from '@/lib/emailService';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const emailSchema = z.object({
   email: z.string().email(),
@@ -25,14 +26,21 @@ export async function POST(request: Request) {
       });
     }
 
-    const token = await generatePasswordResetToken(user.email);
+    const token = await TokenService.generateToken({
+      type: TokenType.PASSWORD_RESET,
+      userId: user.id,
+      email: user.email
+    });
+
     await sendPasswordResetEmail(user.email, user.name || 'User', token);
+
+    logger.info('Password reset requested', { userId: user.id });
 
     return NextResponse.json({
       message: 'Password reset email sent successfully',
     });
   } catch (error) {
-    console.error('Password reset error:', error);
+    logger.error('Password reset error:', error);
     return NextResponse.json(
       { message: 'Failed to process password reset request' },
       { status: 500 }

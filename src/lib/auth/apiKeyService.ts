@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import { ActivityService } from './activityService';
+import { ActivityEventType } from '@/types/activity';
 import type { Prisma } from '@prisma/client';
 
 interface ApiKeyMetadata {
@@ -27,7 +28,7 @@ export class ApiKeyService {
       },
     });
 
-    await ActivityService.log(userId, 'API_KEY_MANAGEMENT', {
+    await ActivityService.log(userId, ActivityEventType.API_KEY_CREATED, {
       metadata: { 
         name: metadata.name,
         action: 'created',
@@ -69,7 +70,7 @@ export class ApiKeyService {
       },
     });
 
-    await ActivityService.log(userId, 'API_KEY_MANAGEMENT', {
+    await ActivityService.log(userId, ActivityEventType.API_KEY_REVOKED, {
       metadata: { 
         keyId,
         action: 'revoked',

@@ -5,6 +5,8 @@ import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { sendPasswordResetEmail } from '@/lib/utils/email';
 import { generateToken } from '@/lib/utils/token';
+import logger from '@/lib/logger';
+import { ActivityEventType } from '@/types/activity';
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -14,7 +16,7 @@ export async function POST(request: Request) {
   try {
     const { email } = requestSchema.parse(await request.json());
     const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const userAgent = request.headers.get('user-agent');
+    const userAgent = request.headers.get('user-agent') || undefined;
 
     // Check rate limit
     await SecurityService.checkBruteForce(ip, 'password');
@@ -37,10 +39,12 @@ export async function POST(request: Request) {
       });
 
       await sendPasswordResetEmail(user.email, user.name || 'User', token);
-      await ActivityService.log(user.id, 'PASSWORD_RESET_REQUESTED', {
+      await ActivityService.log(user.id, ActivityEventType.PASSWORD_RESET_REQUESTED, {
         ip,
         userAgent,
       });
+
+      logger.info('Password reset requested', { userId: user.id, ip });
     }
 
     // Always return success to prevent email enumeration
@@ -48,7 +52,7 @@ export async function POST(request: Request) {
       message: 'If an account exists, a password reset link has been sent.',
     });
   } catch (error) {
-    console.error('Password reset request error:', error);
+    logger.error('Password reset request error:', error);
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }

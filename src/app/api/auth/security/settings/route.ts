@@ -26,17 +26,27 @@ export async function GET(request: Request) {
       where: { id: session.user.id },
       select: {
         twoFactorEnabled: true,
-        lastLoginAt: true,
-        loginAttempts: true,
+        failedLoginAttempts: true,
         lockedUntil: true,
+        sessions: {
+          select: {
+            id: true,
+            lastActive: true,
+            userAgent: true,
+            ipAddress: true
+          },
+          where: {
+            expiresAt: {
+              gt: new Date()
+            }
+          }
+        }
       },
     });
 
-    const activeSessions = await SessionService.getUserSessions(session.user.id);
-
     return NextResponse.json({
       ...settings,
-      activeSessions: activeSessions.length,
+      activeSessions: settings?.sessions.length ?? 0,
     });
   } catch (error) {
     console.error('Security settings fetch error:', error);

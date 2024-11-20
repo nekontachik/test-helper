@@ -5,6 +5,7 @@ import { RBACService } from '@/lib/auth/rbac/service';
 import { OwnershipService } from '@/lib/auth/ownership/service';
 import { Action, Resource, UserRole } from '@/types/rbac';
 import { AuthorizationError } from '@/lib/errors';
+import logger from '@/lib/logger';
 
 interface AuthorizeOptions {
   action: Action;
@@ -49,10 +50,13 @@ export async function authorize(
       }
     } else {
       // Check RBAC permissions and cache result
-      const hasPermission = await RBACService.can(
+      const hasPermission = await RBACService.checkPermission(
+        token.sub,
         token.role,
-        options.action,
-        options.resource
+        {
+          action: options.action,
+          resource: options.resource
+        }
       );
 
       permissionCache.set(cacheKey, hasPermission);
@@ -131,7 +135,7 @@ export async function authorize(
 
     return NextResponse.next();
   } catch (error) {
-    console.error('Authorization error:', error);
+    logger.error('Authorization error:', error);
 
     if (error instanceof AuthorizationError) {
       return NextResponse.json(
@@ -159,7 +163,7 @@ export const withAuthorization = (
       }
       return handler(request);
     } catch (error) {
-      console.error('Authorization error:', error);
+      logger.error('Authorization error:', error);
       return NextResponse.json(
         { error: 'Authorization failed' },
         { status: 403 }

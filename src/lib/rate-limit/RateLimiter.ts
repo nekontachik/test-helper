@@ -1,9 +1,15 @@
 import { Redis } from '@upstash/redis';
-import { RateLimitError } from '@/lib/errors';
 
 export interface RateLimitConfig {
   points: number;
-  duration: number;
+  duration: number; // in seconds
+}
+
+export interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
 }
 
 export class RateLimiter {
@@ -16,24 +22,78 @@ export class RateLimiter {
     });
   }
 
-  async checkLimit(identifier: string, config: RateLimitConfig): Promise<void> {
-    const key = `ratelimit:${identifier}`;
-    const attempts = await this.redis.get<number>(key);
+  async checkLimit(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
+    const { points, duration } = config;
+    const now = Date.now();
+    const clearBefore = now - duration * 1000;
 
-    if (attempts && attempts >= config.points) {
-      const ttl = await this.redis.ttl(key);
-      throw new RateLimitError('Rate limit exceeded', ttl);
+    const keyPrefix = `ratelimit:${key}`;
+    const requestsKey = `${keyPrefix}:requests`;
+    const timestampKey = `${keyPrefix}:timestamp`;
+
+    // Get current count and last request timestamp
+    const [count, lastTimestamp] = await Promise.all([
+      this.redis.get<number>(requestsKey),
+      this.redis.get<number>(timestampKey)
+    ]);
+
+    // Reset if expired
+    if (!count || !lastTimestamp || lastTimestamp < clearBefore) {
+      await Promise.all([
+        this.redis.set(requestsKey, 1),
+        this.redis.set(timestampKey, now),
+        this.redis.expire(requestsKey, duration),
+        this.redis.expire(timestampKey, duration)
+      ]);
+
+      return {
+        success: true,
+        limit: points,
+        remaining: points - 1,
+        reset: now + duration * 1000
+      };
     }
+
+    // Check if limit exceeded
+    if (count >= points) {
+      return {
+        success: false,
+        limit: points,
+        remaining: 0,
+        reset: lastTimestamp + duration * 1000
+      };
+    }
+
+    // Increment count
+    await this.redis.incr(requestsKey);
+
+    return {
+      success: true,
+      limit: points,
+      remaining: points - (count + 1),
+      reset: lastTimestamp + duration * 1000
+    };
   }
 
-  async recordFailedAttempt(identifier: string, type: string): Promise<void> {
-    const key = `ratelimit:${type}:${identifier}`;
-    await this.redis.incr(key);
-    await this.redis.expire(key, 300); // 5 minutes
+  async recordFailedAttempt(key: string, type: string): Promise<void> {
+    const keyPrefix = `ratelimit:${key}:${type}`;
+    const attemptsKey = `${keyPrefix}:attempts`;
+    const timestampKey = `${keyPrefix}:timestamp`;
+    const now = Date.now();
+
+    await Promise.all([
+      this.redis.incr(attemptsKey),
+      this.redis.set(timestampKey, now),
+      this.redis.expire(attemptsKey, 3600), // 1 hour
+      this.redis.expire(timestampKey, 3600)
+    ]);
   }
 
-  async resetAttempts(identifier: string, type: string): Promise<void> {
-    const key = `ratelimit:${type}:${identifier}`;
-    await this.redis.del(key);
+  async resetAttempts(key: string, type: string): Promise<void> {
+    const keyPrefix = `ratelimit:${key}:${type}`;
+    await Promise.all([
+      this.redis.del(`${keyPrefix}:attempts`),
+      this.redis.del(`${keyPrefix}:timestamp`)
+    ]);
   }
 } 

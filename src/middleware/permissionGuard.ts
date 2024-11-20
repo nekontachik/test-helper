@@ -4,9 +4,9 @@ import { UserRole } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
 
-interface AuthToken extends JWT {
+interface AuthToken extends Omit<JWT, 'role'> {
   sub: string;
-  role?: string;
+  role: UserRole;
 }
 
 interface PermissionGuardConfig {

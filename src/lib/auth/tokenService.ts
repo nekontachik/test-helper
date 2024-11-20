@@ -1,33 +1,53 @@
-import { prisma } from '@/lib/prisma';
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { TokenType } from '@/types/token';
+import { randomBytes } from 'crypto';
+import { addHours } from 'date-fns';
+import { prisma } from '@/lib/prisma';
+
+interface TokenPayload {
+  userId: string;
+  email: string;
+  type: TokenType;
+  expiresIn?: string;
+}
 
 export class TokenService {
-  static async generateEmailVerificationToken(email: string): Promise<string> {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  private static readonly SECRET = process.env.JWT_SECRET!;
 
-    await prisma.user.update({
-      where: { email },
-      data: {
-        emailVerificationToken: token,
-        emailVerificationExpires: expires,
-      },
+  static async generateToken(payload: TokenPayload): Promise<string> {
+    return jwt.sign(payload, this.SECRET, {
+      expiresIn: payload.expiresIn || '1h'
     });
-
-    return token;
   }
 
-  static async generatePasswordResetToken(email: string): Promise<string> {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  static async verify(token: string): Promise<TokenPayload | null> {
+    try {
+      return jwt.verify(token, this.SECRET) as TokenPayload;
+    } catch {
+      return null;
+    }
+  }
 
-    await prisma.$executeRaw`
-      UPDATE User 
-      SET passwordResetToken = ${token}, 
-          passwordResetExpires = ${expires.toISOString()}
-      WHERE email = ${email}
-    `;
+  static async generateEmailVerificationToken(email: string): Promise<string> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expires = addHours(new Date(), 24); // 24 hours
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationExpires: expires
+      }
+    });
 
     return token;
   }
@@ -37,46 +57,56 @@ export class TokenService {
       where: {
         emailVerificationToken: token,
         emailVerificationExpires: {
-          gt: new Date(),
-        },
+          gt: new Date()
+        }
       },
-    });
-
-    if (!user) return null;
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerified: new Date(),
-        emailVerificationToken: null,
-        emailVerificationExpires: null,
-      },
+      select: {
+        id: true,
+        email: true
+      }
     });
 
     return user;
   }
 
-  static async validatePasswordResetToken(token: string) {
-    const user = await prisma.$queryRaw<{ id: string; email: string }[]>`
-      SELECT id, email 
-      FROM User 
-      WHERE passwordResetToken = ${token}
-      AND passwordResetExpires > ${new Date().toISOString()}
-      LIMIT 1
-    `;
+  static async generatePasswordResetToken(email: string): Promise<string> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true }
+    });
 
-    return user[0] || null;
-  }
-
-  static generateJWT(payload: any, expiresIn: string = '1d'): string {
-    return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn });
-  }
-
-  static verifyJWT<T>(token: string): T | null {
-    try {
-      return jwt.verify(token, process.env.JWT_SECRET!) as T;
-    } catch {
-      return null;
+    if (!user) {
+      throw new Error('User not found');
     }
+
+    const token = randomBytes(32).toString('hex');
+    const expires = addHours(new Date(), 1); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: token,
+        resetTokenExpiry: expires
+      }
+    });
+
+    return token;
+  }
+
+  static async validatePasswordResetToken(token: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: {
+          gt: new Date()
+        }
+      },
+      select: {
+        id: true,
+        email: true
+      }
+    });
+
+    return user;
   }
 }

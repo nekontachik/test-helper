@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PasswordResetService } from '@/lib/auth/passwordReset';
 import { withRateLimit } from '@/middleware/rateLimit';
-import { AuditService, AuditAction } from '@/lib/audit/auditService';
+import logger from '@/lib/logger';
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -31,7 +31,7 @@ async function handleRequest(request: Request) {
       message: 'If an account exists with this email, a password reset link has been sent.',
     });
   } catch (error) {
-    console.error('Password reset request error:', error);
+    logger.error('Password reset request error:', error);
     return NextResponse.json(
       { error: 'Failed to process reset request' },
       { status: 500 }
@@ -45,21 +45,13 @@ async function handleReset(request: Request) {
     const body = await request.json();
     const { token, password } = resetSchema.parse(body);
 
-    const email = await PasswordResetService.verifyToken(token);
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
-        { status: 400 }
-      );
-    }
-
-    await PasswordResetService.resetPassword(email, password);
+    await PasswordResetService.resetPassword(token, password);
 
     return NextResponse.json({
       message: 'Password reset successful',
     });
   } catch (error) {
-    console.error('Password reset error:', error);
+    logger.error('Password reset error:', error);
 
     if (error instanceof Error) {
       return NextResponse.json(
@@ -75,5 +67,12 @@ async function handleReset(request: Request) {
   }
 }
 
-export const POST = withRateLimit(handleRequest, 'password-reset-request');
-export const PUT = withRateLimit(handleReset, 'password-reset'); 
+export const POST = withRateLimit(handleRequest, 'password-reset-request', {
+  points: 5,
+  duration: 300 // 5 minutes
+});
+
+export const PUT = withRateLimit(handleReset, 'password-reset', {
+  points: 3,
+  duration: 300 // 5 minutes
+}); 

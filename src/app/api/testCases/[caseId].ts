@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { apiErrorHandler } from '@/lib/apiErrorHandler';
+import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
 
 interface TestCaseResponse {
@@ -33,6 +33,6 @@ export default async function handler(
     res.status(200).json({ success: true, data: testCase });
   } catch (error) {
     logger.error('Error in test case handler:', error);
-    return apiErrorHandler(error);
+    return handleApiError(error);
   }
 }

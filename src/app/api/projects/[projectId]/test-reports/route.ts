@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
 import { withAuthorization } from '@/middleware/authorize';
 import { withProtect } from '@/middleware/apiProtect';
-import { ActionType, ResourceType } from '@/types/rbac';
+import { Action, Resource } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { TestReport, Prisma } from '@prisma/client';
 
@@ -223,8 +223,8 @@ async function handlePOST(request: Request): Promise<Response> {
 // Export protected route handlers
 export const GET = withProtect(
   withAuthorization(handleGET, {
-    action: ActionType.READ,
-    resource: ResourceType.REPORT,
+    action: Action.READ,
+    resource: Resource.REPORT,
     allowTeamMembers: true,
     getProjectId: async (req: Request) => {
       const url = new URL(req.url);
@@ -233,8 +233,8 @@ export const GET = withProtect(
     },
   }),
   {
-    action: ActionType.READ,
-    resource: ResourceType.REPORT,
+    action: Action.READ,
+    resource: Resource.REPORT,
     allowUnverified: false,
     rateLimit: {
       points: 100,
@@ -245,8 +245,8 @@ export const GET = withProtect(
 
 export const POST = withProtect(
   withAuthorization(handlePOST, {
-    action: ActionType.CREATE,
-    resource: ResourceType.REPORT,
+    action: Action.CREATE,
+    resource: Resource.REPORT,
     allowTeamMembers: true,
     getProjectId: async (req: Request) => {
       const url = new URL(req.url);
@@ -255,8 +255,8 @@ export const POST = withProtect(
     },
   }),
   {
-    action: ActionType.CREATE,
-    resource: ResourceType.REPORT,
+    action: Action.CREATE,
+    resource: Resource.REPORT,
     allowUnverified: false,
     rateLimit: {
       points: 50,

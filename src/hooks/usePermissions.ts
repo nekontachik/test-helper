@@ -22,13 +22,13 @@ export function usePermissions() {
   ): Promise<boolean> => {
     if (!session?.user) return false;
 
-    return RBACService.can(
+    return RBACService.checkPermission(
+      session.user.id,
       session.user.role,
-      action,
-      resource,
       {
-        userId: session.user.id,
-        ...context,
+        action,
+        resource,
+        resourceId: context?.resourceOwnerId
       }
     );
   };

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { apiErrorHandler } from '@/lib/apiErrorHandler';
+import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
 import { AppError, NotFoundError } from '@/lib/errors';
 
@@ -23,6 +23,6 @@ export async function GET(
     return NextResponse.json(testCase);
   } catch (error) {
     logger.error('Error in test case handler:', error);
-    return apiErrorHandler(error, 'test case handler');
+    return handleApiError(error);
   }
 }

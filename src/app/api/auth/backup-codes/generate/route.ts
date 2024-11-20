@@ -2,12 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-
-function generateBackupCode(): string {
-  return crypto.randomBytes(4).toString('hex').toUpperCase();
-}
+import { SecurityService } from '@/lib/auth/securityService';
+import logger from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
@@ -32,23 +28,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate 10 backup codes
-    const codes = Array.from({ length: 10 }, generateBackupCode);
-    const hashedCodes = await Promise.all(
-      codes.map(code => bcrypt.hash(code, 12))
-    );
+    // First, delete existing backup codes
+    await prisma.backupCode.deleteMany({
+      where: { userId: session.user.id }
+    });
 
-    // Store hashed backup codes
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        backupCodes: hashedCodes,
-      },
+    // Generate and store new backup codes
+    const codes = await SecurityService.generateBackupCodes();
+    const hashedCodes = await SecurityService.hashBackupCodes(codes);
+
+    // Create new backup codes
+    await prisma.backupCode.createMany({
+      data: hashedCodes.map((hashedCode: string) => ({
+        userId: session.user.id,
+        code: hashedCode,
+        used: false
+      }))
+    });
+
+    logger.info('Generated new backup codes', { 
+      userId: session.user.id,
+      count: codes.length 
     });
 
     return NextResponse.json({ codes });
   } catch (error) {
-    console.error('Backup codes generation error:', error);
+    logger.error('Backup codes generation error:', error);
     return NextResponse.json(
       { message: 'Failed to generate backup codes' },
       { status: 500 }

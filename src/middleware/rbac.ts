@@ -10,9 +10,9 @@ interface RBACOptions {
   require2FA?: boolean;
 }
 
-interface AuthToken extends JWT {
+interface AuthToken extends Omit<JWT, 'role'> {
   sub: string;
-  role?: string;
+  role: UserRole;
 }
 
 function isValidUserRole(role: string | undefined): role is UserRole {

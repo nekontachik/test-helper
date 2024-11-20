@@ -6,16 +6,7 @@ import type {
   AuthenticatorTransport,
   AuthenticatorDevice
 } from '@/types/webauthn';
-
-interface WebAuthnCredential {
-  id: string;
-  userId: string;
-  credentialID: string;
-  credentialPublicKey: string;
-  counter: number;
-  transportsData: string;
-  lastUsed: Date;
-}
+import type { WebAuthnCredential } from '@prisma/client';
 
 interface WebAuthnOptions {
   rpName: string;
@@ -55,27 +46,27 @@ export class WebAuthnService {
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { email: true }
+        select: { 
+          email: true,
+          webAuthnCredentials: {
+            select: {
+              credentialID: true,
+              transportsData: true
+            }
+          }
+        }
       });
 
       if (!user) {
         throw new AuthenticationError('User not found');
       }
 
-      const credentials = await prisma.webAuthnCredential.findMany({
-        where: { userId },
-        select: {
-          credentialID: true,
-          transportsData: true
-        }
-      });
-
       const challenge = crypto.randomUUID();
 
       const options: PublicKeyCredentialRequestOptionsJSON = {
         ...this.DEFAULT_OPTIONS,
         challenge,
-        allowCredentials: credentials.map(cred => ({
+        allowCredentials: user.webAuthnCredentials.map(cred => ({
           id: cred.credentialID,
           type: 'public-key',
           transports: JSON.parse(cred.transportsData) as AuthenticatorTransport[]
@@ -109,7 +100,6 @@ export class WebAuthnService {
     credential: AuthenticatorDevice
   ): Promise<WebAuthnCredential> {
     try {
-      // Verify the credential matches stored challenge
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { currentChallenge: true }

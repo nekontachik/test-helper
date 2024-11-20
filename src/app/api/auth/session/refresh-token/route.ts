@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
 import { TokenService } from '@/lib/auth/tokenService';
+import { TokenType } from '@/types/token';
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isValid = await SessionService.validateSession(sessionId, session.user.id);
+    const isValid = await SessionService.validateSession(sessionId);
 
     if (!isValid) {
       return NextResponse.json(
@@ -34,10 +35,11 @@ export async function POST(request: Request) {
     }
 
     // Generate new access token
-    const accessToken = TokenService.generateJWT({
+    const accessToken = await TokenService.generateToken({
       userId: session.user.id,
-      role: session.user.role,
-      sessionId,
+      email: session.user.email!,
+      type: TokenType.ACCESS,
+      expiresIn: '15m' // 15 minutes
     });
 
     // Update session activity

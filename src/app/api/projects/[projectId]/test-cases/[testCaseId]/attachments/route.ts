@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import { withAuth } from '@/middleware/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/types/auth';
 import { getServerSession } from 'next-auth';
@@ -7,9 +7,20 @@ import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
 import { SQLQueryBuilder } from '@/lib/sqlQueryBuilder';
-import type { TestCaseAttachment } from '@prisma/client';
 
-// Add at the top
+// Define the TestCaseAttachment interface
+interface TestCaseAttachment {
+  id: string;
+  testCaseId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  url: string;
+  uploadedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
   'image/jpeg',

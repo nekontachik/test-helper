@@ -88,7 +88,18 @@ const userSelect = {
 } satisfies Prisma.UserSelect;
 
 // Define custom user type that includes permissions
-interface CustomUser {
+interface CustomUser extends User {
+  role: UserRole;
+  permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
+}
+
+// Add CustomSessionUser interface
+interface CustomSessionUser {
   id: string;
   email: string | null;
   name: string | null;
@@ -192,7 +203,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const permissions = user.userPermissions.map(up => ({
+        const permissions: Permission[] = user.userPermissions.map(up => ({
           id: up.permission.id,
           name: up.permission.name,
           description: up.permission.description
@@ -239,32 +250,53 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        // Explicitly type the return value
-        const jwtToken: JWT = {
+        const customUser = user as CustomUser;
+        return {
           ...token,
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          permissions: user.permissions,
-          status: user.status,
-          emailNotificationsEnabled: Boolean(user.emailNotificationsEnabled),
-          twoFactorEnabled: Boolean(user.twoFactorEnabled),
-          twoFactorAuthenticated: Boolean(user.twoFactorAuthenticated),
-          emailVerified: user.emailVerified
+          id: customUser.id,
+          email: customUser.email ?? null,
+          name: customUser.name ?? null,
+          image: customUser.image ?? null,
+          role: customUser.role,
+          permissions: customUser.permissions,
+          status: customUser.status,
+          emailNotificationsEnabled: customUser.emailNotificationsEnabled,
+          twoFactorEnabled: customUser.twoFactorEnabled,
+          twoFactorAuthenticated: customUser.twoFactorAuthenticated,
+          emailVerified: customUser.emailVerified,
+          sub: token.sub,
+          iat: token.iat,
+          exp: token.exp,
+          jti: token.jti
         };
-        return jwtToken;
       }
-      return token;
+      // Ensure token has all required JWT properties
+      return {
+        ...token,
+        id: token.id,
+        email: token.email ?? null,
+        name: token.name ?? null,
+        image: token.image ?? null,
+        role: token.role,
+        permissions: token.permissions,
+        status: token.status,
+        emailNotificationsEnabled: token.emailNotificationsEnabled,
+        twoFactorEnabled: token.twoFactorEnabled,
+        twoFactorAuthenticated: token.twoFactorAuthenticated,
+        emailVerified: token.emailVerified,
+        sub: token.sub,
+        iat: token.iat,
+        exp: token.exp,
+        jti: token.jti
+      };
     },
     async session({ session, token }) {
       if (session.user) {
-        // Explicitly type the session user
         session.user = {
           ...session.user,
           id: token.id,
-          email: token.email,
-          name: token.name,
+          email: token.email ?? null,
+          name: token.name ?? null,
           role: token.role as UserRole,
           permissions: token.permissions,
           status: token.status as AccountStatus,
@@ -272,7 +304,7 @@ export const authOptions: NextAuthOptions = {
           twoFactorEnabled: Boolean(token.twoFactorEnabled),
           twoFactorAuthenticated: Boolean(token.twoFactorAuthenticated),
           emailVerified: token.emailVerified
-        };
+        } as CustomSessionUser;
       }
       return session;
     }

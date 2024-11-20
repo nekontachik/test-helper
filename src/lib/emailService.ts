@@ -18,7 +18,11 @@ assertEnvVar(RESEND_API_KEY, 'RESEND_API_KEY');
 assertEnvVar(APP_URL, 'NEXT_PUBLIC_APP_URL');
 assertEnvVar(EMAIL_FROM, 'EMAIL_FROM');
 
+// Initialize Resend with validated API key
 const resend = new Resend(RESEND_API_KEY);
+
+// Store validated EMAIL_FROM
+const validatedEmailFrom = EMAIL_FROM;
 
 export async function sendVerificationEmail(email: string, name: string) {
   try {
@@ -26,7 +30,7 @@ export async function sendVerificationEmail(email: string, name: string) {
     const verificationUrl = `${APP_URL}/auth/verify?token=${token}`;
 
     await resend.emails.send({
-      from: EMAIL_FROM as string,
+      from: validatedEmailFrom,
       to: email,
       subject: 'Verify your email address',
       html: `
@@ -48,7 +52,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
     const resetUrl = `${APP_URL}/auth/reset-password?token=${token}`;
 
     await resend.emails.send({
-      from: EMAIL_FROM as string,
+      from: validatedEmailFrom,
       to: email,
       subject: 'Reset your password',
       html: `
@@ -62,5 +66,33 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
   } catch (error) {
     console.error('Failed to send password reset email:', error);
     throw new Error('Failed to send password reset email');
+  }
+}
+
+export async function sendRecoveryEmail(email: string, name: string, token: string) {
+  try {
+    const recoveryUrl = `${APP_URL}/auth/recover?token=${token}`;
+
+    await resend.emails.send({
+      from: validatedEmailFrom,
+      to: email,
+      subject: 'Account Recovery Instructions',
+      html: `
+        <h1>Hello ${name},</h1>
+        <p>We received a request to recover your account. Click the link below to verify your identity:</p>
+        <a href="${recoveryUrl}">Recover Account</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request account recovery, please ignore this email and secure your account.</p>
+        <p>For security reasons, please:</p>
+        <ul>
+          <li>Change your password immediately after recovery</li>
+          <li>Enable two-factor authentication if not already enabled</li>
+          <li>Review your recent account activity</li>
+        </ul>
+      `,
+    });
+  } catch (error) {
+    console.error('Failed to send recovery email:', error);
+    throw new Error('Failed to send recovery email');
   }
 }

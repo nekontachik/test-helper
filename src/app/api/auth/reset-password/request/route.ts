@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { generatePasswordResetToken } from '@/lib/auth/tokens';
 import { sendPasswordResetEmail } from '@/lib/emailService';
 import { AUTH_ERRORS } from '@/lib/utils/error';
+import logger from '@/lib/logger';
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -23,6 +24,8 @@ async function handler(request: Request) {
     if (user) {
       const token = await generatePasswordResetToken(email);
       await sendPasswordResetEmail(email, user.name || 'User', token);
+      
+      logger.info('Password reset requested', { userId: user.id });
     }
 
     // Always return success to prevent email enumeration
@@ -30,7 +33,7 @@ async function handler(request: Request) {
       message: 'If an account exists with this email, a password reset link has been sent.',
     });
   } catch (error) {
-    console.error('Password reset request error:', error);
+    logger.error('Password reset request error:', error);
     return NextResponse.json(
       { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }

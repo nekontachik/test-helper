@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyPasswordResetToken } from '@/lib/auth/tokens';
 import { SecurityService } from '@/lib/auth/securityService';
 import { AUTH_ERRORS } from '@/lib/utils/error';
+import logger from '@/lib/logger';
 
 const resetSchema = z.object({
   token: z.string().min(1),
@@ -15,8 +16,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { token, password } = resetSchema.parse(body);
 
-    const payload = await verifyPasswordResetToken(token);
-    if (!payload?.email) {
+    const user = await verifyPasswordResetToken(token);
+    if (!user) {
       return NextResponse.json(
         { error: AUTH_ERRORS.INVALID_TOKEN },
         { status: 400 }
@@ -35,15 +36,20 @@ export async function POST(request: Request) {
     const hashedPassword = await SecurityService.hashPassword(password);
 
     await prisma.user.update({
-      where: { email: payload.email },
-      data: { password: hashedPassword },
+      where: { email: user.email },
+      data: { 
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      },
     });
 
+    logger.info('Password reset successful', { userId: user.id });
     return NextResponse.json({
       message: 'Password reset successfully',
     });
   } catch (error) {
-    console.error('Password reset error:', error);
+    logger.error('Password reset error:', error);
     return NextResponse.json(
       { error: AUTH_ERRORS.UNKNOWN },
       { status: 500 }

@@ -1,79 +1,63 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { RBACService } from '@/lib/auth/rbac/service';
-import { Action, Resource, UserRole } from '@/types/rbac';
-import logger from '@/lib/logger';
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { Session } from 'next-auth';
+import { getServerSession } from 'next-auth';
+import { UserRole } from '@/types/auth';
+import { Action, Resource } from '@/lib/auth/rbac/types';
+
+type HandlerFunction<T extends Record<string, string> = Record<string, string>> = (
+  req: Request,
+  context: { params: T }
+) => Promise<NextResponse>;
 
 interface AuthOptions {
+  allowedRoles: UserRole[];
   requireVerified?: boolean;
-  require2FA?: boolean;
-  allowedRoles?: UserRole[];
   action?: Action;
   resource?: Resource;
+  checkOwnership?: boolean;
+  allowTeamMembers?: boolean;
+  getProjectId?: (req: Request) => string;
 }
 
-interface AuthMiddlewareParams {
-  session: Session | null;
-  requireAuth?: boolean;
-  requireVerified?: boolean;
-  require2FA?: boolean;
-  allowedRoles?: string[];
-  action: Action;
-  resource: Resource;
-}
+export function withAuth<T extends Record<string, string>>(
+  handler: HandlerFunction<T>,
+  options: AuthOptions
+) {
+  return async function authHandler(
+    req: Request,
+    context: { params: T }
+  ) {
+    const session = await getServerSession();
 
-interface AuthResult {
-  success: boolean;
-  error?: string;
-  status?: number;
-}
-
-export async function authMiddleware(
-  params: AuthMiddlewareParams
-): Promise<AuthResult> {
-  try {
-    const session = params.session;
     if (!session?.user) {
-      return { success: false, error: 'Unauthorized', status: 401 };
-    }
-
-    // Check email verification
-    if (params.requireVerified && !session.user.emailVerified) {
-      return { success: false, error: 'Email verification required', status: 403 };
-    }
-
-    // Check 2FA
-    if (params.require2FA && !session.user.twoFactorAuthenticated) {
-      return { success: false, error: '2FA verification required', status: 403 };
-    }
-
-    // Check roles
-    if (params.allowedRoles?.length) {
-      const hasRole = params.allowedRoles.includes(session.user.role as UserRole);
-      if (!hasRole) {
-        return { success: false, error: 'Insufficient permissions', status: 403 };
-      }
-    }
-
-    // Check RBAC permissions
-    if (params.action && params.resource) {
-      const hasPermission = await RBACService.can(
-        session.user.role as UserRole,
-        params.action,
-        params.resource
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
       );
-
-      if (!hasPermission) {
-        return { success: false, error: 'Insufficient permissions', status: 403 };
-      }
     }
 
-    return { success: true };
-  } catch (error) {
-    logger.error('Auth middleware error:', error);
-    return { success: false, error: 'Internal server error', status: 500 };
-  }
+    // Check if user has required role
+    const userRole = session.user.role as UserRole;
+    if (!options.allowedRoles.includes(userRole)) {
+      return NextResponse.json(
+        { message: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    // Check verified requirement if specified
+    if (options.requireVerified && !session.user.emailVerified) {
+      return NextResponse.json(
+        { message: 'Email verification required' },
+        { status: 403 }
+      );
+    }
+
+    // Check ownership if required
+    if (options.checkOwnership && options.getProjectId) {
+      const projectId = options.getProjectId(req);
+      // Add your ownership check logic here
+    }
+
+    return handler(req, context);
+  };
 }

@@ -30,12 +30,21 @@ model User {
   emailVerified             DateTime?
   emailVerificationToken    String?   @unique
   emailVerificationExpires  DateTime?
+  resetToken                String?   @unique
+  resetTokenExpiry          DateTime?
+  emailChangeToken          String?   @unique
+  emailChangeTokenExpiry    DateTime?
+  pendingEmail             String?
+  scheduledDeletion         DateTime?
   twoFactorEnabled          Boolean   @default(false)
   twoFactorSecret           String?
   status                    String    @default("ACTIVE")
   emailNotificationsEnabled Boolean   @default(true)
+  currentChallenge          String?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
+  failedLoginAttempts       Int       @default(0)
+  lockedUntil               DateTime?
 
   // Relations
   userPermissions     UserPermission[]
@@ -54,6 +63,12 @@ model User {
   projectMemberships  ProjectMember[]
   backupCodes         BackupCode[]
   activities          UserActivity[]
+  tokens              Token[]
+
+  @@index([email])
+  @@index([resetToken])
+  @@index([emailChangeToken])
+  @@index([lockedUntil])
 }
 
 model UserRoleMap {
@@ -188,6 +203,7 @@ model TestRun {
   status       String
   projectId    String
   userId       String
+  completedAt  DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -251,13 +267,15 @@ model WebAuthnCredential {
   userId              String
   credentialID        String   @unique
   credentialPublicKey String
-  counter             Int
-  transportsData      String // Store array as JSON string
+  counter             Int      @default(0)
+  transportsData      String // JSON string of AuthenticatorTransport[]
+  lastUsed            DateTime @default(now())
   createdAt           DateTime @default(now())
-  lastUsed            DateTime @updatedAt
+  updatedAt           DateTime @updatedAt
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([credentialID])
 }
 
 model ApiKey {
@@ -390,11 +408,26 @@ model UserActivity {
   type      String
   ipAddress String?
   userAgent String?
-  details   String?  // JSON string for flexible metadata
+  details   String? // JSON string for flexible metadata
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
   @@map("user_activity")
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  type      String
+  userId    String
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
 }

@@ -42,6 +42,7 @@ export class AuthService {
           emailVerified: true,
           failedLoginAttempts: true,
           lockedUntil: true,
+          emailNotificationsEnabled: true,
         },
       });
 
@@ -102,6 +103,7 @@ export class AuthService {
           emailVerified: user.emailVerified,
           twoFactorAuthenticated: false,
           permissions: [],
+          emailNotificationsEnabled: Boolean(user.emailNotificationsEnabled),
         },
         token: session.sessionToken,
         expiresAt: session.expiresAt.getTime(),
@@ -171,7 +173,7 @@ export class AuthService {
   }
 
   static async verifyEmail(token: string): Promise<Partial<User>> {
-    const payload = await TokenService.validateToken(token);
+    const payload = await TokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
     if (!payload || payload.type !== TokenType.EMAIL_VERIFICATION) {
       throw new Error('Invalid verification token');
     }
@@ -192,7 +194,7 @@ export class AuthService {
   }
 
   static async resetPassword(token: string, newPassword: string): Promise<Partial<User>> {
-    const payload = await TokenService.validateToken(token);
+    const payload = await TokenService.verifyToken(token, TokenType.PASSWORD_RESET);
     if (!payload || payload.type !== TokenType.PASSWORD_RESET) {
       throw new Error('Invalid reset token');
     }

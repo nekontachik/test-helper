@@ -53,7 +53,10 @@ export class AccountLockoutService {
     try {
       const user = await prisma.user.findUnique({
         where: { email: identifier },
-        select: { lockedUntil: true },
+        select: {
+          id: true,
+          lockedUntil: true
+        }
       });
 
       return !!user?.lockedUntil && user.lockedUntil > new Date();
@@ -143,7 +146,10 @@ export class AccountLockoutService {
         this.getAttempts(identifier),
         prisma.user.findUnique({
           where: { email: identifier },
-          select: { lockedUntil: true },
+          select: {
+            id: true,
+            lockedUntil: true
+          }
         }),
       ]);
 

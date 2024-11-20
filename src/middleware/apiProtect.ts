@@ -54,10 +54,13 @@ export function withProtect(
       }
 
       // Check RBAC permissions
-      const hasPermission = await RBACService.can(
+      const hasPermission = await RBACService.checkPermission(
+        session.user.id,
         session.user.role as UserRole,
-        config.action,
-        config.resource
+        {
+          action: config.action,
+          resource: config.resource
+        }
       );
 
       if (!hasPermission) {

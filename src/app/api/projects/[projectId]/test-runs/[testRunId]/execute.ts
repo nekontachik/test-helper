@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { authorizeMiddleware } from '@/lib/authorize'; // Updated import
+import { authorizeMiddleware } from '@/lib/authorize';
 import { withMiddleware } from '@/lib/withMiddleware';
 import { TestRunStatus } from '@/types';
 import logger from '@/lib/logger';
@@ -27,7 +27,13 @@ export default withMiddleware(
         const updatedTestRun = await prisma.testRun.update({
           where: { id: testRunId },
           data: { status: TestRunStatus.IN_PROGRESS },
-          include: { testCases: true },
+          include: { 
+            testRunCases: {
+              include: {
+                testCase: true
+              }
+            }
+          },
         });
 
         logger.info(

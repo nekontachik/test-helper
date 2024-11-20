@@ -36,8 +36,8 @@ export function ProfileInformation({ user }: ProfileInformationProps) {
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user.name || '',
-      email: user.email,
+      name: user.name ?? undefined,
+      email: user.email ?? undefined,
     },
   });
 

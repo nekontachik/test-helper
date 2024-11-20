@@ -1,6 +1,5 @@
 import { createTransport } from 'nodemailer';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { VerificationEmail } from '@/emails/VerificationEmail';
+import logger from '@/lib/logger';
 
 const transporter = createTransport({
   host: process.env.SMTP_HOST,
@@ -12,64 +11,58 @@ const transporter = createTransport({
   },
 });
 
-export async function sendVerificationEmail(
+export async function sendPasswordResetEmail(
   email: string,
-  token: string,
-  name?: string
-) {
-  const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify?token=${token}`;
-  
-  const emailHtml = renderToStaticMarkup(
-    VerificationEmail({
-      name: name || email,
-      verificationUrl,
-    })
-  );
+  name: string,
+  token: string
+): Promise<void> {
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${token}`;
 
   try {
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: email,
-      subject: 'Verify your email address',
-      html: emailHtml,
+      subject: 'Reset Your Password',
+      html: `
+        <h1>Hello ${name},</h1>
+        <p>You requested to reset your password.</p>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+        <p>If you didn't request this, please ignore this email.</p>
+        <p>This link will expire in 1 hour.</p>
+      `,
     });
+
+    logger.info('Password reset email sent', { email });
   } catch (error) {
-    console.error('Failed to send verification email:', error);
-    throw new Error('Failed to send verification email');
+    logger.error('Failed to send password reset email:', error);
+    throw new Error('Failed to send password reset email');
   }
 }
 
-// Add type safety for email templates
-export interface EmailTemplateProps {
-  name: string;
-  verificationUrl: string;
-}
-
-// Add error handling and retries
-export async function sendEmail(
-  to: string,
-  subject: string,
-  html: string,
-  retries = 3
+export async function sendEmailChangeVerification(
+  email: string,
+  token: string
 ): Promise<void> {
-  let lastError: Error | undefined;
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email-change?token=${token}`;
 
-  for (let i = 0; i < retries; i++) {
-    try {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to,
-        subject,
-        html,
-      });
-      return;
-    } catch (error) {
-      lastError = error as Error;
-      console.error(`Email sending attempt ${i + 1} failed:`, error);
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
-    }
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: 'Verify Your New Email Address',
+      html: `
+        <h1>Email Change Verification</h1>
+        <p>Please click the link below to verify your new email address:</p>
+        <a href="${verifyUrl}">Verify Email</a>
+        <p>If you didn't request this change, please ignore this email.</p>
+        <p>This link will expire in 1 hour.</p>
+      `,
+    });
+
+    logger.info('Email change verification sent', { email });
+  } catch (error) {
+    logger.error('Failed to send email change verification:', error);
+    throw new Error('Failed to send email change verification');
   }
-
-  throw lastError || new Error('Failed to send email after retries');
 } 

@@ -3,6 +3,7 @@ import { withAuth } from '@/middleware/auth';
 import { Action, Resource } from '@/lib/auth/rbac/types';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { UserRole } from '@/types/auth';
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200),
@@ -12,8 +13,13 @@ const updateSchema = z.object({
   priority: z.string(),
 });
 
-export const PUT = withAuth(
-  async (request: Request, { params }: { params: { projectId: string, testCaseId: string } }) => {
+type RouteParams = {
+  projectId: string;
+  testCaseId: string;
+};
+
+export const PUT = withAuth<RouteParams>(
+  async (request: Request, { params }: { params: RouteParams }) => {
     const body = await request.json();
     const data = updateSchema.parse(body);
 
@@ -30,6 +36,7 @@ export const PUT = withAuth(
     resource: Resource.TEST_CASE,
     checkOwnership: true,
     allowTeamMembers: true,
-    getProjectId: (req) => req.url.split('/')[4], // Extract projectId from URL
+    getProjectId: (request: Request) => request.url.split('/')[4],
+    allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
   }
 );

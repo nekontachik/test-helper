@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { apiErrorHandler } from '@/lib/apiErrorHandler';
+import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
 import type { TestCase } from '@prisma/client';
 
@@ -51,6 +51,6 @@ export async function GET(
     return NextResponse.json(exportData);
   } catch (error) {
     logger.error('Error exporting test run:', error);
-    return apiErrorHandler(error);
+    return handleApiError(error);
   }
 }

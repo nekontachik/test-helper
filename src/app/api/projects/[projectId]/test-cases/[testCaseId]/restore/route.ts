@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import logger from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export async function POST(
   request: Request,
@@ -38,23 +39,27 @@ export async function POST(
       throw new AppError('Version not found', 404);
     }
 
+    const versionData: Prisma.VersionCreateWithoutTestCaseInput = {
+      versionNumber: testCase.versions.length + 1,
+      title: testCase.title,
+      description: testCase.description,
+      steps: testCase.steps,
+      expectedResult: testCase.expectedResult,
+      status: testCase.status,
+      priority: testCase.priority,
+    };
+
     const restoredTestCase = await prisma.testCase.update({
       where: { id: testCaseId },
       data: {
         title: versionToRestore.title,
         description: versionToRestore.description,
+        steps: versionToRestore.steps,
         expectedResult: versionToRestore.expectedResult,
         status: versionToRestore.status,
         priority: versionToRestore.priority,
         versions: {
-          create: {
-            versionNumber: testCase.versions.length + 1,
-            title: testCase.title,
-            description: testCase.description,
-            expectedResult: testCase.expectedResult,
-            status: testCase.status,
-            priority: testCase.priority,
-          },
+          create: versionData
         },
       },
       include: { versions: true },
