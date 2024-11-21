@@ -20,7 +20,7 @@ export const RBAC_RULES: RBACRule[] = [
     ],
   },
   {
-    role: UserRole.PROJECT_MANAGER,
+    role: UserRole.MANAGER,
     permissions: [
       { action: Action.CREATE, resource: Resource.PROJECT },
       { action: Action.READ, resource: Resource.PROJECT },
@@ -34,7 +34,7 @@ export const RBAC_RULES: RBACRule[] = [
     ],
   },
   {
-    role: UserRole.TESTER,
+    role: UserRole.EDITOR,
     permissions: [
       { action: Action.READ, resource: Resource.PROJECT },
       { action: Action.CREATE, resource: Resource.TEST_CASE },

@@ -1,37 +1,41 @@
+import { UserRole } from '@/types/auth';
+
 export const USER_ROLES = {
-  USER: 'USER',
-  TESTER: 'TESTER',
-  PROJECT_MANAGER: 'PROJECT_MANAGER',
-  ADMIN: 'ADMIN',
+  USER: UserRole.USER,
+  EDITOR: UserRole.EDITOR,
+  MANAGER: UserRole.MANAGER,
+  ADMIN: UserRole.ADMIN,
 } as const;
 
 export const VALID_ROLES = Object.values(USER_ROLES);
 
-export function isValidRole(role: string): role is keyof typeof USER_ROLES {
-  return VALID_ROLES.includes(role as keyof typeof USER_ROLES);
+export function isValidRole(role: string): role is UserRole {
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 export const DEFAULT_ROLE = USER_ROLES.USER;
 
 // Role hierarchy for permission checks
 export const ROLE_HIERARCHY = {
-  [USER_ROLES.USER]: 0,
-  [USER_ROLES.TESTER]: 1,
-  [USER_ROLES.PROJECT_MANAGER]: 2,
-  [USER_ROLES.ADMIN]: 3,
+  [UserRole.USER]: 0,
+  [UserRole.VIEWER]: 1,
+  [UserRole.EDITOR]: 2,
+  [UserRole.MANAGER]: 3,
+  [UserRole.ADMIN]: 4,
 } as const;
 
 // Role permissions mapping
 export const ROLE_PERMISSIONS = {
-  [USER_ROLES.USER]: ['read:projects', 'read:testCases'],
-  [USER_ROLES.TESTER]: [
+  [UserRole.USER]: ['read:projects', 'read:testCases'],
+  [UserRole.VIEWER]: ['read:projects', 'read:testCases'],
+  [UserRole.EDITOR]: [
     'read:projects',
     'read:testCases',
     'create:testCases',
     'update:testCases',
     'execute:testRuns'
   ],
-  [USER_ROLES.PROJECT_MANAGER]: [
+  [UserRole.MANAGER]: [
     'read:projects',
     'create:projects',
     'update:projects',
@@ -41,5 +45,5 @@ export const ROLE_PERMISSIONS = {
     'delete:testCases',
     'manage:testRuns'
   ],
-  [USER_ROLES.ADMIN]: ['*']
+  [UserRole.ADMIN]: ['*']
 } as const; 

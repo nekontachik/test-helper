@@ -30,9 +30,10 @@ function ProjectsPage() {
   );
 }
 
-// Use the UserRole enum instead of string literals
+// Use the correct UserRole values
 export default withAuth(ProjectsPage, [
   UserRole.USER,
-  UserRole.TESTER,
+  UserRole.EDITOR,
+  UserRole.MANAGER,
   UserRole.ADMIN
 ]);

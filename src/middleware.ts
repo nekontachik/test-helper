@@ -1,45 +1,47 @@
+import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { authMiddleware } from './middleware/core/auth';
-import { rateLimitMiddleware } from './middleware/security/rateLimit';
-import logger from '@/lib/logger';
 
-export async function middleware(request: NextRequest) {
-  try {
-    // Apply rate limiting first
-    const rateLimitResponse = await rateLimitMiddleware({
-      windowMs: 60 * 1000, // 1 minute
-      max: 100 // 100 requests per minute
-    })(request);
+export default withAuth(
+  function middleware(req) {
+    const isAuth = !!req.nextauth.token;
+    const isAuthPage = req.nextUrl.pathname.startsWith('/auth');
+    const isSignInPage = req.nextUrl.pathname === '/auth/signin';
+    const isSignUpPage = req.nextUrl.pathname === '/auth/signup';
+    const isApiRoute = req.nextUrl.pathname.startsWith('/api');
+    const isPublicRoute = req.nextUrl.pathname.startsWith('/_next') || 
+                         req.nextUrl.pathname.startsWith('/static');
+    const isRootPath = req.nextUrl.pathname === '/';
 
-    if (rateLimitResponse.status === 429) {
-      return rateLimitResponse;
+    // Redirect unauthenticated users to signup
+    if (!isAuth && isSignInPage) {
+      return NextResponse.redirect(new URL('/auth/signup', req.url));
     }
 
-    // Then apply auth middleware
-    const authResponse = await authMiddleware(request, {
-      requireAuth: true,
-      requireVerified: true,
-      require2FA: false
-    });
+    // Always redirect root path to signup for unauthenticated users
+    if (!isAuth && (isRootPath || !isAuthPage && !isApiRoute && !isPublicRoute)) {
+      return NextResponse.redirect(new URL('/auth/signup', req.url));
+    }
 
-    return authResponse;
-  } catch (error) {
-    logger.error('Middleware error:', error);
-    return NextResponse.redirect(new URL('/error', request.url));
+    // Redirect authenticated users away from auth pages
+    if (isAuth && isAuthPage) {
+      return NextResponse.redirect(new URL('/projects', req.url));
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: () => true, // Let the middleware function handle the logic
+    },
   }
-}
+);
 
-// Configure which routes use this middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public directory)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/',
+    '/auth/:path*',
+    '/projects/:path*',
+    '/account/:path*',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

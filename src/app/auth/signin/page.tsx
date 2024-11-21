@@ -14,6 +14,7 @@ import {
   Input,
   VStack,
   Text,
+  Heading,
 } from '@chakra-ui/react';
 import { useToast } from '@/components/ui/use-toast';
 import { DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/redirects";
@@ -123,66 +124,69 @@ export default function SignIn() {
 
   return (
     <Box maxW="md" mx="auto" mt={8} p={6} borderWidth={1} borderRadius="lg">
-      <form onSubmit={handleSubmit}>
-        <VStack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel>Email</FormLabel>
-            <Input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={isLoading}
-              autoComplete="email"
-            />
-          </FormControl>
+      <VStack spacing={6}>
+        <Heading>Sign In</Heading>
+        <form onSubmit={handleSubmit}>
+          <VStack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>Email</FormLabel>
+              <Input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                autoComplete="email"
+              />
+            </FormControl>
 
-          <FormControl isRequired>
-            <FormLabel>Password</FormLabel>
-            <PasswordInput
-              name="password"
-              value={formData.password}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
-              disabled={isLoading}
-              autoComplete="current-password"
-              showStrengthMeter={true}
-            />
-          </FormControl>
+            <FormControl isRequired>
+              <FormLabel>Password</FormLabel>
+              <PasswordInput
+                name="password"
+                value={formData.password}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+                disabled={isLoading}
+                autoComplete="current-password"
+                showStrengthMeter={true}
+              />
+            </FormControl>
 
-          <FormControl>
-            <Checkbox
-              name="rememberMe"
-              isChecked={formData.rememberMe}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            >
-              Remember me for 30 days
-            </Checkbox>
-          </FormControl>
+            <FormControl>
+              <Checkbox
+                name="rememberMe"
+                isChecked={formData.rememberMe}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              >
+                Remember me for 30 days
+              </Checkbox>
+            </FormControl>
 
-          <Button
-            type="submit"
-            colorScheme="blue"
-            width="full"
-            isLoading={isLoading}
-            loadingText="Signing in..."
-            spinner={<LoadingSpinner size="sm" />}
-          >
-            Sign In
-          </Button>
-
-          <Text>
-            Don&apos;t have an account?{' '}
             <Button
-              variant="link"
-              onClick={() => router.push('/auth/register')}
-              isDisabled={isLoading}
+              type="submit"
+              colorScheme="blue"
+              width="full"
+              isLoading={isLoading}
+              loadingText="Signing in..."
+              spinner={<LoadingSpinner size="sm" />}
             >
-              Register
+              Sign In
             </Button>
-          </Text>
-        </VStack>
-      </form>
+          </VStack>
+        </form>
+
+        <Text>
+          New to the platform?{' '}
+          <Button
+            variant="link"
+            onClick={() => router.push('/auth/signup')}
+            colorScheme="blue"
+          >
+            Create an Account
+          </Button>
+        </Text>
+      </VStack>
     </Box>
   );
 }

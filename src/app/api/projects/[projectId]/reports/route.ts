@@ -109,5 +109,5 @@ async function handler(req: Request, { params }: { params: { projectId: string }
 }
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
 });

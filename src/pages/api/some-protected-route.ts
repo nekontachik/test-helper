@@ -15,7 +15,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default withApiAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER],
   requireVerified: true,
   action: Action.READ,
   resource: Resource.PROJECT as Resource,

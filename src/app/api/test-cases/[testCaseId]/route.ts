@@ -4,31 +4,49 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { Action, Resource } from '@/types/rbac';
+import { createSecureRoute, SecureRouteContext, SecureRouteHandler } from '@/lib/api/createSecureRoute';
+import { z } from 'zod';
+import logger from '@/lib/logger';
+import type { Session } from 'next-auth';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { testCaseId: string } }
-) {
+// Define request schema
+const updateTestCaseSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  steps: z.string().optional(),
+  expectedResult: z.string().optional(),
+  actualResult: z.string().optional(),
+  status: z.string().optional(),
+  priority: z.string().optional(),
+});
+
+const handler: SecureRouteHandler = async (request: Request, context: SecureRouteContext) => {
+  const { params, session } = context;
+  
+  if (!session) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const testCaseId = params?.testCaseId as string;
+
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    // Get test case with project and team data
     const testCase = await prisma.testCase.findUnique({
-      where: { id: params.testCaseId },
-      select: {
-        userId: true,
-        status: true,
+      where: { id: testCaseId },
+      include: {
         project: {
-          select: {
-            userId: true,
-          },
-        },
-      },
+          include: {
+            members: {
+              select: {
+                userId: true
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!testCase) {
@@ -38,15 +56,14 @@ export async function PUT(
       );
     }
 
-    const hasPermission = RBACService.can(
+    // Check permissions
+    const hasPermission = await RBACService.checkPermission(
+      session.user.id,
       session.user.role,
-      Action.UPDATE,
-      Resource.TEST_CASE,
       {
-        userId: session.user.id,
-        resourceOwnerId: testCase.userId,
-        teamMembers: [],
-        projectId: testCase.project.userId
+        action: Action.UPDATE,
+        resource: Resource.TEST_CASE,
+        resourceId: testCaseId
       }
     );
 
@@ -57,18 +74,57 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
+    // Validate request body
+    const body = updateTestCaseSchema.parse(await request.json());
+
+    // Update test case
     const updatedTestCase = await prisma.testCase.update({
-      where: { id: params.testCaseId },
+      where: { id: testCaseId },
       data: body,
+      include: {
+        project: {
+          select: {
+            name: true,
+            id: true
+          }
+        }
+      }
+    });
+
+    logger.info('Test case updated', {
+      testCaseId,
+      userId: session.user.id,
+      changes: body
     });
 
     return NextResponse.json(updatedTestCase);
   } catch (error) {
-    console.error('Test case update error:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    logger.error('Test case update error:', error);
     return NextResponse.json(
       { error: 'Failed to update test case' },
       { status: 500 }
     );
   }
-} 
+};
+
+// Export protected route handler
+export const PUT = createSecureRoute(handler, {
+  requireAuth: true,
+  requireVerified: true,
+  action: Action.UPDATE,
+  resource: Resource.TEST_CASE,
+  audit: {
+    action: 'UPDATE_TEST_CASE',
+    getMetadata: async (req) => ({
+      ip: req.headers.get('x-forwarded-for'),
+      userAgent: req.headers.get('user-agent')
+    })
+  }
+}); 

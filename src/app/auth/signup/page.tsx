@@ -69,7 +69,7 @@ export default function SignUp() {
   return (
     <Box maxW="md" mx="auto" mt={8} p={6} borderWidth={1} borderRadius="lg">
       <VStack spacing={6}>
-        <Heading>Sign Up</Heading>
+        <Heading>Create an Account</Heading>
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <VStack spacing={4}>
             <FormControl isRequired>
@@ -110,7 +110,8 @@ export default function SignUp() {
                 }
               >
                 <option value={UserRole.USER}>User</option>
-                <option value={UserRole.TESTER}>Tester</option>
+                <option value={UserRole.VIEWER}>Viewer</option>
+                <option value={UserRole.EDITOR}>Editor</option>
               </Select>
             </FormControl>
             <Button

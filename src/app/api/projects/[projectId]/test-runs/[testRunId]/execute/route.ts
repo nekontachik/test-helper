@@ -74,5 +74,5 @@ async function handler(
 }
 
 export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
 });

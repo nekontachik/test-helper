@@ -31,17 +31,17 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   // Role-specific routes
   '/projects/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/test-cases/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/reports/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    roles: [UserRole.MANAGER, UserRole.ADMIN],
     requireVerified: true 
   },
   '/admin/(.*)': { 

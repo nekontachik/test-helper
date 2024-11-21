@@ -42,14 +42,14 @@ const API_ROUTES: APIRouteConfig = {
 
   '/api/projects/(.*)': {
     requireAuth: true,
-    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 }, // 100 requests per minute
   },
 
   '/api/test-cases/(.*)': {
     requireAuth: true,
-    roles: [UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 },
   },

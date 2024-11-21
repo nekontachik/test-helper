@@ -42,8 +42,8 @@ export function useRole(): UseRoleReturn {
   return {
     hasRole,
     isAdmin: () => session?.user?.role === UserRole.ADMIN,
-    isProjectManager: () => session?.user?.role === UserRole.PROJECT_MANAGER,
-    isTester: () => session?.user?.role === UserRole.TESTER,
+    isProjectManager: () => session?.user?.role === UserRole.MANAGER,
+    isTester: () => session?.user?.role === UserRole.EDITOR,
     role: session?.user?.role,
   };
 }

@@ -37,6 +37,6 @@ export const PUT = withAuth<RouteParams>(
     checkOwnership: true,
     allowTeamMembers: true,
     getProjectId: (request: Request) => request.url.split('/')[4],
-    allowedRoles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.TESTER]
+    allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
   }
 );

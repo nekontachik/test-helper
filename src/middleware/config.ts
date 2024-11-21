@@ -27,8 +27,8 @@ export const MIDDLEWARE_CONFIG = {
   // Role-based route access
   roleAccess: {
     '/admin/(.*)': [UserRole.ADMIN],
-    '/projects/manage/(.*)': [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
-    '/reports/(.*)': [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
+    '/projects/manage/(.*)': [UserRole.MANAGER, UserRole.ADMIN],
+    '/reports/(.*)': [UserRole.MANAGER, UserRole.ADMIN],
   } as Record<string, UserRole[]>,
 
   // Rate limiting configurations

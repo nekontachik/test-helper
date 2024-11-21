@@ -6,7 +6,7 @@ import { AccountSettings } from '@/components/AccountSettings';
 import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
 import type { AuthUser, AccountStatus, Permission } from '@/lib/auth/types';
-import type { UserRole } from '@/types/rbac';
+import { UserRole } from '@/types/auth';
 
 interface ExtendedSession extends Session {
   user: {

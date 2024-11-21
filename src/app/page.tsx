@@ -1,14 +1,28 @@
-import React from 'react';
-import { Box, Heading } from '@chakra-ui/react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function Home() {
-  return (
-    <ErrorBoundary>
-      <Box>
-        <Heading>Welcome to Test Management Application</Heading>
-        {/* Add more content here */}
-      </Box>
-    </ErrorBoundary>
-  );
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (!session) {
+      router.push('/auth/signup');
+      return;
+    }
+
+    router.push('/projects');
+  }, [session, status, router]);
+
+  if (status === 'loading') {
+    return <LoadingSpinner />;
+  }
+
+  return null;
 }

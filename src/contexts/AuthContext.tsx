@@ -2,7 +2,7 @@
 
 import { createContext, useContext, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
-import { UserRole } from '@/types/rbac';
+import { UserRole } from '@/types/auth';
 import type { Session } from 'next-auth';
 
 interface ExtendedSession extends Session {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = (roles: UserRole[]) => {
     if (!session?.user?.role) return false;
-    return roles.includes(session.user.role as UserRole);
+    return roles.includes(session.user.role);
   };
 
   const user: AuthUser | null = session?.user ? {
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: session.user.name,
     email: session.user.email,
     image: session.user.image,
-    role: session.user.role as UserRole,
+    role: session.user.role,
     twoFactorEnabled: session.user.twoFactorEnabled,
     emailVerified: session.user.emailVerified,
     twoFactorAuthenticated: session.user.twoFactorAuthenticated,

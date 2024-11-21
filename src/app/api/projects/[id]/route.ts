@@ -9,7 +9,7 @@ export async function GET(
 ) {
   // Check permissions with correct number of arguments
   const permissionCheck = await permissionGuard(request, {
-    roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
+    roles: [UserRole.ADMIN, UserRole.MANAGER],
     requireVerified: true
   });
   

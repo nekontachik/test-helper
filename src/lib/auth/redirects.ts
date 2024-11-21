@@ -45,7 +45,8 @@ export const publicPages = [
 ]
 
 // Default redirect after login if no callbackUrl is provided
-export const DEFAULT_LOGIN_REDIRECT = "/dashboard"
+export const DEFAULT_LOGIN_REDIRECT = '/projects';
+export const DEFAULT_UNAUTHORIZED_REDIRECT = '/auth/signup';
 
 export function isPublicPage(path: string): boolean {
   return publicPages.some(page => path.startsWith(page))
@@ -53,9 +54,9 @@ export function isPublicPage(path: string): boolean {
 
 export const authConfig: Partial<NextAuthOptions> = {
   pages: {
-    signIn: getURL("/auth/signin"),
-    error: getURL("/auth/error"),
-    verifyRequest: getURL("/auth/verify"),
+    signIn: "/auth/signup",
+    error: "/auth/error",
+    verifyRequest: "/auth/verify",
   },
   callbacks: {
     async redirect({ url, baseUrl }) {

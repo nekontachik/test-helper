@@ -1,10 +1,6 @@
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  PROJECT_MANAGER = 'PROJECT_MANAGER',
-  TESTER = 'TESTER',
-  VIEWER = 'VIEWER',
-  USER = 'USER'
-}
+import { UserRole } from './auth';
+
+export { UserRole };
 
 export enum Action {
   CREATE = 'create',

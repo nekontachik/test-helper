@@ -1,7 +1,13 @@
-import { UserRole } from './rbac';
 import { AuditAction } from './audit';
 
-export { UserRole };
+// Define user roles
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  EDITOR = 'EDITOR',
+  VIEWER = 'VIEWER',
+  USER = 'USER'
+}
 
 // Define account status type
 export enum AccountStatus {
