@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { SecurityService } from '@/lib/auth/securityService';
+import { BackupCodesService } from '@/lib/auth/backupCodesService';
 
 export async function POST(request: Request) {
   try {
@@ -27,8 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const backupCodes = SecurityService.generateBackupCodes();
-    await SecurityService.storeBackupCodes(session.user.id, backupCodes);
+    const backupCodes = await BackupCodesService.generateCodes(session.user.id);
 
     return NextResponse.json({ backupCodes });
   } catch (error) {

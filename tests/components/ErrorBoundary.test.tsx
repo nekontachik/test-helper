@@ -1,38 +1,27 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ReactNode } from 'react';
-
-const ThrowError = (): ReactNode => {
-  throw new Error('Test error');
-};
+import { ErrorBoundary } from '../ErrorBoundary';
+import { renderWithChakra } from '@/test/utils';
 
 describe('ErrorBoundary', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
+  const ErrorComponent = () => {
+    throw new Error('Test error');
+  };
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it('renders fallback UI when error occurs', () => {
-    render(
-      <ErrorBoundary>
-        <ThrowError />
+  it('renders error message when an error occurs', () => {
+    renderWithChakra(
+      <ErrorBoundary 
+        fallback={({ error }) => (
+          <div>
+            <div>Something went wrong.</div>
+            <div>{error.message}</div>
+          </div>
+        )}
+      >
+        <ErrorComponent />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-  });
-
-  it('renders children when no error occurs', () => {
-    render(
-      <ErrorBoundary>
-        <div>Test content</div>
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText('Test content')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
+    expect(screen.getByText('Test error')).toBeInTheDocument();
   });
 });

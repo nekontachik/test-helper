@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { SecurityService } from '@/lib/auth/securityService';
+import { TwoFactorService } from '@/lib/auth/twoFactorService';
 import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { z } from 'zod';
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { code } = validateSchema.parse(body);
 
-    const isValid = await SecurityService.verifyTOTP(session.user.id, code);
+    const isValid = await TwoFactorService.verifyTOTP(session.user.id, code);
 
     if (!isValid) {
       return NextResponse.json(

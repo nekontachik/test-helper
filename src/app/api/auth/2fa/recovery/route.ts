@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { SecurityService } from '@/lib/auth/securityService';
+import { BackupCodesService } from '@/lib/auth/backupCodesService';
 import { z } from 'zod';
 
 const recoverySchema = z.object({
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { code } = recoverySchema.parse(body);
 
-    const isValid = await SecurityService.validateBackupCode(session.user.id, code);
+    const isValid = await BackupCodesService.verifyCode(session.user.id, code);
 
     if (!isValid) {
       return NextResponse.json(
@@ -33,8 +33,7 @@ export async function POST(request: Request) {
     }
 
     // Generate new backup codes after successful recovery
-    const newBackupCodes = await SecurityService.generateBackupCodes();
-    await SecurityService.storeBackupCodes(session.user.id, newBackupCodes);
+    const newBackupCodes = await BackupCodesService.generateCodes(session.user.id);
 
     return NextResponse.json({
       message: 'Recovery successful',

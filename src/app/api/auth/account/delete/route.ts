@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       }
     });
 
-    await ActivityService.log(session.user.id, ActivityEventType.ACCOUNT_DELETE_SCHEDULED, {
+    await ActivityService.log(session.user.id, ActivityEventType.ACCOUNT_DELETION_SCHEDULED, {
       metadata: {
         scheduledDate: deletionDate
       }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     console.error('Account deletion scheduling error:', error);
     
     if (session?.user) {
-      await ActivityService.log(session.user.id, ActivityEventType.ACCOUNT_DELETE_FAILED, {
+      await ActivityService.log(session.user.id, ActivityEventType.ACCOUNT_DELETION_FAILED, {
         metadata: {
           error: error instanceof Error ? error.message : 'Unknown error'
         }

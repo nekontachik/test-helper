@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await ActivityService.log(session.user.id, ActivityEventType.SESSIONS_REVOKED, {
+    await ActivityService.log(session.user.id, ActivityEventType.SESSION_REVOKED, {
       ip,
       userAgent,
       metadata: { sessionIds },

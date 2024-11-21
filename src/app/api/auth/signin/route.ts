@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const { email, password } = await request.json();
-    // Convert null to undefined for type compatibility
     const ip = request.headers.get('x-forwarded-for') || undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
 
@@ -23,7 +22,10 @@ export async function POST(request: NextRequest) {
       await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
         ip,
         userAgent,
-        metadata: { reason: 'breached_password' },
+        metadata: { 
+          reason: 'breached_password',
+          email 
+        },
       });
       return NextResponse.json(
         { error: 'This password has been compromised in a data breach' },
@@ -31,8 +33,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Record the attempt with type
-    await SecurityService.recordFailedAttempt(ip || 'anonymous', 'login');
+    // Log the failed attempt
+    await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
+      ip,
+      userAgent,
+      metadata: { 
+        reason: 'invalid_credentials',
+        email 
+      },
+    });
     
     return NextResponse.json({ success: true });
   } catch (error) {
