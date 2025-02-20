@@ -1,10 +1,13 @@
+import type { TestResult, TestResultWithEvidence } from './testResults';
+import type { TestCase } from './test-case';
+
 export enum TestRunStatus {
-  PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-  BLOCKED = 'BLOCKED',
-  SKIPPED = 'SKIPPED'
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  BLOCKED = 'blocked',
+  SKIPPED = 'skipped'
 }
 
 export enum TestCaseStatus {
@@ -21,12 +24,12 @@ export enum TestCasePriority {
 }
 
 export enum TestCaseResultStatus {
-  PENDING = 'PENDING',
   PASSED = 'PASSED',
   FAILED = 'FAILED',
-  BLOCKED = 'BLOCKED',
   SKIPPED = 'SKIPPED'
 }
+
+export type { TestResult, TestResultWithEvidence, TestCase };
 
 export interface User {
   id: string;
@@ -45,32 +48,6 @@ export interface Project {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
-}
-
-export interface TestCase {
-  id: string;
-  title: string;
-  description: string;
-  steps: string;
-  expectedResult: string;
-  actualResult: string;
-  status: TestCaseStatus;
-  priority: TestCasePriority;
-  projectId: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  version: number;
-}
-
-export interface TestCaseVersion {
-  id: string;
-  versionNumber: number;
-  title: string;
-  description: string;
-  steps: string[];
-  expectedResult: string;
-  status: string;
-  priority: string;
 }
 
 export interface TestRun {
@@ -95,15 +72,11 @@ export interface TestSuite {
   updatedAt: Date;
 }
 
-export interface TestCaseResult {
+export interface TestCaseResult extends Omit<TestResult, 'evidence'> {
   id: string;
-  testCaseId: string;
-  runId: string;
-  status: TestCaseResultStatus;
-  notes?: string;
   testCase: TestCase;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TestReport {
@@ -217,41 +190,11 @@ export interface TestRunInput {
   status?: TestRunStatus;
 }
 
-export interface TestResult {
-  testCaseId: string;
-  status: TestCaseResultStatus;
-  notes?: string;
-  evidenceUrls: string[];
-  evidence?: File[];
-  timestamp?: string;
-}
-
 export interface TestRunProgress {
   projectId: string;
   testRunId: string;
   currentIndex: number;
   results: TestResult[];
-}
-
-export type OperationType = 'upload' | 'testResult';
-export type OperationPriority = 'high' | 'medium' | 'low';
-
-export interface QueuedOperation {
-  id: string;
-  type: OperationType;
-  data: {
-    testRunId?: string;
-    testCaseId?: string;
-    file?: File;
-    status?: TestRunStatus;
-    notes?: string;
-    evidenceUrls?: string[];
-    timestamp?: number;
-  };
-  priority: OperationPriority;
-  timestamp: number;
-  retryCount: number;
-  testRunId?: string;
 }
 
 export interface ApiErrorResponse {
@@ -265,11 +208,10 @@ export interface ApiSuccessResponse<T> {
   message?: string;
 }
 
-export interface TestRunResult extends TestResult {
-  testCaseId: string;
-  status: TestRunStatus;
+export interface TestFormData {
+  status: TestCaseResultStatus;
   notes?: string;
   evidenceUrls: string[];
-  evidence?: File[];
-  timestamp?: string;
 }
+
+export * from './operations';

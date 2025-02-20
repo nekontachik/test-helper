@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,22 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-// Define types locally to avoid dependency on @/types
-interface TestResult {
-  testCaseId: string;
-  status: 'PASSED' | 'FAILED' | 'BLOCKED' | 'SKIPPED';
-  notes?: string;
-  evidenceUrls?: string[];
-  timestamp?: string;
-}
+import { TestResult } from '@/types/testResults';
 
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   localChanges: TestResult[];
   serverChanges: TestResult[];
-  onResolve: (resolvedResults: TestResult[]) => void;
+  onResolve: (resolvedResults: TestResult[]) => Promise<void>;
 }
 
 interface ConflictItem {
@@ -52,6 +44,17 @@ export function ConflictResolutionDialog({
     }))
   );
 
+  useEffect(() => {
+    if (isOpen) {
+      setConflicts(localChanges.map((local, index) => ({
+        testCaseId: local.testCaseId,
+        local,
+        server: serverChanges[index],
+        selected: undefined,
+      })));
+    }
+  }, [isOpen, localChanges, serverChanges]);
+
   const handleSelect = (testCaseId: string, selection: 'local' | 'server') => {
     setConflicts(prev => 
       prev.map(conflict => 
@@ -62,12 +65,15 @@ export function ConflictResolutionDialog({
     );
   };
 
-  const handleResolve = () => {
-    const resolvedResults = conflicts.map(conflict => 
-      conflict.selected === 'server' ? conflict.server : conflict.local
-    );
-    onResolve(resolvedResults);
-    onClose();
+  const handleResolve = async () => {
+    try {
+      const resolvedResults = conflicts.map(conflict => 
+        conflict.selected === 'server' ? conflict.server : conflict.local
+      );
+      await onResolve(resolvedResults);
+    } catch (error) {
+      console.error('Failed to resolve conflicts:', error);
+    }
   };
 
   const getStatusStyles = (status: string) => {

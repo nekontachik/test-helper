@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
-import { AppError } from '@/lib/errors';
-import { logger } from '@/lib/utils/logger';
+import { handleApiError } from '@/lib/errors/errorHandler';
+import { AuthenticationError, NotFoundError } from '@/lib/errors/specific';
 
 export async function GET(
   request: Request,
@@ -11,48 +11,25 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      throw new AppError('Unauthorized', 401);
+    if (!session) {
+      throw new AuthenticationError('Not authenticated');
     }
 
-    const { projectId } = params;
-
     const project = await prisma.project.findUnique({
-      where: { 
-        id: projectId,
-        userId: session.user.id 
-      },
+      where: { id: params.projectId },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
+        testCases: true,
+        testRuns: true,
       },
     });
 
     if (!project) {
-      throw new AppError('Project not found', 404);
+      throw new NotFoundError('Project not found');
     }
 
     return NextResponse.json(project);
   } catch (error) {
-    logger.error('Error in GET project:', error);
-    
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { error: error.message }, 
-        { status: error.statusCode }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal Server Error' }, 
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -63,7 +40,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      throw new AppError('Unauthorized', 401);
+      throw new AuthenticationError();
     }
 
     const { projectId } = params;
@@ -76,27 +53,18 @@ export async function DELETE(
     });
 
     if (!project) {
-      throw new AppError('Project not found', 404);
+      throw new NotFoundError('Project not found');
     }
 
     await prisma.project.delete({
       where: { id: projectId },
     });
 
-    return NextResponse.json({ message: 'Project deleted successfully' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Project deleted successfully' 
+    });
   } catch (error) {
-    logger.error('Error in DELETE project:', error);
-    
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        { error: error.message }, 
-        { status: error.statusCode }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal Server Error' }, 
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

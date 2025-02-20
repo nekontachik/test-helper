@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/useToast';
 export default function ExecuteTestRunPage() {
   const params = useParams();
   const router = useRouter();
-  const { showSuccessToast, showErrorToast } = useToast();
+  const { showSuccessToast } = useToast();
 
   const projectId = params?.projectId as string;
   const testRunId = params?.testRunId as string;

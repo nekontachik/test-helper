@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import type { TestRunResult } from '@/types';
+import type { TestResult } from '@/types/testResults';
+
+interface TestResultWithEvidence extends TestResult {
+  evidence?: File[];
+}
 
 export function useTestRunExecution(projectId: string, testRunId: string) {
   const [isUploading, setIsUploading] = useState(false);
@@ -12,9 +16,12 @@ export function useTestRunExecution(projectId: string, testRunId: string) {
     setUploadProgress(0);
     
     try {
-      const uploadPromises = files.map(async (file) => {
+      const total = files.length;
+      const urls: string[] = [];
+      
+      for (let i = 0; i < files.length; i++) {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', files[i]);
         
         const response = await fetch(`/api/projects/${projectId}/uploads`, {
           method: 'POST',
@@ -24,45 +31,57 @@ export function useTestRunExecution(projectId: string, testRunId: string) {
         if (!response.ok) throw new Error('Failed to upload file');
         
         const { url } = await response.json();
-        return url;
-      });
+        urls.push(url);
+        
+        setUploadProgress(((i + 1) / total) * 100);
+      }
       
-      const urls = await Promise.all(uploadPromises);
-      setUploadProgress(100);
       return urls;
     } finally {
       setIsUploading(false);
     }
   };
 
-  const executeTestRun = async (results: TestRunResult[]) => {
-    const resultsWithUrls = await Promise.all(
-      results.map(async (result) => {
-        const evidenceUrls = result.evidence 
-          ? await uploadEvidence(result.evidence)
-          : [];
+  const executeTestRun = async (results: TestResultWithEvidence[]) => {
+    const MAX_RETRIES = 3;
+    const INITIAL_RETRY_DELAY = 1000;
+    
+    for (let retries = 0; retries < MAX_RETRIES; retries++) {
+      try {
+        const resultsWithUrls = await Promise.all(
+          results.map(async (result) => ({
+            testCaseId: result.testCaseId,
+            status: result.status,
+            notes: result.notes,
+            evidenceUrls: result.evidence 
+              ? await uploadEvidence(result.evidence)
+              : result.evidenceUrls,
+          }))
+        );
+
+        const response = await fetch(
+          `/api/projects/${projectId}/test-runs/${testRunId}/execute`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results: resultsWithUrls }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to execute test run');
+        }
         
-        return {
-          ...result,
-          evidenceUrls,
-        };
-      })
-    );
-
-    const response = await fetch(
-      `/api/projects/${projectId}/test-runs/${testRunId}/execute`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ results: resultsWithUrls }),
+        return await response.json();
+      } catch (error) {
+        if (retries === MAX_RETRIES - 1) throw error;
+        await new Promise(resolve => 
+          setTimeout(resolve, INITIAL_RETRY_DELAY * Math.pow(2, retries))
+        );
       }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to execute test run');
     }
-
-    return response.json();
+    throw new Error('Failed to execute test run after maximum retries');
   };
 
   return {

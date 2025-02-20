@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useOperationQueue } from './useOperationQueue';
 import { useToast } from './useToast';
-import { QueuedOperation, ApiErrorResponse } from '@/types';
+import type { QueuedOperation, ApiErrorResponse } from '../types/index';
 
 const BATCH_SIZE = 3;
 const PROCESSING_INTERVAL = 5000; // 5 seconds
@@ -40,10 +40,13 @@ export function useQueueProcessor(projectId: string) {
 
   const processOperation = useCallback(async (operation: QueuedOperation) => {
     try {
-      if (operation.type === 'upload') {
+      if (operation.type === 'upload' && operation.data.file) {
+        const formData = new FormData();
+        formData.append('file', operation.data.file);
+        
         const response = await fetch(`/api/projects/${projectId}/uploads`, {
           method: 'POST',
-          body: operation.data,
+          body: formData,
         });
         if (!response.ok) {
           const errorData = await response.json() as ApiErrorResponse;

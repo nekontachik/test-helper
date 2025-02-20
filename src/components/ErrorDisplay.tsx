@@ -1,46 +1,47 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorDisplayProps {
-  error: {
-    message: string;
-    code?: string;
-    details?: Record<string, unknown>;
-  };
+  message: string;
+  code?: string;
   onRetry?: () => void;
-  onDismiss?: () => void;
+  onReset?: () => void;
 }
 
-export function ErrorDisplay({ error, onRetry, onDismiss }: ErrorDisplayProps) {
+export function ErrorDisplay({ message, code, onRetry, onReset }: ErrorDisplayProps) {
   return (
-    <Alert variant="destructive">
-      <X className="h-4 w-4" />
-      <div className="font-medium">
-        Error {error.code && `(${error.code})`}
-      </div>
-      <AlertDescription className="mt-2">
-        <p>{error.message}</p>
-        {error.details && (
-          <pre className="mt-2 text-sm bg-destructive/10 p-2 rounded">
-            {JSON.stringify(error.details, null, 2)}
-          </pre>
-        )}
-        {(onRetry || onDismiss) && (
-          <div className="mt-4 flex gap-2">
-            {onRetry && (
-              <Button variant="secondary" size="sm" onClick={onRetry}>
-                Try Again
-              </Button>
-            )}
-            {onDismiss && (
-              <Button variant="ghost" size="sm" onClick={onDismiss}>
-                Dismiss
-              </Button>
-            )}
-          </div>
+    <Alert variant="destructive" className="bg-red-50">
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle className="text-red-700">Error</AlertTitle>
+      <AlertDescription className="text-red-600">
+        {message}
+        {code && (
+          <span className="block mt-1 text-sm text-red-500">
+            Error code: {code}
+          </span>
         )}
       </AlertDescription>
+      <div className="flex gap-2 mt-2">
+        {onRetry && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+          >
+            Try Again
+          </Button>
+        )}
+        {onReset && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReset}
+          >
+            Start Over
+          </Button>
+        )}
+      </div>
     </Alert>
   );
 } 

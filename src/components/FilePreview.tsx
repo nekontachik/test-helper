@@ -5,20 +5,27 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface FileInfo {
+  name: string;
+  type?: string;
+  size?: number;
+  url?: string;
+}
+
 interface FilePreviewProps {
-  files: Array<{ name: string; type?: string; size?: number }>;
+  files: FileInfo[];
   onRemove: (index: number) => void;
 }
 
 export function FilePreview({ files, onRemove }: FilePreviewProps) {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
-  const renderPreview = (file: { name: string; type?: string; size?: number }, index: number) => {
-    const isImage = file.type?.startsWith('image/') || false;
+  const renderPreview = (file: FileInfo, index: number) => {
+    const isImage = file.type?.startsWith('image/');
     const isPDF = file.type === 'application/pdf';
+    const imageUrl = file.url || (file.type ? URL.createObjectURL(new File([], file.name, { type: file.type })) : null);
 
-    if (isImage) {
-      const imageUrl = URL.createObjectURL(new File([], file.name, { type: file.type }));
+    if (isImage && imageUrl) {
       return (
         <div key={index} className="relative group">
           <Image
@@ -26,7 +33,7 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
             alt={file.name}
             width={100}
             height={100}
-            className="object-cover rounded cursor-pointer"
+            className="object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => setExpandedImage(imageUrl)}
           />
           <Button
@@ -34,6 +41,7 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
             size="icon"
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => onRemove(index)}
+            aria-label="Remove file"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -43,13 +51,15 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
 
     if (isPDF) {
       return (
-        <div key={index} className="relative group p-4 border rounded">
-          <p className="text-sm">{file.name}</p>
+        <div key={index} className="relative group p-4 border rounded bg-gray-50 hover:bg-gray-100 transition-colors">
+          <p className="text-sm truncate">{file.name}</p>
+          {file.size && <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>}
           <Button
             variant="destructive"
             size="icon"
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => onRemove(index)}
+            aria-label="Remove file"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -60,6 +70,14 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
     return null;
   };
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
   return (
     <div>
       <div className="grid grid-cols-3 gap-4">
@@ -68,8 +86,10 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
 
       {expandedImage && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 cursor-pointer"
           onClick={() => setExpandedImage(null)}
+          role="dialog"
+          aria-label="Expanded image preview"
         >
           <Image
             src={expandedImage}
@@ -77,6 +97,7 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
             width={800}
             height={600}
             className="max-w-[90vw] max-h-[90vh] object-contain"
+            priority
           />
         </div>
       )}

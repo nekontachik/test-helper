@@ -1,63 +1,59 @@
-import { useState, useCallback } from 'react';
-import { TestRunResult } from '@/types';
+import { useState, useCallback, useEffect } from 'react';
+import { useLocalStorage } from './useLocalStorage';
+import type { TestResult } from '@/types/testResults';
 
 interface RecoveryState {
-  lastAttemptedIndex: number;
-  failedResults: TestRunResult[];
-  retryCount: number;
+  result: TestResult;
+  error: string;
+  timestamp: number;
 }
 
-const STORAGE_KEY = 'testRunRecovery';
-
 export function useTestRunRecovery(projectId: string, testRunId: string) {
-  const storageKey = `${STORAGE_KEY}:${projectId}:${testRunId}`;
-  
-  const [recoveryState, setRecoveryState] = useState<RecoveryState>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : {
-        lastAttemptedIndex: -1,
-        failedResults: [],
-        retryCount: 0,
-      };
-    } catch {
-      return {
-        lastAttemptedIndex: -1,
-        failedResults: [],
-        retryCount: 0,
-      };
-    }
-  });
+  const storageKey = `testrun:${projectId}:${testRunId}:recovery`;
+  const [savedState, setSavedState] = useLocalStorage<RecoveryState | null>(storageKey, null);
+  const [isRecovering, setIsRecovering] = useState(false);
 
-  const saveRecoveryState = useCallback((state: RecoveryState) => {
-    localStorage.setItem(storageKey, JSON.stringify(state));
-    setRecoveryState(state);
-  }, [storageKey]);
-
-  const markFailedAttempt = useCallback((index: number, result: TestRunResult) => {
-    const newState = {
-      lastAttemptedIndex: index,
-      failedResults: [...recoveryState.failedResults, result],
-      retryCount: recoveryState.retryCount + 1,
-    };
-    saveRecoveryState(newState);
-  }, [recoveryState, saveRecoveryState]);
+  const saveState = useCallback((state: Omit<RecoveryState, 'timestamp'>) => {
+    setSavedState({
+      ...state,
+      timestamp: Date.now()
+    });
+  }, [setSavedState]);
 
   const clearRecovery = useCallback(() => {
-    localStorage.removeItem(storageKey);
-    setRecoveryState({
-      lastAttemptedIndex: -1,
-      failedResults: [],
-      retryCount: 0,
-    });
-  }, [storageKey]);
+    setSavedState(null);
+  }, [setSavedState]);
 
-  const canRetry = recoveryState.retryCount < 3 && recoveryState.failedResults.length > 0;
+  const attemptRecovery = useCallback(async () => {
+    if (!savedState || isRecovering) return;
+    
+    try {
+      setIsRecovering(true);
+      // Recovery logic will be implemented in useTestRunManager
+    } catch (error) {
+      console.error('Recovery failed:', error);
+    } finally {
+      setIsRecovering(false);
+    }
+  }, [savedState, isRecovering]);
+
+  // Attempt recovery when coming back online
+  useEffect(() => {
+    const handleOnline = () => {
+      if (savedState) {
+        attemptRecovery();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [savedState, attemptRecovery]);
 
   return {
-    recoveryState,
-    markFailedAttempt,
+    savedState,
+    saveState,
     clearRecovery,
-    canRetry,
+    isRecovering,
+    attemptRecovery
   };
 } 

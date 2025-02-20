@@ -1,5 +1,3 @@
-'use client';
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,27 +19,23 @@ interface ConfirmDialogProps {
   cancelText?: string;
 }
 
-export function ConfirmDialog({
-  isOpen,
-  onConfirm,
-  onCancel,
-  title,
-  description,
-  confirmText = 'Continue',
-  cancelText = 'Cancel',
-}: ConfirmDialogProps) {
+export function ConfirmDialog(props: ConfirmDialogProps) {
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <AlertDialog open={props.isOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle>{props.title}</AlertDialogTitle>
+          <AlertDialogDescription>{props.description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>{confirmText}</AlertDialogAction>
+          <AlertDialogCancel onClick={props.onCancel}>{props.cancelText || 'Cancel'}</AlertDialogCancel>
+          <AlertDialogAction onClick={props.onConfirm}>{props.confirmText || 'Continue'}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
+}
+
+export function ClientConfirmDialog(props: ConfirmDialogProps) {
+  return <ConfirmDialog {...props} />;
 } 

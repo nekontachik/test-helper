@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -11,6 +11,15 @@ export async function POST(
   { params }: { params: { projectId: string } }
 ) {
   try {
+    // Validate projectId
+    const { projectId } = params;
+    if (!projectId) {
+      return NextResponse.json(
+        { error: 'Project ID is required' },
+        { status: 400 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
@@ -28,10 +37,14 @@ export async function POST(
       );
     }
 
+    // Save file in project-specific directory
+    const projectUploadDir = join(UPLOAD_DIR, projectId);
+    await mkdir(projectUploadDir, { recursive: true });
+
     // Generate unique filename
     const ext = file.name.split('.').pop();
     const filename = `${uuidv4()}.${ext}`;
-    const filepath = join(UPLOAD_DIR, filename);
+    const filepath = join(projectUploadDir, filename);
 
     // Convert File to Buffer
     const bytes = await file.arrayBuffer();
@@ -40,8 +53,8 @@ export async function POST(
     // Save file
     await writeFile(filepath, buffer);
 
-    // Return the URL
-    const url = `/uploads/${filename}`;
+    // Return project-specific URL
+    const url = `/uploads/${projectId}/${filename}`;
 
     return NextResponse.json({ url });
   } catch (error) {

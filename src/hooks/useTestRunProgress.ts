@@ -1,64 +1,35 @@
-import { useState, useEffect } from 'react';
-import { TestRunResult } from '@/types';
-
-const STORAGE_KEY = 'testRunProgress';
+import { useState } from 'react';
+import type { TestResult } from '@/types/testResults';
 
 interface TestRunProgress {
-  projectId: string;
-  testRunId: string;
   currentIndex: number;
-  results: TestRunResult[];
+  results: TestResult[];
 }
 
 export function useTestRunProgress(projectId: string, testRunId: string) {
-  const storageKey = `${STORAGE_KEY}:${projectId}:${testRunId}`;
-
-  const loadProgress = (): TestRunProgress | null => {
+  const storageKey = `testrun:${projectId}:${testRunId}`;
+  
+  const [progress, setProgress] = useState<TestRunProgress>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (!saved) return null;
-      
-      const progress = JSON.parse(saved);
-      if (progress.projectId !== projectId || progress.testRunId !== testRunId) {
-        return null;
-      }
-      
-      return progress;
+      return saved ? JSON.parse(saved) : { currentIndex: 0, results: [] };
     } catch {
-      return null;
+      return { currentIndex: 0, results: [] };
     }
-  };
-
-  const [progress, setProgress] = useState<TestRunProgress>(() => {
-    return loadProgress() || {
-      projectId,
-      testRunId,
-      currentIndex: 0,
-      results: [],
-    };
   });
 
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(progress));
-  }, [progress, storageKey]);
-
   const updateProgress = (updates: Partial<TestRunProgress>) => {
-    setProgress(prev => ({ ...prev, ...updates }));
+    setProgress(prev => {
+      const newProgress = { ...prev, ...updates };
+      localStorage.setItem(storageKey, JSON.stringify(newProgress));
+      return newProgress;
+    });
   };
 
   const clearProgress = () => {
     localStorage.removeItem(storageKey);
-    setProgress({
-      projectId,
-      testRunId,
-      currentIndex: 0,
-      results: [],
-    });
+    setProgress({ currentIndex: 0, results: [] });
   };
 
-  return {
-    progress: progress,
-    updateProgress,
-    clearProgress,
-  };
+  return { progress, updateProgress, clearProgress };
 } 

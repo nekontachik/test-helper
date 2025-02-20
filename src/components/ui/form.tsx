@@ -1,12 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import { useFormContext, FormProvider, UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import { 
+  useFormContext, 
+  FormProvider, 
+  UseFormReturn, 
+  FieldValues, 
+  Path, 
+  Controller, 
+  ControllerFieldState,
+  ControllerRenderProps,
+  Control
+} from 'react-hook-form';
 import { cn } from '@/lib/utils';
 
 interface FormProps<TFormValues extends FieldValues> {
   form: UseFormReturn<TFormValues>;
-  onSubmit: (data: TFormValues) => void;
+  onSubmit: (data: TFormValues) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
 }
@@ -30,27 +40,32 @@ interface FormFieldContextValue<TFieldValues extends FieldValues> {
 
 const FormFieldContext = React.createContext<FormFieldContextValue<any>>({} as FormFieldContextValue<any>);
 
-interface FormFieldProps<TFieldValues extends FieldValues = FieldValues> {
+interface FormFieldProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
-  render: (props: { field: ReturnType<UseFormReturn<TFieldValues>['register']> }) => React.ReactNode;
+  control: Control<TFieldValues>;
+  render: (props: {
+    field: ControllerRenderProps<TFieldValues, Path<TFieldValues>>;
+    fieldState: ControllerFieldState;
+  }) => React.ReactElement;
 }
 
-const FormField = <TFieldValues extends FieldValues = FieldValues>({ 
+const FormField = <TFieldValues extends FieldValues>({ 
   name, 
+  control, 
   render 
 }: FormFieldProps<TFieldValues>) => {
-  const form = useFormContext<TFieldValues>();
-
-  if (!form) {
-    throw new Error('FormField must be used within a Form');
-  }
-
   return (
     <FormFieldContext.Provider value={{ name }}>
-      {render({ field: form.register(name) })}
+      <Controller<TFieldValues>
+        name={name}
+        control={control}
+        render={({ field, fieldState }) => render({ field, fieldState })}
+      />
     </FormFieldContext.Provider>
   );
 };
+
+FormField.displayName = 'FormField';
 
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext);
@@ -59,6 +74,14 @@ const useFormField = () => {
 
   if (!form) {
     throw new Error('useFormField must be used within a Form');
+  }
+
+  if (!fieldContext) {
+    throw new Error('useFormField must be used within a FormField');
+  }
+
+  if (!itemContext) {
+    throw new Error('useFormField must be used within a FormItem');
   }
 
   const { getFieldState, formState } = form;
@@ -115,17 +138,18 @@ const FormControl = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ ...props }, ref) => {
-  const { formItemId, formDescriptionId, formMessageId } = useFormField();
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
 
   return (
     <div
       ref={ref}
       id={formItemId}
       aria-describedby={
-        !formDescriptionId
-          ? `${formDescriptionId} ${formMessageId}`
-          : formMessageId
+        !error
+          ? formDescriptionId
+          : `${formDescriptionId} ${formMessageId}`
       }
+      aria-invalid={!!error}
       {...props}
     />
   );
@@ -136,10 +160,12 @@ const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
-  const { formMessageId } = useFormField();
-  const { error } = useFormContext().getFieldState(useFormField().name);
+  const { error, formMessageId } = useFormField();
+  const body = error ? String(error?.message) : children;
 
-  if (!error) return null;
+  if (!body) {
+    return null;
+  }
 
   return (
     <p
@@ -148,7 +174,7 @@ const FormMessage = React.forwardRef<
       className={cn("text-sm font-medium text-destructive", className)}
       {...props}
     >
-      {error.message}
+      {body}
     </p>
   );
 });
@@ -162,4 +188,5 @@ export {
   FormMessage,
   FormField,
   useFormField,
+  type FormFieldProps,
 };

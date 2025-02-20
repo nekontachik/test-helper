@@ -1,46 +1,51 @@
 'use client';
 
 import React from 'react';
-import { Text, VStack } from '@chakra-ui/react';
+import { logger } from '@/lib/utils/logger';
 
-export interface Props {
+interface Props {
   children: React.ReactNode;
-  fallback?: (props: { error: Error }) => React.ReactNode;
-  onCatch?: (error: Error) => void;
+  onError?: (error: Error) => React.ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
-  error: Error | null;
+  hasError: boolean;
+  error?: Error;
 }
 
-const DefaultFallback = React.memo(({ error }: { error: Error }) => (
-  <VStack spacing={4} p={4}>
-    <Text fontSize="lg" fontWeight="bold">Something went wrong</Text>
-    <Text color="red.500">{error.message}</Text>
-  </VStack>
-));
-
-DefaultFallback.displayName = 'DefaultFallback';
-
 export class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { error: null };
-
-  static getDerivedStateFromError(error: Error): State {
-    return { error };
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
-    if (this.props.onCatch) {
-      this.props.onCatch(error);
-    }
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    logger.error('React Error Boundary caught error:', {
+      error,
+      componentStack: errorInfo.componentStack
+    });
   }
 
   render() {
-    const { error } = this.state;
-    const { children, fallback = DefaultFallback } = this.props;
+    const { children, onError } = this.props;
+    const { hasError, error } = this.state;
 
-    if (error) {
-      return fallback({ error });
+    if (hasError && error) {
+      if (onError) {
+        return onError(error);
+      }
+      
+      return (
+        <div className="p-4 bg-red-50 rounded-md">
+          <h2 className="text-lg font-semibold text-red-700">Something went wrong</h2>
+          <p className="mt-2 text-red-600">{error.message}</p>
+        </div>
+      );
     }
 
     return children;
