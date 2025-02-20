@@ -28,7 +28,8 @@
       "./src/types",
       "./types"
     ],
-    "types": ["yup"]
+    "types": ["yup"],
+    "baseUrl": "."
   },
   "include": [
     "next-env.d.ts",

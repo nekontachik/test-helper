@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
@@ -40,7 +39,6 @@ interface PasswordResetFormProps {
 export function PasswordResetForm({ token }: PasswordResetFormProps) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const router = useRouter();
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,7 +64,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
       setTimeout(() => {
         router.push('/auth/signin');
       }, 3000);
-    } catch (error) {
+    } catch {
       setStatus('error');
     }
   };
@@ -84,43 +82,40 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
             </AlertDescription>
           </Alert>
         ) : (
-          <Form form={form} onSubmit={onSubmit}>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="password" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="password" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={form.formState.isSubmitting}
-              >
-                Reset Password
-              </Button>
-            </div>
-          </Form>
+          <div className="space-y-4">
+            <FormField
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="password" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="password" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              Reset Password
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

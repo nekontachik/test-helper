@@ -131,3 +131,12 @@ We use Chakra UI v2.8.0 for our component library. The setup includes:
 ## Component Usage
 
 ### Basic Components
+
+## Directory Structure
+
+All source code should be placed in the `/src` directory:
+- App code goes in `/src/app`
+- Components go in `/src/components`
+- Library code goes in `/src/lib`
+
+❌ Do not create files in the root `/app` directory - use `/src/app` instead.

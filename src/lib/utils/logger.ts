@@ -1,56 +1,37 @@
 import pino from 'pino';
 
-// Configure logger options
-const options = {
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isServer = typeof window === 'undefined';
+
+// Create a simple console logger for client-side
+const consoleLogger = {
+  debug: (...args: any[]) => isDevelopment && console.debug(...args),
+  info: (...args: any[]) => console.log(...args),
+  warn: (...args: any[]) => console.warn(...args),
+  error: (...args: any[]) => console.error(...args),
+};
+
+// Create Pino logger for server-side with minimal config
+const pinoLogger = pino({
+  level: isDevelopment ? 'debug' : 'info',
+  transport: isDevelopment ? {
     target: 'pino-pretty',
     options: {
       colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-    },
-  },
+    }
+  } : undefined,
+});
+
+// Export the appropriate logger based on environment
+export const logger = isServer ? pinoLogger : consoleLogger;
+
+export default logger;
+
+export const logInfo = (component: string, message: string) => {
+  console.log(`[${component}] ${message}`);
 };
 
-// Create logger instance
-export const logger = pino(options);
-
-// Export common log levels for convenience
-export const logLevels = {
-  fatal: 60,
-  error: 50,
-  warn: 40,
-  info: 30,
-  debug: 20,
-  trace: 10,
-} as const;
-
-// Type for log metadata
-export interface LogMetadata {
-  [key: string]: unknown;
-}
-
-// Utility functions for common logging patterns
-export const logError = (error: Error | unknown, metadata?: LogMetadata) => {
-  logger.error({
-    error: error instanceof Error ? {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    } : error,
-    ...metadata,
-  });
+export const logError = (component: string, message: string) => {
+  console.error(`[${component}] ${message}`);
 };
-
-export const logInfo = (message: string, metadata?: LogMetadata) => {
-  logger.info(metadata, message);
-};
-
-export const logWarn = (message: string, metadata?: LogMetadata) => {
-  logger.warn(metadata, message);
-};
-
-export const logDebug = (message: string, metadata?: LogMetadata) => {
-  logger.debug(metadata, message);
-}; 
+ 

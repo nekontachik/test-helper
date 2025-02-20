@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { TwoFactorQRCode } from './TwoFactorQRCode';
 import { TwoFactorVerification } from './TwoFactorVerification';
 import { TwoFactorBackupCodes } from './TwoFactorBackupCodes';
@@ -15,7 +14,6 @@ interface TwoFactorSetupWizardProps {
 type SetupStep = 'qr-code' | 'verification' | 'backup-codes';
 
 export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps) {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<SetupStep>('qr-code');
   const [setupData, setSetupData] = useState<{
     secret?: string;
@@ -29,13 +27,12 @@ export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps)
     { id: 'backup-codes', title: 'Save Backup Codes' },
   ];
 
-  const handleQRCodeComplete = (data: { secret: string; qrCode: string }) => {
-    setSetupData(prev => ({ ...prev, ...data }));
+  const handleQRCodeComplete = (secret: string, qrCode: string) => {
+    setSetupData(prev => ({ ...prev, secret, qrCode }));
     setCurrentStep('verification');
   };
 
-  // Store backup codes in state when verification is complete
-  const handleVerificationSuccess = (backupCodes: string[]) => {
+  const handleVerificationComplete = (backupCodes: string[]) => {
     setSetupData(prev => ({ ...prev, backupCodes }));
     setCurrentStep('backup-codes');
   };
@@ -54,6 +51,7 @@ export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps)
       {currentStep === 'verification' && setupData.secret && (
         <TwoFactorVerification
           secret={setupData.secret}
+          onComplete={handleVerificationComplete}
           redirectUrl={`/api/auth/2fa/verify-success?next=${encodeURIComponent(window.location.pathname)}`}
         />
       )}

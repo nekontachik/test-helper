@@ -2,9 +2,13 @@
   "extends": [
     "next",
     "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:testing-library/react"
   ],
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint",
+    "testing-library"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": ["./tsconfig.json", "./tsconfig.test.json"]
@@ -42,6 +46,10 @@
       "parserOptions": {
         "ecmaVersion": 2020
       }
+    },
+    {
+      "files": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
+      "extends": ["plugin:testing-library/react"]
     }
   ],
   "ignorePatterns": ["**/node_modules/*", "utils/errorLogger.js"],

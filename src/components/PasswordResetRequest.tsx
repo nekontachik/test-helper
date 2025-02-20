@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
@@ -25,7 +24,6 @@ type FormData = z.infer<typeof formSchema>;
 
 export function PasswordResetRequest() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,20 +31,19 @@ export function PasswordResetRequest() {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const handleSubmit = form.handleSubmit(async (data: FormData) => {
     try {
       const response = await fetch('/api/auth/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
       if (!response.ok) throw new Error('Failed to send reset email');
       setStatus('success');
-    } catch (error) {
+    } catch {
       setStatus('error');
     }
-  };
+  });
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -61,30 +58,27 @@ export function PasswordResetRequest() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Form form={form} onSubmit={onSubmit}>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" placeholder="Enter your email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={form.formState.isSubmitting}
-              >
-                Send Reset Link
-              </Button>
-            </div>
-          </Form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormField
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" placeholder="Enter your email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={form.formState.isSubmitting}
+            >
+              Send Reset Link
+            </Button>
+          </form>
         )}
       </CardContent>
       <CardFooter className="text-center text-sm text-muted-foreground">

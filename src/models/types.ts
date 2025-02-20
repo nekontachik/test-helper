@@ -69,7 +69,7 @@ export interface TestCaseResult {
   status: TestCaseResultStatus;
   notes?: string;
   testCaseId: string;
-  testRunId: string;
+  runId: string;
   createdAt: string;
   updatedAt: string;
 }

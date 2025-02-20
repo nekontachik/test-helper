@@ -1,121 +1,57 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { LoadingScreen } from '@/components/LoadingScreen';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControl,
-  FormLabel,
-  Input,
-  VStack,
-  Text,
-  Heading,
-} from '@chakra-ui/react';
-import { useToast } from '@/components/ui/use-toast';
-import { DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/redirects";
-import { AUTH_ERRORS, getErrorMessage } from '@/lib/utils/error';
-import { SESSION_DURATIONS } from '@/lib/auth/session';
-import { useCSRF } from '@/hooks/useCSRF';
-import { PasswordInput } from '@/components/PasswordInput';
-import { validatePassword } from '@/lib/utils/password';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Box, VStack, Text } from '@chakra-ui/react';
+import { useToast } from '@chakra-ui/react';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/utils/logger';
 
-interface SignInFormData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+const signInSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
 
-export default function SignIn() {
-  const [formData, setFormData] = useState<SignInFormData>({
-    email: '',
-    password: '',
-    rememberMe: false,
-  });
+type SignInFormData = z.infer<typeof signInSchema>;
+
+export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const { status } = useSession();
-  const csrfToken = useCSRF();
+  const toast = useToast();
 
-  useEffect(() => {
-    if (status === "loading") return;
+  const form = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
+  });
 
-    if (status === "authenticated") {
-      const callbackUrl = searchParams?.get("callbackUrl") || DEFAULT_LOGIN_REDIRECT;
-      window.location.replace(callbackUrl);
-    }
-  }, [status, searchParams]);
-
-  if (status === "loading") {
-    return <LoadingScreen message="Preparing sign in..." />;
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!csrfToken) {
-      toast({
-        title: 'Error',
-        description: AUTH_ERRORS.INVALID_CSRF,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const { isValid, errors } = validatePassword(formData.password);
-    if (!isValid) {
-      toast({
-        title: 'Invalid Password',
-        description: errors[0],
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
+  const onSubmit = async (data: SignInFormData) => {
     try {
+      setIsLoading(true);
+      
       const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        csrfToken,
+        email: data.email,
+        password: data.password,
         redirect: false,
-        callbackUrl: searchParams?.get("callbackUrl") || DEFAULT_LOGIN_REDIRECT,
-        maxAge: formData.rememberMe 
-          ? SESSION_DURATIONS.REMEMBERED 
-          : SESSION_DURATIONS.DEFAULT,
       });
 
       if (result?.error) {
-        throw new Error(
-          result.error === "CredentialsSignin" 
-            ? AUTH_ERRORS.INVALID_CREDENTIALS 
-            : result.error
-        );
+        throw new Error(result.error);
       }
 
-      if (result?.url) {
-        router.push(result.url);
-      }
+      router.replace('/dashboard' as any);
     } catch (error) {
+      logger.error('Sign in error:', error);
       toast({
         title: 'Error',
-        description: getErrorMessage(error),
-        variant: 'destructive',
+        description: error instanceof Error ? error.message : 'Failed to sign in',
+        status: 'error',
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -123,70 +59,54 @@ export default function SignIn() {
   };
 
   return (
-    <Box maxW="md" mx="auto" mt={8} p={6} borderWidth={1} borderRadius="lg">
-      <VStack spacing={6}>
-        <Heading>Sign In</Heading>
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Email</FormLabel>
-              <Input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                disabled={isLoading}
-                autoComplete="email"
-              />
-            </FormControl>
+    <Box maxW="md" mx="auto" mt={8}>
+      <Form form={form} onSubmit={onSubmit}>
+        <VStack spacing={4}>
+          <FormField
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormControl isRequired>
-              <FormLabel>Password</FormLabel>
-              <PasswordInput
-                name="password"
-                value={formData.password}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
-                disabled={isLoading}
-                autoComplete="current-password"
-                showStrengthMeter={true}
-              />
-            </FormControl>
+          <FormField
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormControl>
-              <Checkbox
-                name="rememberMe"
-                isChecked={formData.rememberMe}
-                onChange={handleInputChange}
-                disabled={isLoading}
-              >
-                Remember me for 30 days
-              </Checkbox>
-            </FormControl>
-
-            <Button
-              type="submit"
-              colorScheme="blue"
-              width="full"
-              isLoading={isLoading}
-              loadingText="Signing in..."
-              spinner={<LoadingSpinner size="sm" />}
-            >
-              Sign In
-            </Button>
-          </VStack>
-        </form>
-
-        <Text>
-          New to the platform?{' '}
-          <Button
-            variant="link"
-            onClick={() => router.push('/auth/signup')}
-            colorScheme="blue"
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading}
           >
-            Create an Account
+            Sign In
           </Button>
-        </Text>
-      </VStack>
+          
+          <Text fontSize="sm">
+            Don't have an account?{' '}
+            <Link 
+              href="/auth/signup" 
+              className="text-blue-500 hover:text-blue-600 underline"
+            >
+              Sign up here
+            </Link>
+          </Text>
+        </VStack>
+      </Form>
     </Box>
   );
 }

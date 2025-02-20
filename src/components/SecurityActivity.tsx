@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
 import { AlertTriangle, Shield, UserMinus } from 'lucide-react';
 import { ActivityType } from '@/lib/auth/activityService';
@@ -12,13 +11,12 @@ interface ActivityLog {
   ip?: string;
   userAgent?: string;
   createdAt: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export function SecurityActivity() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { data: session } = useSession();
 
   useEffect(() => {
     fetchActivities();
@@ -30,7 +28,7 @@ export function SecurityActivity() {
       if (!response.ok) throw new Error('Failed to fetch activities');
       const data = await response.json();
       setActivities(data.activities);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch security activities:', error);
     } finally {
       setIsLoading(false);

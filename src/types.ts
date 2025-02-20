@@ -103,7 +103,7 @@ export interface TestReport {
   name: string;
   description: string; // Add this line
   projectId: string;
-  testRunId: string;
+  runId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -158,7 +158,7 @@ export interface ProjectFormData {
 export interface TestReportFormData {
   name: string;
   description: string;
-  testRunId: string;
+  runId: string;
   projectId: string;
 }
 

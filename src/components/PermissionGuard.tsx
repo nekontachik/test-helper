@@ -31,7 +31,7 @@ export function PermissionGuard({
     };
 
     verifyPermission();
-  }, [action, resource, resourceId]);
+  }, [action, resource, resourceId, checkPermission]);
 
   if (hasPermission === null) {
     return <Skeleton className="w-full h-24" />;

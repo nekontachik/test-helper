@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -66,7 +66,7 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
         ...session,
         current: session.id === currentSessionId
       })));
-    } catch (error) {
+    } catch {
       setError('Failed to load sessions');
       toast({
         title: 'Error',
@@ -78,6 +78,10 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
       setLoading(false);
     }
   }, [currentSessionId, toast]);
+
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
   const terminateSession = async (sessionId: string) => {
     try {
@@ -94,7 +98,7 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
         status: 'success',
         duration: 3000,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to terminate session',
@@ -119,7 +123,7 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
         status: 'success',
         duration: 3000,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to terminate other sessions',

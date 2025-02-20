@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Flex, Box } from '@chakra-ui/react';
+import { Button, Flex } from '@chakra-ui/react';
 
 interface PaginationProps {
   currentPage: number;

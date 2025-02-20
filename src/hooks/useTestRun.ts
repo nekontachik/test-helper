@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
 
-export function useTestRun(projectId?: string, testRunId?: string) {
+export function useTestRun(projectId?: string, runId?: string) {
   return useQuery({
-    queryKey: ['testRun', projectId, testRunId],
+    queryKey: ['testRun', projectId, runId],
     queryFn: () => 
-      projectId && testRunId 
-        ? apiClient.getTestRun(projectId, testRunId)
+      projectId && runId 
+        ? apiClient.getTestRun(projectId, runId)
         : Promise.resolve(undefined),
-    enabled: !!projectId && !!testRunId,
+    enabled: !!projectId && !!runId,
   });
 }

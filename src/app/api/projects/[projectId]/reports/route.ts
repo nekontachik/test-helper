@@ -16,7 +16,7 @@ interface TestRunWithRelations {
   updatedAt: Date;
   testRunCases: Array<{
     id: string;
-    testRunId: string;
+    runId: string;
     testCaseId: string;
     status: string;
     createdAt: Date;
@@ -31,7 +31,7 @@ interface TestRunWithRelations {
     status: string;
     notes: string | null;
     testCaseId: string;
-    testRunId: string;
+    runId: string;
     createdAt: Date;
     updatedAt: Date;
     testCase: {
@@ -41,8 +41,8 @@ interface TestRunWithRelations {
   }>;
 }
 
-async function handler(req: Request, { params }: { params: { projectId: string } }) {
-  const { projectId } = params;
+async function handler(req: Request, { params }: { params: { projectId: string; runId: string } }) {
+  const { projectId, runId } = params;
 
   if (req.method === 'GET') {
     const testRuns = await prisma.testRun.findMany({

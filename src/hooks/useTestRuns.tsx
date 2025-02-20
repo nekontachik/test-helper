@@ -35,7 +35,7 @@ export function useCreateTestRun() {
 export function useDeleteTestRun(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
-    mutationFn: (testRunId) => apiClient.deleteTestRun(projectId, testRunId),
+    mutationFn: (runId) => apiClient.deleteTestRun(projectId, runId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['testRuns', projectId] });
     },
@@ -44,17 +44,17 @@ export function useDeleteTestRun(projectId: string) {
 
 export function useTestRun(
   projectId: string | undefined,
-  testRunId: string | undefined
+  runId: string | undefined
 ) {
   return useQuery<TestRun, Error>({
-    queryKey: ['testRun', projectId, testRunId],
+    queryKey: ['testRun', projectId, runId],
     queryFn: () => {
-      if (!projectId || !testRunId) {
+      if (!projectId || !runId) {
         throw new Error('Project ID and Test Run ID are required');
       }
-      return apiClient.getTestRun(projectId, testRunId);
+      return apiClient.getTestRun(projectId, runId);
     },
-    enabled: !!projectId && !!testRunId,
+    enabled: !!projectId && !!runId,
   });
 }
 
@@ -64,19 +64,19 @@ export function useUpdateTestRun(projectId: string) {
     TestRun,
     Error,
     {
-      testRunId: string;
+      runId: string;
       status: TestRunStatus;
       testCaseResults: TestCaseResult[];
     }
   >({
-    mutationFn: ({ testRunId, status, testCaseResults }) =>
-      apiClient.updateTestRun(projectId, testRunId, {
+    mutationFn: ({ runId, status, testCaseResults }) =>
+      apiClient.updateTestRun(projectId, runId, {
         status,
         testCaseResults,
       }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['testRun', projectId, variables.testRunId],
+        queryKey: ['testRun', projectId, variables.runId],
       });
       queryClient.invalidateQueries({ queryKey: ['testRuns', projectId] });
     },

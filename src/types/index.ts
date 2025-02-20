@@ -2,6 +2,9 @@ export enum TestRunStatus {
   PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  BLOCKED = 'BLOCKED',
+  SKIPPED = 'SKIPPED'
 }
 
 export enum TestCaseStatus {
@@ -21,7 +24,8 @@ export enum TestCaseResultStatus {
   PENDING = 'PENDING',
   PASSED = 'PASSED',
   FAILED = 'FAILED',
-  SKIPPED = 'SKIPPED',
+  BLOCKED = 'BLOCKED',
+  SKIPPED = 'SKIPPED'
 }
 
 export interface User {
@@ -94,7 +98,7 @@ export interface TestSuite {
 export interface TestCaseResult {
   id: string;
   testCaseId: string;
-  testRunId: string;
+  runId: string;
   status: TestCaseResultStatus;
   notes?: string;
   testCase: TestCase;
@@ -107,7 +111,7 @@ export interface TestReport {
   name: string;
   description: string;
   projectId: string;
-  testRunId: string;
+  runId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -162,7 +166,7 @@ export interface ProjectFormData {
 export interface TestReportFormData {
   name: string;
   description: string;
-  testRunId: string;
+  runId: string;
   projectId: string;
 }
 
@@ -182,7 +186,7 @@ export interface TestCaseAttachment {
 
 export interface TestRunNote {
   id: string;
-  testRunId: string;
+  runId: string;
   content: string;
   userId: string;
   user: {
@@ -203,4 +207,69 @@ export interface TestCaseAttachmentFormData {
 
 export interface TestRunNoteFormData {
   content: string;
+}
+
+export interface TestRunInput {
+  name: string;
+  description?: string;
+  projectId: string;
+  testCases?: string[];
+  status?: TestRunStatus;
+}
+
+export interface TestResult {
+  testCaseId: string;
+  status: TestCaseResultStatus;
+  notes?: string;
+  evidenceUrls: string[];
+  evidence?: File[];
+  timestamp?: string;
+}
+
+export interface TestRunProgress {
+  projectId: string;
+  testRunId: string;
+  currentIndex: number;
+  results: TestResult[];
+}
+
+export type OperationType = 'upload' | 'testResult';
+export type OperationPriority = 'high' | 'medium' | 'low';
+
+export interface QueuedOperation {
+  id: string;
+  type: OperationType;
+  data: {
+    testRunId?: string;
+    testCaseId?: string;
+    file?: File;
+    status?: TestRunStatus;
+    notes?: string;
+    evidenceUrls?: string[];
+    timestamp?: number;
+  };
+  priority: OperationPriority;
+  timestamp: number;
+  retryCount: number;
+  testRunId?: string;
+}
+
+export interface ApiErrorResponse {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
+export interface ApiSuccessResponse<T> {
+  data: T;
+  message?: string;
+}
+
+export interface TestRunResult extends TestResult {
+  testCaseId: string;
+  status: TestRunStatus;
+  notes?: string;
+  evidenceUrls: string[];
+  evidence?: File[];
+  timestamp?: string;
 }

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Box,
   Button,
   FormControl,
   FormLabel,
@@ -54,7 +53,7 @@ export function ResetPassword({ token }: ResetPasswordProps) {
       });
 
       router.push('/auth/signin');
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to reset password. Please try again.',

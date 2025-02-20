@@ -38,8 +38,8 @@ interface UserWithAuth {
 
 // Pages that don't require authentication
 export const publicPages = [
-  "/auth/signin",
   "/auth/signup",
+  "/auth/signin",
   "/auth/error",
   "/auth/verify",
 ]

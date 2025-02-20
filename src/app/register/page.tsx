@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, FormControl, FormLabel, Input, VStack, Text } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/toast';
+import { useToast } from '@chakra-ui/react';
 import type { ChangeEvent } from 'react';
 
 interface RegisterFormData {

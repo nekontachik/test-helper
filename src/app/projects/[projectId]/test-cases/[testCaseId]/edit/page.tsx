@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Box, Heading } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/toast';
+import { useToast } from '@chakra-ui/react';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
 import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
 import { TestCaseFormData } from '@/types';

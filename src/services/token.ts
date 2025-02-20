@@ -1,6 +1,5 @@
 import { EmailVerificationToken } from '@/types/auth';
 import { randomBytes } from 'crypto';
-import { addHours } from 'date-fns';
 
 export class TokenService {
   static async createToken({ type, userId, expiresIn }: {
@@ -13,7 +12,7 @@ export class TokenService {
     
     // Calculate expiration date (default to 24 hours)
     const hours = parseInt(expiresIn) || 24;
-    const expiresAt = addHours(new Date(), hours);
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
 
     // Store token in database (implementation depends on your setup)
     // await prisma.verificationToken.create({
@@ -31,7 +30,10 @@ export class TokenService {
     };
   }
 
-  static async verifyToken(token: string, type: string) {
+  static async verifyToken(token: string, type: string): Promise<{
+    userId: string;
+    email: string;
+  }> {
     // Verify token implementation
     // const verificationToken = await prisma.verificationToken.findFirst({
     //   where: {

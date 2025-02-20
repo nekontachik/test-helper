@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Box, Heading, Spinner, Text } from '@chakra-ui/react';
-import { useToast } from '@chakra-ui/toast';
+import { useToast } from '@chakra-ui/react';
 import { useTestCases } from '@/hooks/useTestCases';
 import { useCreateTestRun } from '@/hooks/useTestRuns';
 import { TestRunForm } from '@/components/TestRunForm';

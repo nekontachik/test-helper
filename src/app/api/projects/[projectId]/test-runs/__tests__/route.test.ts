@@ -40,7 +40,7 @@ describe('Test Runs API', () => {
       };
 
       const handler = await GET;
-      const response = await handler(request);
+      const response = await handler(request, { params: { projectId: '1' } });
 
       const data = await response.json();
 
@@ -65,7 +65,7 @@ describe('Test Runs API', () => {
       });
 
       const handler = await GET;
-      const response = await handler(request);
+      const response = await handler(request, { params: { projectId: '1' } });
 
       expect(response.status).toBe(401);
     });

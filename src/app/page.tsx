@@ -1,28 +1,25 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import logger from '@/lib/utils/logger';
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+export default async function HomePage() {
+  const requestId = crypto.randomUUID();
+  logger.debug({ requestId }, '[ROOT] Rendering HomePage');
 
-export default function Home() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'loading') return;
-
+  try {
+    const session = await getServerSession(authOptions);
+    
     if (!session) {
-      router.push('/auth/signup');
-      return;
+      logger.info({ requestId }, '[ROOT] No session, redirecting to signin');
+      return redirect('/auth/signin');
     }
 
-    router.push('/projects');
-  }, [session, status, router]);
-
-  if (status === 'loading') {
-    return <LoadingSpinner />;
+    logger.info({ requestId, userId: session.user.id }, '[ROOT] Session found');
+    return redirect('/dashboard');
+    
+  } catch (error) {
+    logger.error({ requestId, error }, '[ROOT] Error in HomePage');
+    return redirect('/auth/signin');
   }
-
-  return null;
 }

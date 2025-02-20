@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useToast } from '@chakra-ui/react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -16,9 +17,8 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
-  useToast,
+  Divider,
 } from '@chakra-ui/react';
-import { Divider } from '@chakra-ui/layout';
 import { AuthCard } from './AuthCard';
 import { PasswordInput } from './PasswordInput';
 import { usePermissions } from '@/hooks/usePermissions';

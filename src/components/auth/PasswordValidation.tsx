@@ -43,7 +43,7 @@ export function PasswordValidation({
   onValidationChange,
 }: PasswordValidationProps) {
   const [validation, setValidation] = React.useState<PasswordStrengthResult | null>(null);
-  const [loading, setLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const validatePassword = React.useCallback(async () => {
     if (!password) {
@@ -52,7 +52,7 @@ export function PasswordValidation({
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
       const response = await fetch('/api/auth/password/validate', {
         method: 'POST',
@@ -68,7 +68,7 @@ export function PasswordValidation({
     } catch (error) {
       console.error('Password validation error:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [password, context, onValidationChange]);
 
@@ -79,28 +79,35 @@ export function PasswordValidation({
 
   if (!password || !validation) return null;
 
-  const strengthColor = {
-    0: 'bg-red-500',
-    1: 'bg-orange-500',
-    2: 'bg-yellow-500',
-    3: 'bg-green-500',
-    4: 'bg-green-600',
-  }[validation.score];
+  const strengthColor = validation?.score !== undefined ? {
+    0: 'primary-red',
+    1: 'primary-orange',
+    2: 'primary-yellow',
+    3: 'primary-green',
+    4: 'primary-green',
+  }[validation.score] : 'primary';
 
   return (
     <div className="space-y-4" role="status" aria-live="polite">
       <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Password Strength</span>
-          <span className={validation.isStrong ? 'text-green-500' : 'text-red-500'}>
-            {validation.isStrong ? 'Strong' : 'Weak'}
-          </span>
-        </div>
-        <Progress
-          value={(validation.score / 4) * 100}
-          className={`h-1 ${strengthColor}`}
-          aria-label="Password strength indicator"
-        />
+        {isLoading ? (
+          <div className="animate-pulse bg-gray-200 h-4 w-full rounded" />
+        ) : (
+          <>
+            <div className="flex justify-between text-sm">
+              <span>Password Strength</span>
+              <span className={validation.isStrong ? 'text-green-500' : 'text-red-500'}>
+                {validation.isStrong ? 'Strong' : 'Weak'}
+              </span>
+            </div>
+            <Progress
+              value={(validation.score / 4) * 100}
+              indicatorColor={`bg-${strengthColor}`}
+              backgroundColor="bg-secondary"
+              aria-label="Password strength indicator"
+            />
+          </>
+        )}
       </div>
 
       {validation.feedback.warning && (

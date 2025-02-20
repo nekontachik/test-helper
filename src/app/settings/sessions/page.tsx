@@ -7,7 +7,7 @@ export default async function SessionsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/auth/signin');
+    redirect('/auth/signup');
   }
 
   const sessionToken = session.user?.email || 'unknown';

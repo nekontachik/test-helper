@@ -5,10 +5,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
-import Image from 'next/image';
 
 interface TwoFactorQRCodeProps {
-  onComplete: (data: { secret: string; qrCode: string }) => void;
+  onComplete: (secret: string, qrCode: string) => void;
 }
 
 export function TwoFactorQRCode({ onComplete }: TwoFactorQRCodeProps) {
@@ -29,7 +28,7 @@ export function TwoFactorQRCode({ onComplete }: TwoFactorQRCodeProps) {
       }
 
       const data = await response.json();
-      onComplete(data);
+      onComplete(data.secret, data.qrCode);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to setup 2FA');
     } finally {

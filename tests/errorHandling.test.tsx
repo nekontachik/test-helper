@@ -27,7 +27,7 @@ describe('ErrorBoundary', () => {
 
   it('renders error message when an error occurs', () => {
     renderWithChakra(
-      <ErrorBoundary fallback={(error: Error) => (
+      <ErrorBoundary fallback={({ error }) => (
         <div>
           <div>Something went wrong.</div>
           <div>{error.message}</div>
@@ -56,7 +56,7 @@ describe('ErrorBoundary', () => {
 
     renderWithChakra(
       <ErrorBoundary 
-        fallback={(error: Error) => (
+        fallback={({ error }) => (
           <div>
             <div>Something went wrong.</div>
             <div>{error.message}</div>

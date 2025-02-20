@@ -10,6 +10,8 @@ import {
   TestCaseResult,
   TestRunFormData,
 } from '@/types';
+import { createApiHook } from '@/lib/hooks/createApiHook';
+import { ROUTES } from '@/lib/routes';
 
 interface TestRunsResponse {
   testRuns: TestRun[];
@@ -25,31 +27,31 @@ export function useTestRuns(projectId: string, page: number = 1, limit: number =
   });
 }
 
-export function useTestRun(projectId: string, testRunId: string) {
+export function useTestRun(projectId: string, runId: string) {
   return useQuery({
-    queryKey: ['testRun', projectId, testRunId],
-    queryFn: () => apiClient.getTestRun(projectId, testRunId),
-    enabled: !!projectId && !!testRunId,
+    queryKey: ['testRun', projectId, runId],
+    queryFn: () => apiClient.getTestRun(projectId, runId),
+    enabled: !!projectId && !!runId,
   });
 }
 
-export function useCreateTestRun(projectId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: TestRunFormData) => apiClient.createTestRun(projectId, data),
+export const useCreateTestRun = createApiHook<TestRun, TestRunFormData>({
+  queryKey: ['testRuns', 'create'],
+  url: (data) => ROUTES.API.PROJECT.TEST_RUNS.INDEX(data.projectId),
+  method: 'POST',
+  options: {
     onSuccess: () => {
-      queryClient.invalidateQueries(['testRuns', projectId]);
-    },
-  });
-}
+      // Handle success
+    }
+  }
+});
 
 export function useUpdateTestRun(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ testRunId, data }: { testRunId: string; data: Partial<TestRunFormData> }) => 
-      apiClient.updateTestRun(projectId, testRunId, data),
+    mutationFn: ({ runId, data }: { runId: string; data: Partial<TestRunFormData> }) => 
+      apiClient.updateTestRun(projectId, runId, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['testRuns', projectId]);
     },
@@ -60,7 +62,7 @@ export function useDeleteTestRun(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (testRunId: string) => apiClient.deleteTestRun(projectId, testRunId),
+    mutationFn: (runId: string) => apiClient.deleteTestRun(projectId, runId),
     onSuccess: () => {
       queryClient.invalidateQueries(['testRuns', projectId]);
     },

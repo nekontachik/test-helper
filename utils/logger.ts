@@ -1,27 +1,20 @@
-import winston from 'winston';
+import pino from 'pino';
 
-const logger = winston.createLogger({
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    }),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+const logger = pino({
+  level: isDevelopment ? 'debug' : 'info',
+  transport: isDevelopment ? {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      ignore: 'pid,hostname',
+      translateTime: 'yyyy-mm-dd HH:MM:ss',
+    }
+  } : undefined,
 });
 
-type LogLevel =
-  | 'error'
-  | 'warn'
-  | 'info'
-  | 'http'
-  | 'verbose'
-  | 'debug'
-  | 'silly';
+type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
 interface LogMethod {
   (message: string, ...meta: any[]): void;
@@ -33,14 +26,12 @@ interface Logger {
   error: LogMethod;
   warn: LogMethod;
   info: LogMethod;
-  verbose: LogMethod;
   debug: LogMethod;
-  silly: LogMethod;
 }
 
 const customLogger: Logger = {
   log: (level: LogLevel, message: string, ...meta: any[]) => {
-    logger.log(level, message, ...meta);
+    logger[level](message, ...meta);
   },
   error: (message: string | any, ...meta: any[]) => {
     logger.error(message, ...meta);
@@ -51,14 +42,8 @@ const customLogger: Logger = {
   info: (message: string | any, ...meta: any[]) => {
     logger.info(message, ...meta);
   },
-  verbose: (message: string | any, ...meta: any[]) => {
-    logger.verbose(message, ...meta);
-  },
   debug: (message: string | any, ...meta: any[]) => {
     logger.debug(message, ...meta);
-  },
-  silly: (message: string | any, ...meta: any[]) => {
-    logger.silly(message, ...meta);
   },
 };
 

@@ -9,15 +9,13 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
+        worker_threads: false,
       };
-      
-      // Exclude @mapbox/node-pre-gyp from client-side bundle
-      config.externals = [...(config.externals || []), '@mapbox/node-pre-gyp'];
     }
     return config;
   },
   experimental: {
-    optimizeCss: true,
+    serverComponentsExternalPackages: ['pino-pretty', 'thread-stream'],
   },
 };
 

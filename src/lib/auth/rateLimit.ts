@@ -1,20 +1,22 @@
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL!,
-  token: process.env.UPSTASH_REDIS_TOKEN!,
-});
+const redis = process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_URL,
+      token: process.env.UPSTASH_REDIS_TOKEN,
+    })
+  : null;
 
-// Create a new ratelimiter that allows 10 requests per 10 seconds
-const authLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '10 s'),
-  analytics: true,
-});
+export const ratelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, '10 s'),
+    })
+  : null;
 
 export async function checkRateLimit(identifier: string) {
-  const { success, limit, reset, remaining } = await authLimiter.limit(identifier);
+  const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
 
   return {
     success,
@@ -25,5 +27,5 @@ export async function checkRateLimit(identifier: string) {
 }
 
 export async function getRateLimitInfo(identifier: string) {
-  return authLimiter.limit(identifier);
+  return ratelimit.limit(identifier);
 }

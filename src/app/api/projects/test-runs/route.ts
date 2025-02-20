@@ -123,7 +123,7 @@ export async function POST(request: Request) {
       testCases: testRun.testRunCases.map(trc => trc.testCase)
     };
 
-    logger.info('Created test run', { testRunId: testRun.id });
+    logger.info('Created test run', { runId: testRun.id });
     
     return NextResponse.json(formattedTestRun, { status: 201 });
   } catch (error) {

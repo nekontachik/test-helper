@@ -20,6 +20,7 @@ import {
 interface EditTestCaseFormProps {
   testCase: TestCase;
   onSubmit: (data: TestCaseFormData) => void;
+  isLoading?: boolean;
 }
 
 export function EditTestCaseForm({

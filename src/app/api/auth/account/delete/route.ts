@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
-import { addDays } from 'date-fns';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -18,7 +17,8 @@ export async function POST(request: Request) {
     }
 
     // Schedule account for deletion in 30 days
-    const deletionDate = addDays(new Date(), 30);
+    const deletionDate = new Date();
+    deletionDate.setDate(deletionDate.getDate() + 30);
 
     await prisma.user.update({
       where: { id: session.user.id },

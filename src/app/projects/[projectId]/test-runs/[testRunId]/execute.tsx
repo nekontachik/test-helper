@@ -12,12 +12,12 @@ interface ExecuteTestRunPageProps {
 export const getServerSideProps: GetServerSideProps<
   ExecuteTestRunPageProps
 > = async (context) => {
-  const { projectId, testRunId } = context.params as {
+  const { projectId, runId } = context.params as {
     projectId: string;
-    testRunId: string;
+    runId: string;
   };
   try {
-    const testRun = await getTestRun(projectId, testRunId);
+    const testRun = await getTestRun(projectId, runId);
     return { props: { testRun } };
   } catch (error) {
     console.error('Error fetching test run:', error);

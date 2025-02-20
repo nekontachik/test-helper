@@ -7,9 +7,9 @@ import { Spinner, Text } from '@chakra-ui/react';
 export default function TestRunPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
-  const testRunId = params?.testRunId as string;
+  const runId = params?.runId as string;
 
-  const { data: testRun, isLoading, error } = useTestRun(projectId, testRunId);
+  const { data: testRun, isLoading, error } = useTestRun(projectId, runId);
 
   if (isLoading) return <Spinner />;
   if (error)

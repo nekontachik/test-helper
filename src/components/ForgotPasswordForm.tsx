@@ -8,7 +8,6 @@ import {
   Input,
   Button,
   useToast,
-  Text,
 } from '@chakra-ui/react';
 import { AuthCard } from './AuthCard';
 import { AuthMessage } from './AuthMessage';
@@ -35,7 +34,7 @@ export function ForgotPasswordForm() {
       }
 
       setIsSubmitted(true);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to send password reset email',

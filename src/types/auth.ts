@@ -1,12 +1,11 @@
-import { AuditAction } from './audit';
+import { Session } from 'next-auth';
 
 // Define user roles
 export enum UserRole {
   ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
+  MEMBER = 'MEMBER',
   EDITOR = 'EDITOR',
-  VIEWER = 'VIEWER',
-  USER = 'USER'
+  VIEWER = 'VIEWER'
 }
 
 // Define account status type
@@ -14,8 +13,11 @@ export enum AccountStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   SUSPENDED = 'SUSPENDED',
-  PENDING = 'PENDING'
+  PENDING = 'PENDING',
+  DELETED = 'DELETED'
 }
+
+export type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading';
 
 export interface RegisterData {
   name: string;
@@ -40,7 +42,6 @@ export interface AuthUser {
   id: string;
   email: string | null;
   name: string | null;
-  image: string | null;
   role: UserRole;
   permissions: Permission[];
   status: AccountStatus;
@@ -56,9 +57,25 @@ export interface AuthResult {
   expiresAt: number;
 }
 
-export interface Session {
-  user: AuthUser;
-  expires: string;
+export interface ExtendedSession extends Session {
+  user: {
+    id: string;
+    email: string | null;
+    name: string | null;
+    image: string | null;
+    role: UserRole;
+    status: AccountStatus;
+    permissions: Permission[];
+    twoFactorEnabled: boolean;
+    emailVerified: Date | null;
+    emailNotificationsEnabled: boolean;
+    twoFactorAuthenticated: boolean;
+  };
+}
+
+// Type guard
+export function isExtendedSession(session: Session): session is ExtendedSession {
+  return 'role' in session.user && 'permissions' in session.user;
 }
 
 export interface TokenPayload {
@@ -66,6 +83,20 @@ export interface TokenPayload {
   email: string;
   userId: string;
   expiresIn?: string;
+}
+
+export interface AuthConfig {
+  maxSessions: number;
+  sessionDuration: number;
+  refreshTokenDuration: number;
+  twoFactorTimeout: number;
+}
+
+export interface AuthContext {
+  userId?: string;
+  sessionId?: string;
+  ip?: string;
+  userAgent?: string;
 }
 
 export interface VerificationToken {
@@ -99,4 +130,10 @@ export interface Permission {
   id: string;
   name: string;
   description: string | null;
+}
+
+export enum AuditAction {
+  EMAIL_VERIFICATION_REQUESTED = 'EMAIL_VERIFICATION_REQUESTED',
+  EMAIL_VERIFIED = 'EMAIL_VERIFIED',
+  EMAIL_VERIFICATION_FAILED = 'EMAIL_VERIFICATION_FAILED'
 }

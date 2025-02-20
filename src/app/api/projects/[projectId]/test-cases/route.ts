@@ -10,6 +10,9 @@ import { withProtect } from '@/middleware/apiProtect';
 import { Action, Resource } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { TestCase, Prisma } from '@prisma/client';
+import { createEndpoint } from '@/lib/api/createEndpoint';
+import { testCaseSchema } from '@/lib/validations/schema';
+import { testCaseService } from '@/services/TestCaseService';
 
 // Validation schemas
 const querySchema = z.object({
@@ -227,46 +230,17 @@ async function handlePOST(request: Request): Promise<Response> {
 }
 
 // Export protected route handlers
-export const GET = withProtect(
-  withAuthorization(handleGET, {
-    action: Action.READ,
-    resource: Resource.TEST_CASE,
-    allowTeamMembers: true,
-    getProjectId: async (req: Request) => {
-      const url = new URL(req.url);
-      const parts = url.pathname.split('/');
-      return parts[3];
-    },
-  }),
-  {
-    action: Action.READ,
-    resource: Resource.TEST_CASE,
-    allowUnverified: false,
-    rateLimit: {
-      points: 100,
-      duration: 60
-    }
+export const GET = createEndpoint({
+  method: 'GET',
+  handler: async (_, { params }) => {
+    return testCaseService.findByProject(params.projectId);
   }
-);
+});
 
-export const POST = withProtect(
-  withAuthorization(handlePOST, {
-    action: Action.CREATE,
-    resource: Resource.TEST_CASE,
-    allowTeamMembers: true,
-    getProjectId: async (req: Request) => {
-      const url = new URL(req.url);
-      const parts = url.pathname.split('/');
-      return parts[3];
-    },
-  }),
-  {
-    action: Action.CREATE,
-    resource: Resource.TEST_CASE,
-    allowUnverified: false,
-    rateLimit: {
-      points: 50,
-      duration: 60
-    }
+export const POST = createEndpoint({
+  method: 'POST',
+  schema: testCaseSchema,
+  handler: async (data) => {
+    return testCaseService.createWithValidation(data);
   }
-);
+});

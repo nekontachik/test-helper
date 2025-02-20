@@ -1,8 +1,8 @@
 import React, { useState, ChangeEvent } from 'react';
-import { Box, Button, VStack, Heading, Text, Textarea } from '@chakra-ui/react';
+import { Button, VStack, Heading, Text, Textarea } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
 import { TestRun, TestReport, TestReportFormData } from '@/types';
-import  apiClient from '@/lib/apiClient';
+import apiClient from '@/lib/apiClient';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { ApiError, ValidationError, DatabaseError } from '@/lib/errors';
 
@@ -27,7 +27,7 @@ export default function GenerateTestReport({
       const reportData: TestReportFormData = {
         name: `Test Run Report: ${testRun.name}`,
         description,
-        testRunId: testRun.id,
+        runId: testRun.id,
         projectId: testRun.projectId,
       };
       const report = await apiClient.createTestReport(testRun.projectId, reportData);

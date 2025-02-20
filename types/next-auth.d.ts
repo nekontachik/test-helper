@@ -9,11 +9,11 @@ declare module "next-auth" {
       name: string | null;
       image: string | null;
       role: UserRole;
-      permissions: Permission[];
       status: AccountStatus;
-      emailNotificationsEnabled: boolean;
       twoFactorEnabled: boolean;
       twoFactorAuthenticated: boolean;
+      permissions: Permission[];
+      emailNotificationsEnabled: boolean;
       emailVerified: Date | null;
     } & DefaultSession["user"]
   }
@@ -24,11 +24,11 @@ declare module "next-auth" {
     name: string | null;
     image: string | null;
     role: UserRole;
-    permissions: Permission[];
     status: AccountStatus;
-    emailNotificationsEnabled: boolean;
     twoFactorEnabled: boolean;
     twoFactorAuthenticated: boolean;
+    permissions: Permission[];
+    emailNotificationsEnabled: boolean;
     emailVerified: Date | null;
   }
 }

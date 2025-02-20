@@ -48,7 +48,6 @@ Error.args = {
 };
 
 // Mock the useTestRuns hook for Storybook
-import { useTestRuns } from '@/hooks/useTestRuns';
 jest.mock('@/hooks/useTestRuns', () => ({
   useTestRuns: jest.fn(),
 }));

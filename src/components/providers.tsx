@@ -1,19 +1,22 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+import { CacheProvider } from '@chakra-ui/next-js';
 import { ChakraProvider } from '@chakra-ui/react';
-import theme from '@/styles/theme';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SimpleAuthProvider } from '@/lib/auth/simpleAuth';
 
-interface ProvidersProps {
-  children: React.ReactNode;
-}
+const queryClient = new QueryClient();
 
-export function Providers({ children }: ProvidersProps) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <ChakraProvider theme={theme}>
-        {children}
+    <CacheProvider>
+      <ChakraProvider>
+        <SimpleAuthProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </SimpleAuthProvider>
       </ChakraProvider>
-    </SessionProvider>
+    </CacheProvider>
   );
 }

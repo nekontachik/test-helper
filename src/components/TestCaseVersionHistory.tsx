@@ -1,6 +1,5 @@
 import React from 'react';
 import { VStack, Text, Box } from '@chakra-ui/react';
-import type { TestCase } from '@prisma/client';
 
 interface Version {
   id: string;

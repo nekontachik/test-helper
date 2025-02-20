@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, VStack, Text, Button, useToast } from '@chakra-ui/react';
+import { VStack, Text, Button, useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { AuthCard } from './AuthCard';
 import { AuthMessage } from './AuthMessage';
@@ -27,7 +27,7 @@ export function VerificationStatus({ email }: VerificationStatusProps) {
 
         const data = await response.json();
         setIsVerified(data.isVerified);
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to check verification status',
@@ -50,17 +50,17 @@ export function VerificationStatus({ email }: VerificationStatusProps) {
         body: JSON.stringify({ email }),
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Verification email sent',
-          description: 'Please check your email for the verification link',
-          status: 'success',
-          duration: 5000,
-        });
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to send verification email');
       }
-    } catch (error) {
+
+      toast({
+        title: 'Verification email sent',
+        description: 'Please check your email for the verification link',
+        status: 'success',
+        duration: 5000,
+      });
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to send verification email',

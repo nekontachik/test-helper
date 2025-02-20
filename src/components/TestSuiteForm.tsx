@@ -25,13 +25,13 @@ interface TestSuiteFormData {
 interface TestSuiteFormProps {
   onSubmit: (data: TestSuiteFormData) => void;
   initialData?: Partial<TestSuiteFormData>;
-  testCases: TestSuiteFormTestCase[];
+  _testCases: TestSuiteFormTestCase[];
 }
 
 export const TestSuiteForm: React.FC<TestSuiteFormProps> = ({
   onSubmit,
   initialData,
-  testCases,
+  _testCases,
 }) => {
   // Use testCases in your component logic
   // For example:

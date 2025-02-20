@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { generateTOTPConfig, verifyTOTP } from '@/lib/utils/totp';
-import { authOptions } from '../../[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { AUTH_ERRORS } from '@/lib/utils/error';
 
 export async function POST(request: Request) {

@@ -1,105 +1,83 @@
 'use client';
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
-import {
-  VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Textarea,
-  Select,
-  Button,
-  FormErrorMessage,
-} from '@chakra-ui/react';
-import { TestCase, TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
+import { VStack, FormControl, FormLabel, Input, Textarea, Select, Button, Text } from '@chakra-ui/react';
+import { createFormHook } from '@/lib/hooks/createFormHook';
+import { useCreateTestCase, useUpdateTestCase } from '@/hooks/useTestCaseMutations';
+import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import { testCaseSchema, type TestCaseFormData } from '@/lib/validations/testCase';
 
-export interface TestCaseFormProps {
-  testCase?: TestCase;  // Optional for create form
+interface TestCaseFormProps {
+  testCase?: TestCase;
   projectId: string;
-  onSubmit: (data: TestCaseFormData) => Promise<void>;
-  isLoading?: boolean;
 }
 
-export function TestCaseForm({ testCase, projectId, onSubmit, isLoading = false }: TestCaseFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<TestCaseFormData>({
+export function TestCaseForm({ testCase, projectId }: TestCaseFormProps) {
+  const createTestCase = useCreateTestCase();
+  const updateTestCase = useUpdateTestCase();
+
+  const { form, handleSubmit, isSubmitting } = createFormHook({
+    schema: testCaseSchema,
     defaultValues: testCase ? {
-      title: testCase.title,
-      description: testCase.description,
-      steps: testCase.steps,
-      expectedResult: testCase.expectedResult,
-      actualResult: testCase.actualResult,
-      status: testCase.status,
-      priority: testCase.priority,
-      projectId: projectId,
+      ...testCase,
+      projectId
     } : {
-      title: '',
-      description: '',
-      steps: '',
-      expectedResult: '',
-      actualResult: '',
       status: TestCaseStatus.DRAFT,
       priority: TestCasePriority.MEDIUM,
-      projectId: projectId,
+      projectId
     },
-  });
+    onSubmit: async (data: TestCaseFormData) => {
+      if (testCase) {
+        await updateTestCase.mutateAsync({ id: testCase.id, data });
+      } else {
+        await createTestCase.mutateAsync(data);
+      }
+    }
+  })();
 
-  const onSubmitForm = async (data: TestCaseFormData) => {
-    await onSubmit(data);
-  };
+  const { register, formState: { errors } } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmitForm)}>
+    <form onSubmit={handleSubmit}>
       <VStack spacing={4} align="stretch">
         <FormControl isInvalid={!!errors.title}>
           <FormLabel>Title</FormLabel>
-          <Input
-            {...register('title', {
-              required: 'Title is required',
-              maxLength: { value: 200, message: 'Title is too long' },
-            })}
-          />
-          <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
+          <Input {...register('title')} />
+          {errors.title && (
+            <Text color="red.500" fontSize="sm">{errors.title.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.description}>
           <FormLabel>Description</FormLabel>
-          <Textarea
-            {...register('description', {
-              maxLength: { value: 2000, message: 'Description is too long' },
-            })}
-          />
-          <FormErrorMessage>{errors.description?.message}</FormErrorMessage>
+          <Textarea {...register('description')} />
+          {errors.description && (
+            <Text color="red.500" fontSize="sm">{errors.description.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.steps}>
           <FormLabel>Steps</FormLabel>
-          <Textarea
-            {...register('steps', {
-              required: 'Steps are required',
-            })}
-          />
-          <FormErrorMessage>{errors.steps?.message}</FormErrorMessage>
+          <Textarea {...register('steps')} />
+          {errors.steps && (
+            <Text color="red.500" fontSize="sm">{errors.steps.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.expectedResult}>
           <FormLabel>Expected Result</FormLabel>
-          <Textarea
-            {...register('expectedResult', {
-              required: 'Expected result is required',
-            })}
-          />
-          <FormErrorMessage>{errors.expectedResult?.message}</FormErrorMessage>
+          <Textarea {...register('expectedResult')} />
+          {errors.expectedResult && (
+            <Text color="red.500" fontSize="sm">{errors.expectedResult.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.actualResult}>
           <FormLabel>Actual Result</FormLabel>
           <Textarea {...register('actualResult')} />
-          <FormErrorMessage>{errors.actualResult?.message}</FormErrorMessage>
+          {errors.actualResult && (
+            <Text color="red.500" fontSize="sm">{errors.actualResult.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.status}>
@@ -111,7 +89,9 @@ export function TestCaseForm({ testCase, projectId, onSubmit, isLoading = false 
               </option>
             ))}
           </Select>
-          <FormErrorMessage>{errors.status?.message}</FormErrorMessage>
+          {errors.status && (
+            <Text color="red.500" fontSize="sm">{errors.status.message}</Text>
+          )}
         </FormControl>
 
         <FormControl isInvalid={!!errors.priority}>
@@ -123,10 +103,16 @@ export function TestCaseForm({ testCase, projectId, onSubmit, isLoading = false 
               </option>
             ))}
           </Select>
-          <FormErrorMessage>{errors.priority?.message}</FormErrorMessage>
+          {errors.priority && (
+            <Text color="red.500" fontSize="sm">{errors.priority.message}</Text>
+          )}
         </FormControl>
 
-        <Button type="submit" colorScheme="blue" isLoading={isLoading}>
+        <Button 
+          type="submit" 
+          colorScheme="blue"
+          isLoading={isSubmitting}
+        >
           {testCase ? 'Update Test Case' : 'Create Test Case'}
         </Button>
       </VStack>

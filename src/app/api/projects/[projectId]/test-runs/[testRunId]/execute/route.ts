@@ -1,78 +1,85 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
 import { TestRunStatus, TestCaseResultStatus } from '@/types';
+import { dbLogger as logger } from '@/lib/logger';
 
-async function handler(
+const testRunResultSchema = z.object({
+  testCaseId: z.string(),
+  status: z.enum([
+    TestCaseResultStatus.PASSED,
+    TestCaseResultStatus.FAILED,
+    TestCaseResultStatus.BLOCKED,
+    TestCaseResultStatus.SKIPPED
+  ]),
+  notes: z.string().optional(),
+  evidenceUrls: z.array(z.string()).optional(),
+});
+
+const executeTestRunSchema = z.object({
+  results: z.array(testRunResultSchema),
+});
+
+// Add type for parsed result
+interface ParsedTestResult {
+  testCaseId: string;
+  status: TestCaseResultStatus;
+  notes?: string;
+  evidenceUrls?: string[];
+}
+
+export async function POST(
   req: Request,
   { params }: { params: { projectId: string; testRunId: string } }
 ) {
-  if (req.method !== 'POST') {
-    return NextResponse.json(
-      { message: 'Method not allowed' },
-      { status: 405 }
-    );
-  }
-
-  const { projectId, testRunId } = params;
-
   try {
-    const data = await req.json();
-    const { results } = data;
+    const body = await req.json();
+    const { results } = executeTestRunSchema.parse(body) as { results: ParsedTestResult[] };
 
-    // Validate results
-    if (!Array.isArray(results)) {
-      return NextResponse.json(
-        { message: 'Invalid results format' },
-        { status: 400 }
-      );
-    }
+    // Calculate overall status using correct enum values
+    const hasFailures = results.some(r => r.status === TestCaseResultStatus.FAILED);
+    const hasBlocked = results.some(r => r.status === TestCaseResultStatus.BLOCKED);
+    const allSkipped = results.every(r => r.status === TestCaseResultStatus.SKIPPED);
+    
+    let finalStatus = TestRunStatus.COMPLETED;
+    if (hasFailures) finalStatus = TestRunStatus.FAILED;
+    else if (hasBlocked) finalStatus = TestRunStatus.BLOCKED;
+    else if (allSkipped) finalStatus = TestRunStatus.SKIPPED;
 
-    // Start a transaction
-    const updatedTestRun = await prisma.$transaction(async (tx) => {
-      // Create test case results
-      await Promise.all(
-        results.map((result) =>
-          tx.testCaseResult.create({
-            data: {
-              testCaseId: result.testCaseId,
-              testRunId,
-              status: result.status as TestCaseResultStatus,
-              notes: result.notes,
-            },
-          })
-        )
-      );
-
+    // Start transaction
+    const result = await prisma.$transaction(async (tx) => {
       // Update test run status
-      return tx.testRun.update({
-        where: { id: testRunId },
-        data: {
-          status: TestRunStatus.COMPLETED,
-          completedAt: new Date(),
-        },
-        include: {
-          testRunCases: {
-            include: {
-              testCase: true
-            }
-          },
-          results: true,
-        },
+      const updatedRun = await tx.testRun.update({
+        where: { id: params.testRunId },
+        data: { 
+          status: finalStatus,
+          completedAt: new Date()
+        }
       });
+
+      // Create test results with correct schema
+      const testResults = await Promise.all(results.map((result) =>
+        tx.testCaseResult.create({
+          data: {
+            testCaseId: result.testCaseId,
+            testRunId: params.testRunId,
+            status: result.status,
+            notes: result.notes ?? '',
+            evidenceUrls: result.evidenceUrls ? JSON.stringify(result.evidenceUrls) : null,
+            completedAt: new Date()
+          }
+        })
+      ));
+
+      return { run: updatedRun, results: testResults };
     });
 
-    return NextResponse.json(updatedTestRun);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error executing test run:', error);
+    logger.error('Error executing test run:', error);
     return NextResponse.json(
-      { message: 'Failed to execute test run' },
+      { error: 'Failed to execute test run' },
       { status: 500 }
     );
   }
-}
-
-export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
-});
+} 

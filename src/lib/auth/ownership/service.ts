@@ -22,9 +22,9 @@ export class OwnershipService {
     return testCase?.userId === userId || testCase?.project.userId === userId;
   }
 
-  static async isTestRunOwner(userId: string, testRunId: string): Promise<boolean> {
+  static async isTestRunOwner(userId: string, runId: string): Promise<boolean> {
     const testRun = await prisma.testRun.findUnique({
-      where: { id: testRunId },
+      where: { id: runId },
       select: { 
         userId: true,
         project: {

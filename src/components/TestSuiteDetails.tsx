@@ -1,26 +1,33 @@
 import React from 'react';
 import { Box, Heading, Text, VStack, Button } from '@chakra-ui/react';
 import { TestSuite, TestCase } from '@/types';
-import { useRouter } from 'next/navigation';
-import { useTestCases } from '@/hooks/useTestCases';
 import NextLink from 'next/link';
+import { useTestCases } from '@/hooks/useTestCases';
+import { Loading } from '@/components/ui/loading';
+import { logger } from '@/lib/utils/logger';
 
 interface TestSuiteDetailsProps {
   testSuite: TestSuite;
 }
 
-export const TestSuiteDetails: React.FC<TestSuiteDetailsProps> = ({
+export const TestSuiteDetails = ({
   testSuite,
-}) => {
-  const router = useRouter();
+}: TestSuiteDetailsProps) => {
+  logger.debug('TestSuiteDetails Component Mounted', { testSuiteId: testSuite.id });
+
   const {
     data: testCasesResponse,
     isLoading,
     error,
-  } = useTestCases(testSuite.projectId);
+  } = useTestCases({
+    projectId: testSuite.projectId,
+    status: [],
+    page: 1,
+    limit: 100
+  });
 
   if (isLoading) {
-    return <Text>Loading test cases...</Text>;
+    return <Loading text="Loading test cases..." size="lg" />;
   }
 
   if (error) {
@@ -30,9 +37,8 @@ export const TestSuiteDetails: React.FC<TestSuiteDetailsProps> = ({
   }
 
   const testCases = testCasesResponse?.data || [];
-  // Assuming testSuite.testCases is an array of test case IDs
   const testCasesForSuite = testCases.filter(
-    (tc: TestCase) => testSuite.testCases?.includes(tc.id)
+    (tc: TestCase) => testSuite.testCases?.includes(tc.id) ?? false
   );
 
   return (

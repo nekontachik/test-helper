@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTestCase, useTestCaseVersions } from '@/hooks/useTestCase';
+import { useTestCase } from '@/hooks/useTestCase';
 import {
   Box,
   VStack,
@@ -20,10 +20,9 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import { EditTestCaseForm } from './EditTestCaseForm';
-import TestCaseVersionComparison from './TestCaseVersionComparison';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { handleApiError } from '@/lib/errorReporting';
-import { TestCaseStatus, TestCasePriority, TestCaseVersion, TestCaseFormData } from '@/types';
+import { TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
 
 interface TestCaseDetailsProps {
   projectId: string;
@@ -33,8 +32,6 @@ interface TestCaseDetailsProps {
 export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { data: testCase, isLoading, error } = useTestCase(projectId, testCaseId);
-  const { data: versions } = useTestCaseVersions(projectId, testCaseId);
-  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
   const toast = useToast();
 
   const handleDelete = async () => {
@@ -52,8 +49,8 @@ export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps)
         status: 'success',
         duration: 3000,
       });
-    } catch (error) {
-      handleApiError(error);
+    } catch (err) {
+      handleApiError(err);
       toast({
         title: 'Error',
         description: 'Failed to delete test case',
@@ -63,16 +60,26 @@ export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps)
     }
   };
 
-  const handleEditSubmit = async (data: TestCaseFormData) => {
+  const handleEditSubmit = async (formData: TestCaseFormData) => {
     try {
-      // Handle form submission logic here
+      const response = await fetch(`/api/projects/${projectId}/test-cases/${testCaseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update test case');
+      }
+      
       setIsEditing(false);
       toast({
         title: 'Test case updated',
         status: 'success',
         duration: 3000,
       });
-    } catch (error) {
+    } catch (err) {
+      handleApiError(err);
       toast({
         title: 'Error',
         description: 'Failed to update test case',
@@ -106,11 +113,6 @@ export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps)
     );
   }
 
-  const currentVersion = versions?.find((v: TestCaseVersion) => v.versionNumber === testCase.version);
-  const selectedVersionData = selectedVersion 
-    ? versions?.find((v: TestCaseVersion) => v.versionNumber === selectedVersion) 
-    : null;
-
   return (
     <ErrorBoundary>
       <Card>
@@ -140,13 +142,6 @@ export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps)
 
         <CardBody>
           <VStack align="stretch" spacing={4}>
-            {currentVersion && selectedVersionData && (
-              <TestCaseVersionComparison 
-                oldVersion={currentVersion} 
-                newVersion={selectedVersionData} 
-              />
-            )}
-            
             {!isEditing ? (
               <>
                 <Text fontWeight="medium">Description</Text>

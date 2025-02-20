@@ -1,27 +1,23 @@
-import { useToast as useChakraToast } from '@chakra-ui/toast';
+import { useToast as useToastUI } from "@/components/ui/use-toast";
 
 export function useToast() {
-  const toast = useChakraToast();
+  const { toast } = useToastUI();
 
-  const showSuccessToast = (message: string) => {
-    toast({
-      title: 'Success',
-      description: message,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+  return {
+    toast,
+    showSuccessToast: (message: string) => {
+      toast({
+        title: "Success",
+        description: message,
+        variant: "default",
+      });
+    },
+    showErrorToast: (message: string) => {
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
-
-  const showErrorToast = (message: string) => {
-    toast({
-      title: 'Error',
-      description: message,
-      status: 'error',
-      duration: 5000,
-      isClosable: true,
-    });
-  };
-
-  return { showSuccessToast, showErrorToast };
 }

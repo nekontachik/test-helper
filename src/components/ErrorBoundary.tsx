@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Text, VStack } from '@chakra-ui/react';
+import { Text, VStack } from '@chakra-ui/react';
 
 export interface Props {
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return { error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo) {
     if (this.props.onCatch) {
       this.props.onCatch(error);
     }

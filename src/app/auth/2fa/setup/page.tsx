@@ -7,7 +7,7 @@ export default async function TwoFactorSetupPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/auth/signin');
+    redirect('/auth/signup');
   }
 
   if (session.user.twoFactorEnabled) {

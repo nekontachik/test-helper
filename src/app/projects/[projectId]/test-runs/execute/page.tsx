@@ -9,8 +9,8 @@ import { useTestRun } from '@/hooks/useTestRuns';
 export default function TestRunExecutionPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
-  const testRunId = params?.testRunId as string;
-  const { data: testRun, isLoading, error } = useTestRun(projectId, testRunId);
+  const runId = params?.runId as string;
+  const { data: testRun, isLoading, error } = useTestRun(projectId, runId);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;

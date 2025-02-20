@@ -35,7 +35,7 @@ describe('RoleGuard', () => {
     mockUseSession.mockReturnValue({
       data: {
         user: {
-          role: UserRole.USER,
+          role: UserRole.MEMBER,
         },
       },
       status: 'authenticated',

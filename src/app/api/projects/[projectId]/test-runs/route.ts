@@ -1,79 +1,72 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
+import { authOptions } from '@/lib/auth';
 import { testRunSchema } from '@/lib/validation';
 import { TestRunStatus } from '@/types';
-import { getServerSession } from 'next-auth/next';
+import { logger } from '@/lib/utils/logger';
+import { createEndpoint } from '@/lib/api/createEndpoint';
 
-async function handler(req: Request, { params }: { params: { projectId: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { projectId: string } }
+) {
+  const session = await getServerSession(authOptions);
   const { projectId } = params;
 
-  if (req.method === 'GET') {
-    try {
-      const testRuns = await prisma.testRun.findMany({
-        where: { projectId },
-        include: {
-          testRunCases: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-      return NextResponse.json(testRuns);
-    } catch (error) {
-      return NextResponse.json(
-        { message: 'Invalid test run data' },
-        { status: 400 }
-      );
-    }
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (req.method === 'POST') {
-    try {
-      const data = await req.json();
-      const validated = testRunSchema.parse(data);
-      const session = await getServerSession();
-      
-      if (!session?.user?.id) {
-        return NextResponse.json(
-          { message: 'Unauthorized' },
-          { status: 401 }
-        );
-      }
+  try {
+    const testRuns = await prisma.testRun.findMany({
+      where: { 
+        projectId,
+        userId: session.user.id
+      },
+      include: {
+        testRunCases: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-      const testRun = await prisma.testRun.create({
-        data: {
-          name: validated.name,
-          projectId,
-          status: TestRunStatus.PENDING,
-          userId: session.user.id,
-          testRunCases: {
-            connect: validated.testCaseIds.map(id => ({ id })),
-          },
-        },
-        include: {
-          testRunCases: true,
-        },
-      });
-
-      return NextResponse.json(testRun, { status: 201 });
-    } catch (error) {
-      return NextResponse.json(
-        { message: 'Invalid test run data' },
-        { status: 400 }
-      );
-    }
+    return NextResponse.json(testRuns);
+  } catch (error) {
+    logger.error("Error fetching test runs:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(
-    { message: 'Method not allowed' },
-    { status: 405 }
-  );
 }
 
-export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
-});
+export const POST = createEndpoint({
+  method: 'POST',
+  schema: testRunSchema,
+  handler: async (data) => {
+    const session = await getServerSession(authOptions);
+    const { projectId } = data;
 
-export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    try {
+      const testRun = await prisma.testRun.create({
+        data: {
+          ...data,
+          status: TestRunStatus.PENDING,
+          userId: session.user.id,
+        },
+        include: {
+          testRunCases: true,
+        },
+      });
+
+      return testRun;
+    } catch (error) {
+      logger.error("Error creating test run:", error);
+      throw new Error("Invalid test run data");
+    }
+  }
 });

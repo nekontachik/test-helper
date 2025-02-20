@@ -55,7 +55,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       setTimeout(() => {
         router.push('/auth/signin');
       }, 3000);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to reset password. Please try again.',

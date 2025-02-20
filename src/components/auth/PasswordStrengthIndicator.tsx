@@ -20,7 +20,7 @@ export function PasswordStrengthIndicator({
   onStrengthChange,
 }: PasswordStrengthIndicatorProps) {
   const [strength, setStrength] = useState<PasswordStrength | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const checkStrength = async () => {
@@ -30,7 +30,7 @@ export function PasswordStrengthIndicator({
         return;
       }
 
-      setLoading(true);
+      setIsLoading(true);
       try {
         const response = await fetch('/api/auth/password/strength', {
           method: 'POST',
@@ -46,7 +46,7 @@ export function PasswordStrengthIndicator({
       } catch (error) {
         console.error('Password strength check error:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -57,19 +57,24 @@ export function PasswordStrengthIndicator({
   if (!strength || !password) return null;
 
   const strengthColor = {
-    0: 'bg-red-500',
-    1: 'bg-orange-500',
-    2: 'bg-yellow-500',
-    3: 'bg-green-500',
-    4: 'bg-green-600',
+    0: 'primary-red',
+    1: 'primary-orange',
+    2: 'primary-yellow',
+    3: 'primary-green',
+    4: 'primary-green',
   }[strength.score];
 
   return (
     <div className="space-y-2">
-      <Progress
-        value={(strength.score / 4) * 100}
-        className={`h-1 ${strengthColor}`}
-      />
+      {isLoading ? (
+        <div className="animate-pulse bg-gray-200 h-4 w-full rounded" />
+      ) : (
+        <Progress
+          value={(strength.score / 4) * 100}
+          indicatorColor={`bg-${strengthColor}`}
+          backgroundColor="bg-secondary"
+        />
+      )}
       {strength.feedback.warning && (
         <Alert 
           variant="default" 

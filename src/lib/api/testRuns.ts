@@ -11,10 +11,10 @@ export async function getTestRuns(projectId: string): Promise<TestRun[]> {
 
 export async function getTestRun(
   projectId: string,
-  testRunId: string
+  runId: string
 ): Promise<TestRun | null> {
   const response = await fetch(
-    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, testRunId)
+    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, runId)
   );
   if (!response.ok) {
     throw new Error('Failed to fetch test run');
@@ -43,11 +43,11 @@ export async function createTestRun(
 
 export async function updateTestRun(
   projectId: string,
-  testRunId: string,
+  runId: string,
   data: TestRunFormData
 ): Promise<TestRun> {
   const response = await fetch(
-    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, testRunId),
+    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, runId),
     {
       method: 'PUT',
       headers: {
@@ -66,10 +66,10 @@ export async function updateTestRun(
 
 export async function deleteTestRun(
   projectId: string,
-  testRunId: string
+  runId: string
 ): Promise<void> {
   const response = await fetch(
-    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, testRunId),
+    ROUTES.API.PROJECT.TEST_RUNS.SHOW(projectId, runId),
     {
       method: 'DELETE',
     }

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -29,9 +29,11 @@ const verifySchema = z.object({
 type FormData = z.infer<typeof verifySchema>;
 
 interface TwoFactorVerificationProps {
-  /** Secret key for 2FA verification */
+  /** Secret key for verification */
   secret: string;
-  /** URL to redirect to after successful verification */
+  /** Callback when verification is complete */
+  onComplete: (backupCodes: string[]) => void;
+  /** URL to redirect after verification */
   redirectUrl: string;
 }
 
@@ -48,6 +50,7 @@ interface TwoFactorVerificationProps {
  */
 export function TwoFactorVerification({
   secret,
+  onComplete,
   redirectUrl,
 }: TwoFactorVerificationProps) {
   const router = useRouter();
@@ -60,7 +63,7 @@ export function TwoFactorVerification({
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
       setError(null);
       const response = await fetch('/api/auth/2fa/verify', {
@@ -82,6 +85,7 @@ export function TwoFactorVerification({
         localStorage.setItem('backupCodes', JSON.stringify(backupCodes));
       }
 
+      onComplete(backupCodes);
       router.push(redirectUrl);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Verification failed');
@@ -105,35 +109,36 @@ export function TwoFactorVerification({
           </Alert>
         )}
 
-        <Form form={form} onSubmit={onSubmit}>
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter 6-digit code"
-                      maxLength={6}
-                      className="text-center text-2xl tracking-widest"
-                      aria-label="Verification code"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={form.formState.isSubmitting}
-              aria-label="Verify code"
-            >
-              Verify and Continue
-            </Button>
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              <FormField
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                        className="text-center text-2xl tracking-widest"
+                        aria-label="Verification code"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+                aria-label="Verify code"
+              >
+                Verify and Continue
+              </Button>
+            </div>
+          </form>
         </Form>
       </CardContent>
     </Card>
@@ -174,7 +179,8 @@ export function TwoFactorVerification({
  * | Name       | Type   | Default | Description                               |
  * |------------|--------|---------|-------------------------------------------|
  * | secret     | string | -       | Secret key for 2FA verification           |
- * | redirectUrl| string | -       | URL to redirect after successful verification |
+ * | onComplete | function| -       | Callback when verification is complete       |
+ * | redirectUrl| string | -       | URL to redirect after verification            |
  */
 
 /**

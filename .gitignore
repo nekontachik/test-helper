@@ -8,6 +8,7 @@
 out
 dist
 build
+/app
 
 # Dependencies
 node_modules

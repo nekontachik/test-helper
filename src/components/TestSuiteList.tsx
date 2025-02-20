@@ -6,17 +6,11 @@ import NextLink from 'next/link';
 interface TestSuiteListProps {
   projectId: string;
   testSuites: TestSuite[];
-  sortBy: string;
-  sortOrder: string;
-  onSort: (newSortBy: string, newSortOrder: string) => void; // Update this line
 }
 
 export const TestSuiteList: React.FC<TestSuiteListProps> = ({
   projectId,
   testSuites,
-  sortBy,
-  sortOrder,
-  onSort,
 }) => {
   return (
     <VStack spacing={4} align="stretch">

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useErrorToast } from './useErrorToast';
+import { useErrorToast } from '@/hooks/useErrorToast';
 import { ChakraProvider, useToast } from '@chakra-ui/react';
 
 describe('useErrorToast', () => {

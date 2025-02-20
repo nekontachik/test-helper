@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +69,7 @@ export function LoginForm() {
       }
 
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       setError({
         message: 'An unexpected error occurred',
       });
@@ -99,7 +98,6 @@ export function LoginForm() {
 
       <Form form={form} onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -113,7 +111,6 @@ export function LoginForm() {
         />
 
         <FormField
-          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>

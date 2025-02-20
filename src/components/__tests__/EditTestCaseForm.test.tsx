@@ -1,70 +1,111 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { EditTestCaseForm } from '../EditTestCaseForm';
 import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const mockTestCase: TestCase = {
+  id: '1',
+  title: 'Test Case 1',
+  description: 'Description 1',
+  steps: 'Step 1\nStep 2\nStep 3',
+  expectedResult: 'Expected Result 1',
+  actualResult: 'Actual Result 1',
+  status: TestCaseStatus.ACTIVE,
+  priority: TestCasePriority.HIGH,
+  projectId: 'project1',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  version: 1,
+};
 
 describe('EditTestCaseForm', () => {
-  const mockTestCase: TestCase = {
-    id: '1',
-    title: 'Test Case 1',
-    description: 'Test case description',
-    expectedResult: 'Expected result',
-    status: TestCaseStatus.ACTIVE,
-    priority: TestCasePriority.HIGH,
-    projectId: 'project1',
-    version: 1,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z',
-    steps: 'Step 1\nStep 2',  // Added missing required field
-    actualResult: 'Actual result'  // Added missing required field
-  };
-
-  const mockOnSubmit = jest.fn();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient.clear();
   });
 
-  it('renders the form with pre-populated data', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
+  const renderComponent = (props = {}) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <ChakraProvider>
+          <EditTestCaseForm
+            testCase={mockTestCase}
+            onSubmit={jest.fn()}
+            isLoading={false}
+            {...props}
+          />
+        </ChakraProvider>
+      </QueryClientProvider>
+    );
+  };
 
-    expect(screen.getByLabelText('Title')).toHaveValue('Test Case 1');
-    expect(screen.getByLabelText('Description')).toHaveValue('Test case description');
-    expect(screen.getByLabelText('Expected Result')).toHaveValue('Expected result');
-    expect(screen.getByLabelText('Status')).toHaveValue(TestCaseStatus.ACTIVE);
-    expect(screen.getByLabelText('Priority')).toHaveValue(TestCasePriority.HIGH);
+  it('renders form with pre-filled values', () => {
+    renderComponent();
+
+    expect(screen.getByDisplayValue('Test Case 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Description 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Step 1\nStep 2\nStep 3')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Expected Result 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Actual Result 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(TestCaseStatus.ACTIVE)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(TestCasePriority.HIGH)).toBeInTheDocument();
   });
 
-  it('calls onSubmit with updated data when form is submitted', async () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
+  it('handles form submission correctly', async () => {
+    const mockOnSubmit = jest.fn();
+    renderComponent({ onSubmit: mockOnSubmit });
 
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated Test Case' } });
-    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated description' } });
-    fireEvent.change(screen.getByLabelText('Expected Result'), { target: { value: 'Updated expected result' } });
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: TestCaseStatus.INACTIVE } });
-    fireEvent.change(screen.getByLabelText('Priority'), { target: { value: TestCasePriority.LOW } });
+    fireEvent.change(screen.getByLabelText(/title/i), {
+      target: { value: 'Updated Test Case' }
+    });
 
-    fireEvent.click(screen.getByText('Update Test Case (Create New Version)'));
+    fireEvent.click(screen.getByText(/update test case/i));
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
-        title: 'Updated Test Case',
-        description: 'Updated description',
-        expectedResult: 'Updated expected result',
-        status: TestCaseStatus.INACTIVE,
-        priority: TestCasePriority.LOW,
-        projectId: 'project1',
+        ...mockTestCase,
+        title: 'Updated Test Case'
       });
     });
   });
 
+  it('shows validation errors', async () => {
+    renderComponent();
+    
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: '' } });
+    fireEvent.click(screen.getByText(/update test case/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles loading state correctly', () => {
+    renderComponent({ isLoading: true });
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /update test case/i })).toBeDisabled();
+  });
+
   it('displays the correct version number', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
+    renderComponent();
     expect(screen.getByText('Editing Version: 1')).toBeInTheDocument();
   });
 
   it('displays the correct button text', () => {
-    render(<EditTestCaseForm testCase={mockTestCase} onSubmit={mockOnSubmit} />);
+    renderComponent();
     expect(screen.getByText('Update Test Case (Create New Version)')).toBeInTheDocument();
   });
 });

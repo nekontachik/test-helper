@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { AuthCard } from './AuthCard';
 import type { User } from '@/types/auth';
+import { logger } from '@/lib/utils/logger';
 
 interface SecuritySettingsProps {
   user: User;
@@ -44,7 +45,8 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
         status: 'success',
         duration: 5000,
       });
-    } catch (error) {
+    } catch (err: unknown) {
+      logger.error('2FA toggle failed:', err);
       toast({
         title: 'Error',
         description: 'Failed to update 2FA settings. Please try again.',
@@ -68,15 +70,16 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
         throw new Error('Failed to generate backup codes');
       }
 
-      const { codes } = await response.json();
+      await response.json();
+      
       toast({
         title: 'Backup Codes Generated',
         description: 'Please save these codes in a secure location.',
         status: 'success',
         duration: 5000,
       });
-      // Here you might want to show the codes in a modal or download them
-    } catch (error) {
+    } catch (err: unknown) {
+      logger.error('Backup codes generation failed:', err);
       toast({
         title: 'Error',
         description: 'Failed to generate backup codes. Please try again.',

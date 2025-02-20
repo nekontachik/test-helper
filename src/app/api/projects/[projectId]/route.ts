@@ -1,51 +1,102 @@
 import { NextResponse } from 'next/server';
-import { createSecureRoute, SecureRouteContext } from '@/lib/api/createSecureRoute';
-import { Action, Resource } from '@/types/rbac';
+import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { authOptions } from '@/lib/auth';
+import { AppError } from '@/lib/errors';
+import { logger } from '@/lib/utils/logger';
 
-const updateProjectSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  status: z.string().optional(),
-});
+export async function GET(
+  request: Request,
+  { params }: { params: { projectId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      throw new AppError('Unauthorized', 401);
+    }
 
-export const PUT = createSecureRoute(
-  async (request: Request, context: SecureRouteContext) => {
-    try {
-      const body = await request.json();
-      const data = updateProjectSchema.parse(body);
+    const { projectId } = params;
 
-      const project = await prisma.project.update({
-        where: { id: context.params.projectId },
-        data,
-      });
+    const project = await prisma.project.findUnique({
+      where: { 
+        id: projectId,
+        userId: session.user.id 
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
 
-      return NextResponse.json(project);
-    } catch (error) {
-      console.error('Project update error:', error);
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+
+    return NextResponse.json(project);
+  } catch (error) {
+    logger.error('Error in GET project:', error);
+    
+    if (error instanceof AppError) {
       return NextResponse.json(
-        { message: 'Failed to update project' },
-        { status: 500 }
+        { error: error.message }, 
+        { status: error.statusCode }
       );
     }
-  },
-  {
-    requireAuth: true,
-    requireVerified: true,
-    requireCsrf: true,
-    action: Action.UPDATE,
-    resource: Resource.PROJECT,
-    rateLimit: {
-      points: 30,
-      duration: 60,
-    },
-    audit: {
-      action: 'project.update',
-      getMetadata: async (request: Request, context: SecureRouteContext) => ({
-        projectId: context.params.projectId,
-        changes: await request.json(),
-      }),
-    },
+
+    return NextResponse.json(
+      { error: 'Internal Server Error' }, 
+      { status: 500 }
+    );
   }
-);
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { projectId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const { projectId } = params;
+
+    const project = await prisma.project.findUnique({
+      where: { 
+        id: projectId,
+        userId: session.user.id 
+      },
+    });
+
+    if (!project) {
+      throw new AppError('Project not found', 404);
+    }
+
+    await prisma.project.delete({
+      where: { id: projectId },
+    });
+
+    return NextResponse.json({ message: 'Project deleted successfully' });
+  } catch (error) {
+    logger.error('Error in DELETE project:', error);
+    
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        { error: error.message }, 
+        { status: error.statusCode }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal Server Error' }, 
+      { status: 500 }
+    );
+  }
+}

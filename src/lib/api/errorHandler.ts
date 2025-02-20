@@ -11,6 +11,7 @@ import {
   DatabaseError
 } from '@/lib/errors';
 import { logger } from '@/lib/utils/logger';
+import { createApiError } from '@/types/api';
 
 interface ErrorResponseData {
   code: string;
@@ -22,58 +23,44 @@ interface ErrorResponse {
   error: ErrorResponseData;
 }
 
-export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
-  // Log all errors
-  logger.error('API Error:', {
-    error: error instanceof Error ? error.message : 'Unknown error',
-    stack: error instanceof Error ? error.stack : undefined,
-    type: error instanceof Error ? error.constructor.name : typeof error,
-  });
-
-  // Handle known application errors
-  if (error instanceof AppError) {
-    return NextResponse.json(
-      {
-        error: {
-          code: error.code || 'APP_ERROR',
-          message: error.message,
-        },
-      },
-      { status: error.statusCode }
-    );
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number = 500,
+    public code?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
   }
+}
 
-  // Handle Zod validation errors
+export function handleApiError(error: unknown) {
+  logger.error('API Error:', error);
+
   if (error instanceof ZodError) {
     return NextResponse.json(
-      {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Validation failed',
-          details: error.errors,
-        },
-      },
+      createApiError('Validation failed', 'VALIDATION_ERROR', error.errors),
       { status: 400 }
     );
   }
 
-  // Handle Prisma errors
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    const prismaError = handlePrismaError(error);
+  if (error instanceof ApiError) {
     return NextResponse.json(
-      { error: prismaError.error },
-      { status: prismaError.status }
+      createApiError(error.message, error.code),
+      { status: error.status }
     );
   }
 
-  // Handle unexpected errors
+  // Prisma errors handling
+  if (error.constructor.name === 'PrismaClientKnownRequestError') {
+    return NextResponse.json(
+      createApiError('Database error', 'DB_ERROR'),
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json(
-    {
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'An unexpected error occurred',
-      },
-    },
+    createApiError('Internal server error'),
     { status: 500 }
   );
 }

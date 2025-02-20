@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getSession } from 'next-auth/react';
 import { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
 
@@ -14,7 +14,7 @@ const api: AxiosInstance = axios.create({
   baseURL: '/api',
 });
 
-api.interceptors.request.use(async (config) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const session = await getSession();
   if (session?.user) {
     config.headers.Authorization = `Bearer ${session.user.id}`;
@@ -124,8 +124,8 @@ const apiClient = {
     return this.post<TestRun>(`/projects/${projectId}/test-runs`, data);
   },
 
-  async updateTestRun(projectId: string, testRunId: string, data: Partial<TestRun>): Promise<TestRun> {
-    return this.put<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`, data);
+  async updateTestRun(projectId: string, runId: string, data: Partial<TestRun>): Promise<TestRun> {
+    return this.put<TestRun>(`/projects/${projectId}/test-runs/${runId}`, data);
   },
 
   async createTestReport(projectId: string, data: TestReportFormData): Promise<TestReport> {
@@ -163,12 +163,12 @@ const apiClient = {
     return this.get<Project>(`/projects/${projectId}`);
   },
 
-  async getTestRun(projectId: string, testRunId: string): Promise<TestRun> {
-    return this.get<TestRun>(`/projects/${projectId}/test-runs/${testRunId}`);
+  async getTestRun(projectId: string, runId: string): Promise<TestRun> {
+    return this.get<TestRun>(`/projects/${projectId}/test-runs/${runId}`);
   },
 
-  async deleteTestRun(projectId: string, testRunId: string): Promise<void> {
-    return this.delete(`/projects/${projectId}/test-runs/${testRunId}`);
+  async deleteTestRun(projectId: string, runId: string): Promise<void> {
+    return this.delete(`/projects/${projectId}/test-runs/${runId}`);
   },
 
   async getTestSuite(projectId: string, suiteId: string): Promise<TestSuite> {
@@ -187,8 +187,8 @@ const apiClient = {
     return this.post<TestSuite>(`/projects/${projectId}/test-suites`, data);
   },
 
-  async getTestCaseResults(projectId: string, testRunId: string): Promise<TestCaseResult[]> {
-    return this.get<TestCaseResult[]>(`/projects/${projectId}/test-runs/${testRunId}/results`);
+  async getTestCaseResults(projectId: string, runId: string): Promise<TestCaseResult[]> {
+    return this.get<TestCaseResult[]>(`/projects/${projectId}/test-runs/${runId}/results`);
   },
 
   // Add other methods as needed

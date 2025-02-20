@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import SignIn from '@/app/auth/signin/page';
-import Register from '@/app/auth/register/page';
+import SignIn from '@/src/app/auth/signin/page';
+import Register from '@/src/app/auth/register/page';
 import { act } from 'react-dom/test-utils';
 
 // Mock next-auth
