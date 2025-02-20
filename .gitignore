@@ -11,7 +11,24 @@ build
 /app
 
 # Dependencies
-node_modules
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+/dist
+
+# Environment files
+.env.*
+!.env.example
 
 # Logs
 *.log
@@ -24,3 +41,21 @@ yarn-error.log*
 .vscode
 *.swp
 *.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+/prisma/migrations/
+*.db
+*.db-journal
+
+# Generated API docs
+/docs/api/
+swagger.json
+swagger.yaml
+
+# Cache
+.eslintcache
+.tsbuildinfo

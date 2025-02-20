@@ -31,7 +31,7 @@ model User {
   resetTokenExpiry          DateTime?
   emailChangeToken          String?   @unique
   emailChangeTokenExpiry    DateTime?
-  pendingEmail             String?
+  pendingEmail              String?
   scheduledDeletion         DateTime?
   twoFactorEnabled          Boolean   @default(false)
   twoFactorSecret           String?
@@ -61,6 +61,7 @@ model User {
   backupCodes         BackupCode[]
   activities          UserActivity[]
   tokens              Token[]
+  testCaseVersions    TestCaseVersion[]
 
   @@index([email])
   @@index([resetToken])
@@ -153,29 +154,47 @@ model Project {
 }
 
 model TestCase {
-  id             String           @id @default(cuid())
+  id             String   @id @default(cuid())
   title          String
-  description    String
-  steps          String
+  description    String?
+  steps          String // JSON array
   expectedResult String
-  actualResult   String?
   status         String
   priority       String
   projectId      String
   userId         String
-  version        Int              @default(1)
-  deleted        Boolean          @default(false)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author         User             @relation("AuthoredTestCases", fields: [userId], references: [id])
-  versions       Version[]
-  testRunCases   TestRunCase[]
-  results        TestCaseResult[]
-  testSuites     TestSuite[]
+  currentVersion Int      @default(1)
+  deleted        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author       User              @relation("AuthoredTestCases", fields: [userId], references: [id])
+  versions     TestCaseVersion[]
+  testResults  TestResult[]
+  testRunCases TestRunCase[]
+  testResults2 TestCaseResult[]
+  testSuites   TestSuite[]
+  Version      Version[]
 
   @@index([projectId])
   @@index([userId])
+}
+
+model TestCaseVersion {
+  id            String   @id @default(cuid())
+  testCase      TestCase @relation(fields: [testCaseId], references: [id])
+  testCaseId    String
+  versionNumber Int
+  changes       String
+  data          Json
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([testCaseId, versionNumber])
 }
 
 model Version {
@@ -213,17 +232,17 @@ model TestRun {
 }
 
 model TestCaseResult {
-  id            String    @id @default(cuid())
-  testCaseId    String
-  testRunId     String
-  status        String
-  notes         String?
-  evidenceUrls  String?
-  completedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  testCase      TestCase  @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
-  testRun       TestRun   @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  testCaseId   String
+  testRunId    String
+  status       String
+  notes        String?
+  evidenceUrls String?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  testCase     TestCase  @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testRun      TestRun   @relation(fields: [testRunId], references: [id], onDelete: Cascade)
 
   @@index([testCaseId])
   @@index([testRunId])
@@ -429,4 +448,18 @@ model Token {
 
   @@index([userId])
   @@index([token])
+}
+
+model TestResult {
+  id          String    @id @default(cuid())
+  testCase    TestCase  @relation(fields: [testCaseId], references: [id])
+  testCaseId  String
+  status      String
+  notes       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([testCaseId])
 }

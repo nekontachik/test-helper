@@ -1,18 +1,23 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { AppError } from '@/lib/errors';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { formatErrorResponse, logError, normalizeError } from '@/lib/utils/errorUtils';
 
-export function errorHandler(err: Error, req: NextApiRequest, res: NextApiResponse) {
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      status: 'error',
-      message: err.message,
+export async function errorHandler(
+  request: NextRequest,
+  handler: () => Promise<Response>
+) {
+  try {
+    return await handler();
+  } catch (error) {
+    const normalizedError = normalizeError(error);
+    logError(error, {
+      url: request.url,
+      method: request.method
     });
+
+    return NextResponse.json(
+      formatErrorResponse(error),
+      { status: normalizedError.status || 500 }
+    );
   }
-
-  console.error('Unhandled error:', err);
-
-  return res.status(500).json({
-    status: 'error',
-    message: 'An unexpected error occurred',
-  });
 }

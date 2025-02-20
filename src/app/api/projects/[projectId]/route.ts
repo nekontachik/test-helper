@@ -1,70 +1,34 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { prisma } from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
-import { handleApiError } from '@/lib/errors/errorHandler';
-import { AuthenticationError, NotFoundError } from '@/lib/errors/specific';
+import { errorHandler } from '@/middleware/errorHandler';
+import { NextRequest } from 'next/server';
+import { getProject, updateProject, deleteProject } from '@/lib/services/projectService';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new AuthenticationError('Not authenticated');
-    }
+  return errorHandler(request, async () => {
+    const project = await getProject(params.projectId);
+    return Response.json(project);
+  });
+}
 
-    const project = await prisma.project.findUnique({
-      where: { id: params.projectId },
-      include: {
-        testCases: true,
-        testRuns: true,
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundError('Project not found');
-    }
-
-    return NextResponse.json(project);
-  } catch (error) {
-    return handleApiError(error);
-  }
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { projectId: string } }
+) {
+  return errorHandler(request, async () => {
+    const data = await request.json();
+    const project = await updateProject(params.projectId, data);
+    return Response.json(project);
+  });
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      throw new AuthenticationError();
-    }
-
-    const { projectId } = params;
-
-    const project = await prisma.project.findUnique({
-      where: { 
-        id: projectId,
-        userId: session.user.id 
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundError('Project not found');
-    }
-
-    await prisma.project.delete({
-      where: { id: projectId },
-    });
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Project deleted successfully' 
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+  return errorHandler(request, async () => {
+    await deleteProject(params.projectId);
+    return Response.json({ success: true });
+  });
 }
