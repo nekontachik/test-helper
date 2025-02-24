@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { TestCase, TestResult } from '@/types';
+import { TestCase, TestCaseResult, TestCaseResultStatus } from '@/types';
 import { useTestRunQueue } from '@/hooks/useTestRunQueue';
 
 interface UseTestRunStateProps {
@@ -9,13 +9,20 @@ interface UseTestRunStateProps {
   onComplete: () => void;
 }
 
+interface TestResultInput {
+  status: TestCaseResultStatus;
+  notes?: string;
+  evidence?: string[];
+}
+
 export interface UseTestRunStateReturn {
   currentTestCase: TestCase | null;
   isLastTestCase: boolean;
   completionProgress: number;
   isSubmitting: boolean;
   error: Error | null;
-  handleSubmitResult: (result: TestResult) => Promise<void>;
+  results: Record<string, TestResultInput>;
+  handleSubmitResult: (result: TestResultInput) => Promise<void>;
   handleComplete: () => void;
   hasQueuedOperations: boolean;
 }
@@ -29,6 +36,7 @@ export function useTestRunState({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [results, setResults] = useState<Record<string, TestResultInput>>({});
   const { addToQueue, processQueue, hasQueuedOperations } = useTestRunQueue(projectId, runId);
 
   const currentTestCase = testCases[currentIndex] || null;
@@ -36,14 +44,25 @@ export function useTestRunState({
   const completionProgress = ((currentIndex + 1) / testCases.length) * 100;
 
   useEffect(() => {
-    window.addEventListener('online', processQueue);
-    return () => window.removeEventListener('online', processQueue);
+    const syncInterval = setInterval(() => {
+      if (navigator.onLine) {
+        processQueue();
+      }
+    }, 30000); // Try sync every 30 seconds
+
+    return () => clearInterval(syncInterval);
   }, [processQueue]);
 
-  const handleSubmitResult = useCallback(async (result: TestResult) => {
+  const handleSubmitResult = useCallback(async (result: TestResultInput) => {
     try {
       setIsSubmitting(true);
       setError(null);
+
+      // Store result locally first
+      setResults(prev => ({
+        ...prev,
+        [currentTestCase?.id]: result
+      }));
 
       if (!navigator.onLine) {
         addToQueue(result);
@@ -56,10 +75,15 @@ export function useTestRunState({
       await fetch(`/api/projects/${projectId}/test-runs/${runId}/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result)
+        body: JSON.stringify({
+          testCaseId: currentTestCase?.id,
+          ...result
+        })
       });
 
-      if (!isLastTestCase) {
+      if (isLastTestCase) {
+        onComplete();
+      } else {
         setCurrentIndex(prev => prev + 1);
       }
     } catch (err) {
@@ -67,7 +91,7 @@ export function useTestRunState({
     } finally {
       setIsSubmitting(false);
     }
-  }, [projectId, runId, isLastTestCase, addToQueue]);
+  }, [projectId, runId, isLastTestCase, addToQueue, currentTestCase, onComplete]);
 
   return {
     currentTestCase,
@@ -75,6 +99,7 @@ export function useTestRunState({
     completionProgress,
     isSubmitting,
     error,
+    results,
     handleSubmitResult,
     handleComplete: onComplete,
     hasQueuedOperations

@@ -7,15 +7,22 @@ interface UseReportReturn {
   error: Error | undefined;
 }
 
-const fetcher = async (url: string): Promise<TestReport> => {
+interface UseReportsReturn {
+  data: TestReport[] | undefined;
+  isLoading: boolean;
+  error: Error | undefined;
+}
+
+async function fetcher<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error('Failed to fetch report');
+    const error = await response.text();
+    throw new Error(error || 'Failed to fetch data');
   }
   return response.json();
-};
+}
 
-export function useReport(projectId: string, reportId: string): UseReportReturn {
+export function useReport(projectId: string | undefined, reportId: string | undefined): UseReportReturn {
   const { data, error, isLoading } = useSWR<TestReport>(
     projectId && reportId ? `/api/projects/${projectId}/reports/${reportId}` : null,
     fetcher
@@ -28,7 +35,7 @@ export function useReport(projectId: string, reportId: string): UseReportReturn 
   };
 }
 
-export function useReports(projectId: string) {
+export function useReports(projectId: string | undefined): UseReportsReturn {
   const { data, error, isLoading } = useSWR<TestReport[]>(
     projectId ? `/api/projects/${projectId}/reports` : null,
     fetcher

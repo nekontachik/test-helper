@@ -9,6 +9,7 @@ import { GenerateReport } from '@/components/test-run/GenerateReport';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { TestRunStatus } from '@/types';
+import { GenerateReportButton } from '@/components/reports/GenerateReportButton';
 
 export default function TestRunPage() {
   const params = useParams();
@@ -26,11 +27,11 @@ export default function TestRunPage() {
     <Box className="container mx-auto py-8">
       <Box className="flex justify-between items-center mb-6">
         <Heading>Test Run: {testRun.name}</Heading>
-        {testRun.status === TestRunStatus.COMPLETED && (
-          <Button colorScheme="blue" onClick={onOpen}>
-            Generate Report
-          </Button>
-        )}
+        <GenerateReportButton 
+          projectId={projectId} 
+          runId={runId}
+          disabled={testRun.status !== TestRunStatus.COMPLETED}
+        />
       </Box>
       
       <TestRunDetails testRun={testRun} />

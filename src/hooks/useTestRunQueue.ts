@@ -1,64 +1,76 @@
-import { useState, useEffect } from 'react';
-import { TestResult } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
+import { TestCaseResultStatus } from '@/types';
 
-interface QueuedOperation {
-  testResult: TestResult;
-  projectId: string;
-  runId: string;
-  timestamp: number;
+interface TestResultInput {
+  status: TestCaseResultStatus;
+  notes?: string;
+  evidence?: string[];
+  testCaseId?: string;
 }
 
-const QUEUE_KEY = 'test-run-queue';
+interface QueuedOperation {
+  type: 'TEST_RESULT';
+  data: TestResultInput;
+  timestamp: number;
+  retryCount: number;
+}
 
 export function useTestRunQueue(projectId: string, runId: string) {
-  const [queue, setQueue] = useState<QueuedOperation[]>(() => {
-    try {
-      const saved = localStorage.getItem(QUEUE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+  const queueKey = `test-run-queue:${projectId}:${runId}`;
+  const [operations, setOperations] = useState<QueuedOperation[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem(queueKey);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  useEffect(() => {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  }, [queue]);
+  const addToQueue = useCallback((data: TestResultInput) => {
+    const operation: QueuedOperation = {
+      type: 'TEST_RESULT',
+      data,
+      timestamp: Date.now(),
+      retryCount: 0
+    };
+    setOperations(prev => {
+      const updated = [...prev, operation];
+      localStorage.setItem(queueKey, JSON.stringify(updated));
+      return updated;
+    });
+  }, [queueKey]);
 
-  const addToQueue = (testResult: TestResult) => {
-    setQueue(prev => [...prev, {
-      testResult,
-      projectId,
-      runId,
-      timestamp: Date.now()
-    }]);
-  };
+  const processQueue = useCallback(async () => {
+    if (!navigator.onLine || !operations.length) return;
 
-  const removeFromQueue = (timestamp: number) => {
-    setQueue(prev => prev.filter(op => op.timestamp !== timestamp));
-  };
+    const operation = operations[0];
+    try {
+      await fetch(`/api/projects/${projectId}/test-runs/${runId}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(operation.data)
+      });
 
-  const processQueue = async () => {
-    if (!navigator.onLine) return;
-
-    for (const operation of queue) {
-      try {
-        await fetch(`/api/projects/${operation.projectId}/test-runs/${operation.runId}/execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(operation.testResult)
+      setOperations(prev => {
+        const updated = prev.slice(1);
+        localStorage.setItem(queueKey, JSON.stringify(updated));
+        return updated;
+      });
+    } catch (error) {
+      if (operation.retryCount < 3) {
+        setOperations(prev => {
+          const updated = [
+            { ...operation, retryCount: operation.retryCount + 1 },
+            ...prev.slice(1)
+          ];
+          localStorage.setItem(queueKey, JSON.stringify(updated));
+          return updated;
         });
-        removeFromQueue(operation.timestamp);
-      } catch (error) {
-        console.error('Failed to process queued operation:', error);
       }
     }
-  };
+  }, [operations, projectId, runId, queueKey]);
 
   return {
-    queue,
     addToQueue,
-    removeFromQueue,
     processQueue,
-    hasQueuedOperations: queue.length > 0
+    hasQueuedOperations: operations.length > 0,
+    queueLength: operations.length
   };
 } 

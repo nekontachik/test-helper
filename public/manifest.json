@@ -1,19 +1,19 @@
 {
-  "name": "Test Helper",
-  "short_name": "TestHelper",
-  "description": "A comprehensive tool for managing test cases and runs",
+  "name": "Test Management Application",
+  "short_name": "Test App",
+  "description": "Comprehensive test case management application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

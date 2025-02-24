@@ -258,26 +258,38 @@ model TestRunCase {
   @@index([userId])
 }
 
+enum TestRunStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TestResultStatus {
+  PASSED
+  FAILED
+  BLOCKED
+  SKIPPED
+}
+
 model TestCaseResult {
-  id          String    @id @default(cuid())
-  testRunId   String
+  id          String          @id @default(uuid())
+  testCase    TestCase       @relation(fields: [testCaseId], references: [id])
   testCaseId  String
-  status      String
+  testRun     TestRun        @relation(fields: [testRunId], references: [id])
+  testRunId   String
+  status      TestResultStatus
   notes       String?
-  userId      String
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  evidence    String[]       @default([])
+  executedBy  User          @relation(fields: [executedById], references: [id])
+  executedById String
+  executedAt  DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  // Relations
-  testRun     TestRun   @relation(fields: [testRunId], references: [id], onDelete: Cascade)
-  testCase    TestCase  @relation(fields: [testCaseId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
-
-  @@index([testRunId])
   @@index([testCaseId])
-  @@index([userId])
+  @@index([testRunId])
+  @@index([executedById])
 }
 
 model ActivityLog {
@@ -485,4 +497,27 @@ model TestResult {
   updatedAt   DateTime  @updatedAt
 
   @@index([testCaseId])
+}
+
+enum SyncConflictStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+model SyncConflict {
+  id            String   @id @default(uuid())
+  clientVersion Json
+  serverVersion Json
+  userId        String
+  timestamp     DateTime
+  status        String   @default("PENDING")
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
