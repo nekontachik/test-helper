@@ -1,8 +1,8 @@
 import type { Session } from 'next-auth';
-import type { NextRequest } from 'next/server';
 import type { AuthUser } from '@/lib/auth/types';
-import { TestRun, TestResult } from './testRun';
+import type { TestRun, TestResult } from './testRun';
 
+// Request types
 export interface RequestWithSession extends Request {
   session?: Session;
 }
@@ -12,39 +12,40 @@ export interface RequestWithUser extends Request {
   url: string;
 }
 
-// Generic API response types
-export interface ApiResponse<T> {
+// Base response types
+export interface ApiSuccessResponse<T> {
+  success: true;
   data: T;
-  error?: never;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+  };
 }
 
-export interface ApiError {
-  message: string;
-  code: number;
+export interface ApiErrorResponse {
+  success: false;
+  error: {
+    message: string;
+    code: string;
+    details?: unknown;
+  };
 }
 
-export type ApiResult<T> = ApiResponse<T> | ApiError;
-
-// Specific API responses
-export interface TestRunResponse extends ApiResponse<TestRun> {}
-export interface TestResultsResponse extends ApiResponse<TestResult[]> {}
-
-// API client helper
-export const createApiResponse = <T>(data: T): ApiResponse<T> => ({ data });
-export const createApiError = (message: string, code?: string): ApiError => ({
-  error: { message, code }
-});
-
+// Pagination
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
+  items: T[];
+  totalPages: number;
+  currentPage: number;
+  totalItems: number;
 }
 
-export type QueryFilters = {
+// Query types
+export interface QueryFilters {
   field: string;
   operator: 'equals' | 'contains' | 'in';
-  value: any;
-};
+  value: unknown;
+}
 
 export interface QueryOptions {
   page?: number;
@@ -52,4 +53,35 @@ export interface QueryOptions {
   filters?: QueryFilters[];
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-} 
+}
+
+// API helpers
+export function createSuccessResponse<T>(
+  data: T,
+  meta?: ApiSuccessResponse<T>['meta']
+): ApiSuccessResponse<T> {
+  return {
+    success: true,
+    data,
+    meta,
+  };
+}
+
+export function createErrorResponse(
+  message: string,
+  code: string = 'INTERNAL_ERROR',
+  details?: unknown
+): ApiErrorResponse {
+  return {
+    success: false,
+    error: {
+      message,
+      code,
+      details,
+    },
+  };
+}
+
+// Specific API response types
+export type TestRunResponse = ApiSuccessResponse<TestRun> | ApiErrorResponse;
+export type TestResultsResponse = ApiSuccessResponse<TestResult[]> | ApiErrorResponse; 

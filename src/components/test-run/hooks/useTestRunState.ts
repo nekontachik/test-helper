@@ -1,69 +1,82 @@
-import { useState, useCallback } from 'react';
-import { useTestRunProgress } from '@/hooks/useTestRunProgress';
-import { useTestRunRecovery } from '@/hooks/useTestRunRecovery';
-import { useTestRunExecution } from '@/hooks/useTestRunExecution';
-import type { TestCase } from '@/types';
-import type { TestResultWithEvidence } from '@/types/testResults';
-import type { TestResultFormData } from '../TestResultForm';
+import { useState, useCallback, useEffect } from 'react';
+import { TestCase, TestResult } from '@/types';
+import { useTestRunQueue } from '@/hooks/useTestRunQueue';
 
 interface UseTestRunStateProps {
   testCases: TestCase[];
   projectId: string;
-  testRunId: string;
+  runId: string;
   onComplete: () => void;
 }
 
-export function useTestRunState({ 
-  testCases, 
-  projectId, 
-  testRunId, 
-  onComplete 
-}: UseTestRunStateProps) {
+export interface UseTestRunStateReturn {
+  currentTestCase: TestCase | null;
+  isLastTestCase: boolean;
+  completionProgress: number;
+  isSubmitting: boolean;
+  error: Error | null;
+  handleSubmitResult: (result: TestResult) => Promise<void>;
+  handleComplete: () => void;
+  hasQueuedOperations: boolean;
+}
+
+export function useTestRunState({
+  testCases,
+  projectId,
+  runId,
+  onComplete
+}: UseTestRunStateProps): UseTestRunStateReturn {
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { executeTestRun } = useTestRunExecution(projectId, testRunId);
-  const { progress, updateProgress, clearProgress } = useTestRunProgress(projectId, testRunId);
-  const { clearRecovery } = useTestRunRecovery(projectId, testRunId);
+  const [error, setError] = useState<Error | null>(null);
+  const { addToQueue, processQueue, hasQueuedOperations } = useTestRunQueue(projectId, runId);
 
-  const currentTestCase = testCases[progress.currentIndex];
-  const isLastTestCase = progress.currentIndex === testCases.length - 1;
+  const currentTestCase = testCases[currentIndex] || null;
+  const isLastTestCase = currentIndex === testCases.length - 1;
+  const completionProgress = ((currentIndex + 1) / testCases.length) * 100;
 
-  const handleSubmit = useCallback(async (formData: TestResultFormData) => {
+  useEffect(() => {
+    window.addEventListener('online', processQueue);
+    return () => window.removeEventListener('online', processQueue);
+  }, [processQueue]);
+
+  const handleSubmitResult = useCallback(async (result: TestResult) => {
     try {
       setIsSubmitting(true);
+      setError(null);
 
-      const result: TestResultWithEvidence = {
-        testCaseId: currentTestCase.id,
-        status: formData.status,
-        notes: formData.notes || '',
-        evidenceUrls: formData.evidenceUrls || [],
-        evidence: undefined
-      };
-
-      await executeTestRun([result]);
-      
-      if (isLastTestCase) {
-        clearProgress();
-        clearRecovery();
-        onComplete();
-      } else {
-        updateProgress({
-          currentIndex: progress.currentIndex + 1,
-          results: [...progress.results, result]
-        });
+      if (!navigator.onLine) {
+        addToQueue(result);
+        if (!isLastTestCase) {
+          setCurrentIndex(prev => prev + 1);
+        }
+        return;
       }
-    } catch (error) {
-      console.error('Failed to submit test result:', error instanceof Error ? error.message : 'Unknown error');
+
+      await fetch(`/api/projects/${projectId}/test-runs/${runId}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result)
+      });
+
+      if (!isLastTestCase) {
+        setCurrentIndex(prev => prev + 1);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to submit result'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentTestCase.id, progress, executeTestRun, isLastTestCase, clearProgress, clearRecovery, onComplete, updateProgress]);
+  }, [projectId, runId, isLastTestCase, addToQueue]);
 
   return {
     currentTestCase,
     isLastTestCase,
-    progress,
-    handleSubmit,
+    completionProgress,
     isSubmitting,
-    executeTestRun
+    error,
+    handleSubmitResult,
+    handleComplete: onComplete,
+    hasQueuedOperations
   };
 } 

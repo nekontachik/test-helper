@@ -1,38 +1,56 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { getErrorMessage } from '@/lib/utils/error';
-
-export type ApiResponse<T = any> = {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
-  meta?: {
-    page?: number;
-    limit?: number;
-    total?: number;
-  };
-};
+import { logger } from '@/lib/utils/logger';
+import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
 
 export class ApiError extends Error {
   constructor(
     message: string,
-    public readonly code: string,
-    public readonly status: number = 400,
-    public readonly details?: any
+    public statusCode: number = 500,
+    public code: string = 'INTERNAL_ERROR',
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-export function createApiResponse<T>(
-  data?: T,
-  meta?: ApiResponse['meta']
-): ApiResponse<T> {
+type ApiResponseData<T> = {
+  success: true;
+  data: T;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+  };
+} | {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
+
+function createErrorData(
+  message: string,
+  code: string = 'INTERNAL_ERROR',
+  details?: unknown
+): ApiErrorResponse {
+  return {
+    success: false,
+    error: {
+      message,
+      code,
+      details,
+    },
+  };
+}
+
+function createSuccessData<T>(
+  data: T,
+  meta?: ApiSuccessResponse<T>['meta']
+): ApiSuccessResponse<T> {
   return {
     success: true,
     data,
@@ -40,69 +58,41 @@ export function createApiResponse<T>(
   };
 }
 
-export function createErrorResponse(
-  error: unknown,
-  defaultMessage = 'An unexpected error occurred'
-): ApiResponse {
-  if (error instanceof ApiError) {
-    return {
-      success: false,
-      error: {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-      },
-    };
-  }
-
-  if (error instanceof ZodError) {
-    return {
-      success: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Validation failed',
-        details: error.errors,
-      },
-    };
-  }
-
-  return {
-    success: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: getErrorMessage(error) || defaultMessage,
-    },
-  };
-}
-
-export function apiResponse<T>(
-  data?: T,
-  meta?: ApiResponse['meta'],
-  status: number = 200
-): NextResponse {
-  return NextResponse.json(createApiResponse(data, meta), { status });
-}
-
-export function errorResponse(
-  error: unknown,
-  status?: number
-): NextResponse {
+export function errorResponse(error: unknown): NextResponse<ApiErrorResponse> {
   if (error instanceof ApiError) {
     return NextResponse.json(
-      createErrorResponse(error),
-      { status: error.status }
+      createErrorData(error.message, error.code, error.details),
+      { status: error.statusCode }
     );
   }
 
   if (error instanceof ZodError) {
     return NextResponse.json(
-      createErrorResponse(error),
+      createErrorData('Validation failed', 'VALIDATION_ERROR', error.errors),
       { status: 400 }
     );
   }
 
+  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+  logger.error(errorMessage, error);
+  
   return NextResponse.json(
-    createErrorResponse(error),
-    { status: status || 500 }
+    createErrorData('Internal server error', 'INTERNAL_ERROR'),
+    { status: 500 }
   );
+}
+
+export function successResponse<T>(
+  data: T,
+  meta?: ApiSuccessResponse<T>['meta']
+): NextResponse<ApiSuccessResponse<T>> {
+  return NextResponse.json(createSuccessData(data, meta));
+}
+
+export function apiResponse<T>(
+  data: T,
+  meta?: ApiSuccessResponse<T>['meta'],
+  status: number = 200
+): NextResponse<ApiSuccessResponse<T>> {
+  return NextResponse.json(createSuccessData(data, meta), { status });
 } 

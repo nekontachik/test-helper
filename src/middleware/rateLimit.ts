@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { RateLimitError } from '@/lib/errors';
 import logger from '@/lib/logger';
@@ -8,64 +9,54 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_TOKEN!,
 });
 
-interface RateLimitOptions {
-  points?: number;
-  duration?: number;
-  identifier?: string;
+interface RateLimitConfig {
+  maxRequests: number;
+  windowMs: number;
 }
 
-interface RateLimitParams {
-  request: Request;
-  points: number;
-  duration: number;
-}
+const defaultConfig: RateLimitConfig = {
+  maxRequests: 100, // requests
+  windowMs: 60 * 1000, // 1 minute
+};
 
-interface RateLimitResult {
-  success: boolean;
-  retryAfter?: number;
-}
+export async function rateLimit(
+  request: NextRequest,
+  config: RateLimitConfig = defaultConfig
+) {
+  const ip = request.ip ?? '127.0.0.1';
+  const key = `rate-limit:${ip}`;
 
-export async function rateLimitMiddleware(
-  params: RateLimitParams
-): Promise<RateLimitResult> {
-  try {
-    const ip = params.request.headers.get('x-forwarded-for') || 'unknown';
-    const identifier = `ratelimit:${ip}`;
-    
-    const current = await redis.incr(identifier);
-    
-    if (current === 1) {
-      await redis.expire(identifier, params.duration);
-    }
-
-    if (current > params.points) {
-      const ttl = await redis.ttl(identifier);
-      logger.warn('Rate limit exceeded:', {
-        ip,
-        path: params.request.url,
-      });
-      return { success: false, retryAfter: ttl };
-    }
-
-    return { success: true };
-  } catch (error) {
-    logger.error('Rate limit middleware error:', error);
-    return { success: false };
+  const currentRequests = await redis.incr(key);
+  
+  if (currentRequests === 1) {
+    await redis.expire(key, config.windowMs / 1000);
   }
+
+  if (currentRequests > config.maxRequests) {
+    return new NextResponse(null, {
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: {
+        'Retry-After': String(config.windowMs / 1000),
+      },
+    });
+  }
+
+  return null;
 }
 
-export function withRateLimit(handler: Function, key: string, options: RateLimitOptions = {}) {
+export function withRateLimit(handler: Function, key: string, options: RateLimitConfig = defaultConfig) {
   return async function rateLimitHandler(request: Request, ...args: any[]) {
     const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const identifier = options.identifier || `${key}:${ip}`;
+    const identifier = `${key}:${ip}`;
     
     const current = await redis.incr(identifier);
     
     if (current === 1) {
-      await redis.expire(identifier, options.duration || 60);
+      await redis.expire(identifier, options.windowMs / 1000);
     }
 
-    if (current > (options.points || 10)) {
+    if (current > options.maxRequests) {
       const ttl = await redis.ttl(identifier);
       throw new RateLimitError('Too many requests', ttl);
     }

@@ -1,66 +1,79 @@
 import { useCallback, useState } from 'react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@chakra-ui/react';
 import { logger } from '@/lib/utils/logger';
-import type { AppError, ErrorState, ErrorHandlerOptions } from '@/lib/errors/types';
+import { getErrorMessage } from '@/lib/errors/errorMessages';
+import { AppError } from '@/lib/errors/types';
+import { ErrorFactory } from '@/lib/errors/ErrorFactory';
+import { ErrorRecovery } from '@/lib/errors/ErrorRecovery';
+import { ErrorTracker } from '@/lib/monitoring/ErrorTracker';
+
+interface ErrorHandlerOptions {
+  silent?: boolean;
+  retry?: boolean;
+  retryOptions?: {
+    maxAttempts?: number;
+    delayMs?: number;
+    backoffFactor?: number;
+    timeout?: number;
+  };
+  track?: boolean;
+  context?: string;
+}
 
 export function useErrorHandler() {
-  const [error, setError] = useState<ErrorState | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const [loading, setLoading] = useState(false);
-  const { toast: showToast } = useToast();
+  const toast = useToast();
 
-  const handleError = useCallback((error: AppError) => {
-    const errorState: ErrorState = {
-      message: error.message,
-      code: error.code || 'INTERNAL_ERROR',
-      details: error.details,
-      status: error.status
-    };
+  const handleError = useCallback((error: Error | AppError, options?: ErrorHandlerOptions) => {
+    const isAppError = error instanceof AppError;
+    const errorDetails = getErrorMessage(error);
+    const context = options?.context || 'Operation';
 
-    logger.error('Error handled:', errorState);
-    showToast({
-      title: errorState.code,
-      description: errorState.message,
-      variant: "destructive"
+    if (options?.track) {
+      ErrorTracker.track(error, context, errorDetails.severity);
+    }
+
+    logger.error(`Error in ${context}:`, {
+      error: error.message,
+      code: isAppError ? error.code : undefined,
+      status: isAppError ? error.status : undefined,
+      details: isAppError ? error.details : undefined,
+      stack: error.stack
     });
 
-    setError(errorState);
-    return errorState;
-  }, [showToast]);
+    if (!options?.silent) {
+      toast({
+        title: errorDetails.title,
+        description: errorDetails.description,
+        status: errorDetails.severity,
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right'
+      });
+    }
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+    setError(isAppError ? error : ErrorFactory.create('UNKNOWN_ERROR', error.message));
+  }, [toast]);
+
+  const clearError = useCallback(() => setError(null), []);
 
   const withErrorHandling = useCallback(
-    async <T,>(
-      operation: () => Promise<T>, 
-      options?: ErrorHandlerOptions
-    ): Promise<T | undefined> => {
-      const { silent = false, retryCount = 0, retryDelay = 1000 } = options || {};
-      let attempts = 0;
+    async <T,>(operation: () => Promise<T>, options?: ErrorHandlerOptions): Promise<T | undefined> => {
+      try {
+        setLoading(true);
+        clearError();
 
-      const attempt = async (): Promise<T | undefined> => {
-        try {
-          setLoading(true);
-          clearError();
-          return await operation();
-        } catch (error) {
-          if (attempts < retryCount) {
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, retryDelay * attempts));
-            return attempt();
-          }
-          
-          if (!silent) {
-            handleError(error as AppError);
-          }
-          return undefined;
-        } finally {
-          setLoading(false);
+        if (options?.retry) {
+          return await ErrorRecovery.withRetry(operation, options.retryOptions);
         }
-      };
-
-      return attempt();
+        return await operation();
+      } catch (err) {
+        handleError(err as Error, options);
+        return undefined;
+      } finally {
+        setLoading(false);
+      }
     },
     [clearError, handleError]
   );

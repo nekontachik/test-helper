@@ -1,21 +1,43 @@
-export type UserRole = 'ADMIN' | 'PROJECT_MANAGER' | 'TESTER' | 'VIEWER';
+export const UserRole = {
+  GUEST: 'GUEST',
+  USER: 'USER',
+  TESTER: 'TESTER',
+  PROJECT_MANAGER: 'PROJECT_MANAGER',
+  ADMIN: 'ADMIN'
+} as const;
 
-export type Role = UserRole;
+export type Role = (typeof UserRole)[keyof typeof UserRole];
 
-export enum Action {
-  CREATE = 'create',
-  READ = 'read',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  MANAGE = 'manage'
-}
+export const Action = {
+  CREATE: 'CREATE',
+  READ: 'READ',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  MANAGE: 'MANAGE',
+  EXECUTE: 'EXECUTE'
+} as const;
 
-export enum Resource {
-  PROJECT = 'project',
-  TEST_CASE = 'testCase',
-  TEST_RUN = 'testRun',
-  USER = 'user',
-  REPORT = 'report'
+export type ActionType = (typeof Action)[keyof typeof Action];
+
+export const Resource = {
+  PROJECT: 'PROJECT',
+  TEST_CASE: 'TEST_CASE',
+  TEST_RUN: 'TEST_RUN',
+  REPORT: 'REPORT',
+  USER: 'USER',
+  SETTINGS: 'SETTINGS'
+} as const;
+
+export type ResourceType = (typeof Resource)[keyof typeof Resource];
+
+export interface Permission {
+  action: ActionType;
+  resource: ResourceType;
+  conditions?: {
+    isOwner?: boolean;
+    isTeamMember?: boolean;
+    projectId?: string;
+  };
 }
 
 export interface RBACContext {
@@ -25,20 +47,20 @@ export interface RBACContext {
   status?: string;
 }
 
-// Add type guard for UserRole
-export function isUserRole(role: string): role is UserRole {
-  return ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER'].includes(role);
+// Type guard for UserRole
+export function isUserRole(role: string): role is Role {
+  return Object.values(UserRole).includes(role as Role);
 }
 
-// Add type assertion function
-export function assertUserRole(role: string): asserts role is UserRole {
+// Type assertion function
+export function assertUserRole(role: string): asserts role is Role {
   if (!isUserRole(role)) {
     throw new Error(`Invalid role: ${role}`);
   }
 }
 
-// Add role conversion utility
-export function toUserRole(role: string): UserRole {
+// Role conversion utility
+export function toUserRole(role: string): Role {
   assertUserRole(role);
-  return role;
+  return role as Role;
 } 

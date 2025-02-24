@@ -1,144 +1,98 @@
-import { useState } from 'react';
-import { TestCaseView } from './TestCaseView';
+'use client';
+
+import { VStack, Box, useToast } from '@chakra-ui/react';
+import { useTestRunState } from './hooks/useTestRunState';
+import { TestRunHeader } from './TestRunHeader';
 import { TestResultForm } from './TestResultForm';
 import { OfflineIndicator } from './OfflineIndicator';
-import { TestRunHeader } from './TestRunHeader';
-import { ConflictResolutionDialog } from './ConflictResolutionDialog';
-import { ConfirmDialog } from '../ConfirmDialog';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { TestRunSummary } from '../TestRunSummary';
-import type { TestCase } from '@/types';
-import type { TestResult, TestResultWithEvidence } from '@/types/testResults';
-import React from 'react';
-import { useTestRunConflicts } from '@/hooks/useTestRunConflicts';
-import { useTestRunWebSocket } from '@/hooks/useTestRunWebSocket';
-import { useTestRunState } from './hooks/useTestRunState';
-import { useTestRunSync } from './hooks/useTestRunSync';
+import { useRouter } from 'next/navigation';
+import type { TestRun } from '@/types';
+import type { TestResult } from '@/types/testResults';
 
 interface ExecuteTestRunProps {
-  testCases: TestCase[];
+  testRun: TestRun;
   projectId: string;
-  testRunId: string;
-  onComplete: () => void;
-  onCancel: () => void;
+  runId: string;
 }
 
-export function ExecuteTestRun({ testCases, projectId, testRunId, onComplete, onCancel }: ExecuteTestRunProps) {
+interface TestResultFormProps {
+  testCaseId: string;
+  runId: string;
+  projectId: string;
+  isSubmitting: boolean;
+  isLastCase: boolean;
+  onSubmit: (result: TestResult) => Promise<void>;
+  onSuccess: (data: Record<string, any>) => Promise<void>;
+}
+
+export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProps) {
+  const router = useRouter();
+  const toast = useToast();
+  
   const {
     currentTestCase,
     isLastTestCase,
-    progress,
-    handleSubmit,
+    completionProgress,
     isSubmitting,
-    executeTestRun
-  } = useTestRunState({ testCases, projectId, testRunId, onComplete });
-
-  const {
-    isOnline,
-    hasQueuedOperations,
-    isProcessing,
-    queueLength
-  } = useTestRunSync(projectId, testRunId);
-
-  const {
-    showConflictDialog,
-    setShowConflictDialog,
-    serverChanges,
-    handleConflictDetected
-  } = useTestRunConflicts();
-
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-
-  const completionProgress = ((progress.currentIndex + 1) / testCases.length) * 100;
-
-  const handleConflictResolution = async (resolvedResults: TestResult[]) => {
-    try {
-      const resultsWithEvidence: TestResultWithEvidence[] = resolvedResults.map(result => ({
-        ...result,
-        notes: result.notes || '',
-        evidenceUrls: result.evidenceUrls || [],
-        evidence: undefined
-      }));
-      await executeTestRun(resultsWithEvidence);
-      setShowConflictDialog(false);
-    } catch (err) {
-      console.error('Failed to resolve conflicts:', err);
+    error,
+    handleSubmitResult,
+    handleComplete,
+    hasQueuedOperations
+  } = useTestRunState({
+    testCases: testRun.testCases || [],
+    projectId,
+    runId,
+    onComplete: () => {
+      toast({
+        title: 'Test Run Completed',
+        description: 'All test cases have been executed.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true
+      });
+      router.push(`/projects/${projectId}/test-runs/${runId}`);
     }
+  });
+
+  if (!currentTestCase) {
+    return null;
+  }
+
+  const handleSuccess = async (data: Record<string, any>) => {
+    await handleComplete();
+    return Promise.resolve();
   };
 
-  useTestRunWebSocket(projectId, testRunId, handleConflictDetected);
-
-  // Memoize TestRunSummary to prevent unnecessary re-renders
-  const MemoizedTestRunSummary = React.memo(TestRunSummary);
-
   return (
-    <>
-      {!isOnline && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-          <p className="text-sm text-yellow-700">
-            You are currently offline. Changes will be saved and synchronized when you're back online.
-          </p>
-        </div>
-      )}
+    <VStack spacing={6} align="stretch">
+      <TestRunHeader 
+        currentIndex={testRun.testCases?.indexOf(currentTestCase) ?? 0}
+        totalCases={testRun.testCases?.length ?? 0}
+        progress={completionProgress}
+      />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
-              <TestRunHeader 
-                currentIndex={progress.currentIndex}
-                totalCases={testCases.length}
-                progress={completionProgress}
-              />
-            </CardHeader>
-            <CardContent>
-              <TestCaseView testCase={currentTestCase} />
-              <TestResultForm
-                testRunId={testRunId}
-                testCaseId={currentTestCase.id}
-                projectId={projectId}
-                onSuccess={handleSubmit}
-                isSubmitting={isSubmitting}
-                isLastCase={isLastTestCase}
-                onCancel={() => setShowCancelDialog(true)}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="md:col-span-1">
-          <MemoizedTestRunSummary results={progress.results} />
-        </div>
-      </div>
-
-      <ConfirmDialog
-        isOpen={showCancelDialog}
-        onConfirm={() => { setShowCancelDialog(false); onCancel(); }}
-        onCancel={() => setShowCancelDialog(false)}
-        title="Cancel Test Run?"
-        description="You have unsaved changes. Are you sure you want to cancel?"
-        confirmText="Yes, Cancel"
-        cancelText="No, Continue"
-      />
-
-      <ConflictResolutionDialog
-        isOpen={showConflictDialog}
-        onClose={() => setShowConflictDialog(false)}
-        localChanges={progress.results}
-        serverChanges={serverChanges}
-        onResolve={handleConflictResolution}
-      />
+      <Box>
+        <TestResultForm
+          testCaseId={currentTestCase.id}
+          runId={runId}
+          projectId={projectId}
+          isSubmitting={isSubmitting}
+          isLastCase={isLastTestCase}
+          onSubmit={handleSubmitResult}
+          onSuccess={handleSuccess}
+        />
+      </Box>
 
       <OfflineIndicator
-        isOnline={isOnline}
+        isOnline={navigator.onLine}
         hasQueuedOperations={hasQueuedOperations}
         hasPendingOperations={false}
-        isProcessing={isProcessing}
+        isProcessing={isSubmitting}
         isSyncing={false}
-        queueLength={queueLength}
+        queueLength={0}
         pendingOperations={[]}
         onSync={() => {}}
       />
-    </>
+    </VStack>
   );
 } 

@@ -29,4 +29,35 @@ export class BaseError extends Error implements AppError {
       }
     };
   }
+}
+
+// Create a centralized error factory
+export class ErrorFactory {
+  static create(
+    type: ApiErrorCode, 
+    message: string, 
+    details?: Record<string, unknown>
+  ): BaseError {
+    const errorMap: Record<ApiErrorCode, number> = {
+      'UNAUTHORIZED': 401,
+      'FORBIDDEN': 403,
+      'NOT_FOUND': 404,
+      'VALIDATION_ERROR': 400,
+      'CONFLICT': 409,
+      'RATE_LIMITED': 429,
+      'INTERNAL_ERROR': 500,
+      'BAD_REQUEST': 400,
+      'TEST_RUN_ERROR': 500,
+      'FILE_UPLOAD_ERROR': 500,
+      'TEST_RESULT_ERROR': 500,
+      'INVALID_DATA': 400,
+      'TRANSACTION_ERROR': 500
+    };
+
+    return new BaseError(message, {
+      code: type,
+      status: errorMap[type],
+      details
+    });
+  }
 } 

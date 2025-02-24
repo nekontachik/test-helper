@@ -15,17 +15,26 @@ export class RateLimitError extends Error {
   }
 }
 
+export function isError(error: unknown): error is Error {
+  return error instanceof Error;
+}
+
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof RateLimitError) {
-    return `${error.message} Please try again in ${Math.ceil(error.resetIn / 1000)} seconds.`;
-  }
-  if (error instanceof AuthError) {
+  if (isError(error)) {
     return error.message;
   }
-  if (error instanceof Error) {
-    return error.message;
+  if (typeof error === 'string') {
+    return error;
   }
   return 'An unexpected error occurred';
+}
+
+export function createErrorContext(error: unknown) {
+  return {
+    message: getErrorMessage(error),
+    stack: isError(error) ? error.stack : undefined,
+    details: error,
+  };
 }
 
 export const AUTH_ERRORS = {

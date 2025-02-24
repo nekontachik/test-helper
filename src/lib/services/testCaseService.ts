@@ -9,135 +9,114 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { BaseError } from '@/lib/errors/BaseError';
-import type { TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase, TestCaseVersion, Prisma } from '@prisma/client';
+import { serviceResponse, type ServiceResponse } from '@/lib/utils/serviceResponse';
+import { validateTestCase, validatePartialTestCase } from '@/lib/validation/schemas';
+import type { TestCaseInput, TestCaseUpdateInput } from '@/lib/validation/schemas';
+import { ErrorFactory } from '@/lib/errors/BaseError';
+import { authUtils } from '@/lib/utils/authUtils';
+import { versionUtils } from '@/lib/utils/versionUtils';
 
-export interface TestCaseData {
-  title: string;
-  description?: string;
-  steps: string[];
-  expectedResult: string;
-  status: TestCaseStatus;
-  priority: TestCasePriority;
-  tags?: string[];
-}
-
-export interface TestCaseVersion {
-  id: string;
-  versionNumber: number;
-  changes: string;
-  data: string;
-  userId: string;
-  testCaseId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface TestCaseWithVersion extends TestCaseData {
-  id: string;
-  projectId: string;
-  userId: string;
-  currentVersion: number;
-  versions?: TestCaseVersion[];
-}
+export type { TestCaseInput as TestCaseData };
 
 /**
  * Create a new test case with versioning
  */
 export async function createTestCase(
   projectId: string, 
-  data: TestCaseData
-): Promise<TestCaseWithVersion> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
+  data: TestCaseInput
+): Promise<ServiceResponse<TestCase>> {
+  try {
+    const session = await authUtils.requireAuth();
+    const validatedData = validateTestCase({ ...data, projectId });
+
+    const testCase = await prisma.$transaction(async (tx) => {
+      const created = await tx.testCase.create({
+        data: {
+          ...validatedData,
+          userId: session.user.id,
+          currentVersion: 1
+        }
+      });
+
+      await versionUtils.createVersion(
+        tx as Prisma.TransactionClient,
+        {
+          testCaseId: created.id,
+          versionNumber: 1,
+          changes: 'Initial version',
+          data: validatedData,
+          authorId: session.user.id
+        }
+      );
+
+      return created;
     });
+
+    return serviceResponse.success(testCase);
+  } catch (error) {
+    return serviceResponse.error(error instanceof Error ? error : new Error('Unknown error'));
   }
-
-  return prisma.$transaction(async (tx) => {
-    // Create test case
-    const testCase = await tx.testCase.create({
-      data: {
-        ...data,
-        steps: JSON.stringify(data.steps),
-        projectId,
-        userId: session.user.id,
-        currentVersion: 1,
-      },
-    });
-
-    // Create initial version
-    await tx.testCaseVersion.create({
-      data: {
-        testCaseId: testCase.id,
-        versionNumber: 1,
-        changes: 'Initial version',
-        data: JSON.stringify(data),
-        userId: session.user.id,
-      },
-    });
-
-    return testCase as TestCaseWithVersion;
-  });
 }
 
 /**
  * Update test case with version tracking
  */
 export async function updateTestCase(
-  testCaseId: string, 
-  data: Partial<TestCaseData>,
+  id: string,
+  data: TestCaseUpdateInput,
   changes: string
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
-    });
-  }
+): Promise<ServiceResponse<TestCase>> {
+  try {
+    const session = await authUtils.requireAuth();
+    const validatedData = validatePartialTestCase(data);
 
-  return prisma.$transaction(async (tx) => {
-    // Get current test case
-    const testCase = await tx.testCase.findUnique({
-      where: { id: testCaseId },
-      include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } }
-    });
-
-    if (!testCase) {
-      throw new BaseError('Test case not found', {
-        code: 'NOT_FOUND',
-        status: 404
+    const testCase = await prisma.$transaction(async (tx) => {
+      const existing = await tx.testCase.findUnique({ 
+        where: { id }
       });
-    }
+      
+      if (!existing) {
+        throw ErrorFactory.create('NOT_FOUND', 'Test case not found');
+      }
 
-    const newVersionNumber = testCase.currentVersion + 1;
+      // Merge existing data with updates
+      const mergedData: TestCaseInput = {
+        title: validatedData.title || existing.title,
+        description: validatedData.description || existing.description || undefined,
+        steps: validatedData.steps || existing.steps,
+        expectedResult: validatedData.expectedResult || existing.expectedResult,
+        status: (validatedData.status || existing.status) as TestCaseInput['status'],
+        priority: (validatedData.priority || existing.priority) as TestCaseInput['priority'],
+        projectId: existing.projectId
+      };
 
-    // Create new version
-    await tx.testCaseVersion.create({
-      data: {
-        testCaseId,
-        versionNumber: newVersionNumber,
-        changes,
-        data: JSON.stringify({ ...testCase, ...data }),
-        userId: session.user.id,
-      },
+      const updated = await tx.testCase.update({
+        where: { id },
+        data: {
+          ...validatedData,
+          currentVersion: { increment: 1 }
+        }
+      });
+
+      await versionUtils.createVersion(
+        tx,
+        {
+          testCaseId: id,
+          versionNumber: updated.currentVersion,
+          changes,
+          data: mergedData,
+          authorId: session.user.id
+        }
+      );
+
+      return updated;
     });
 
-    // Update test case
-    return tx.testCase.update({
-      where: { id: testCaseId },
-      data: {
-        ...data,
-        steps: data.steps ? JSON.stringify(data.steps) : undefined,
-        currentVersion: newVersionNumber,
-      },
-    });
-  });
+    return serviceResponse.success(testCase);
+  } catch (error) {
+    return serviceResponse.error(error instanceof Error ? error : new Error('Unknown error'));
+  }
 }
 
 /**
@@ -145,77 +124,63 @@ export async function updateTestCase(
  */
 export async function bulkCreateTestCases(
   projectId: string,
-  testCases: TestCaseData[]
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
+  testCases: TestCaseInput[]
+): Promise<ServiceResponse<TestCase[]>> {
+  try {
+    const session = await authUtils.requireAuth();
+    
+    const createdTestCases = await prisma.$transaction(async (tx) => {
+      return Promise.all(testCases.map(async (data) => {
+        const validatedData = validateTestCase({ ...data, projectId });
+        
+        const testCase = await tx.testCase.create({
+          data: {
+            ...validatedData,
+            userId: session.user.id,
+            currentVersion: 1
+          }
+        });
+
+        await versionUtils.createVersion(
+          tx as Prisma.TransactionClient,
+          {
+            testCaseId: testCase.id,
+            versionNumber: 1,
+            changes: 'Initial version',
+            data: validatedData,
+            authorId: session.user.id
+          }
+        );
+
+        return testCase;
+      }));
     });
+
+    return serviceResponse.success(createdTestCases);
+  } catch (error) {
+    return serviceResponse.error(error instanceof Error ? error : new Error('Unknown error'));
   }
-
-  return prisma.$transaction(async (tx) => {
-    const createdTestCases = [];
-
-    for (const data of testCases) {
-      const testCase = await tx.testCase.create({
-        data: {
-          ...data,
-          steps: JSON.stringify(data.steps),
-          projectId,
-          userId: session.user.id,
-          currentVersion: 1,
-        },
-      });
-
-      await tx.testCaseVersion.create({
-        data: {
-          testCaseId: testCase.id,
-          versionNumber: 1,
-          changes: 'Initial version',
-          data: JSON.stringify(data),
-          userId: session.user.id,
-        },
-      });
-
-      createdTestCases.push(testCase);
-    }
-
-    return createdTestCases;
-  });
 }
 
 /**
  * Get test case version history
  */
-export async function getTestCaseVersions(testCaseId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
+export async function getTestCaseVersions(
+  testCaseId: string
+): Promise<ServiceResponse<TestCaseVersion[]>> {
+  try {
+    await authUtils.requireAuth();
+
+    const versions = await prisma.testCaseVersion.findMany({
+      where: { testCaseId },
+      orderBy: { versionNumber: 'desc' },
+      include: { user: { select: { id: true, name: true, email: true } } }
     });
+
+    return serviceResponse.success(versions);
+  } catch (error) {
+    return serviceResponse.error(error instanceof Error ? error : new Error('Unknown error'));
   }
-
-  const versions = await prisma.testCaseVersion.findMany({
-    where: { testCaseId },
-    orderBy: { versionNumber: 'desc' },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
-  });
-
-  return versions.map(version => ({
-    ...version,
-    data: JSON.parse(version.data) as TestCaseData,
-  }));
 }
 
 /**
@@ -224,77 +189,45 @@ export async function getTestCaseVersions(testCaseId: string) {
 export async function restoreTestCaseVersion(
   testCaseId: string,
   versionNumber: number
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
-    });
-  }
+): Promise<ServiceResponse<TestCase>> {
+  try {
+    const session = await authUtils.requireAuth();
 
-  return prisma.$transaction(async (tx) => {
-    try {
-      // Get specified version
+    const result = await prisma.$transaction(async (tx) => {
       const version = await tx.testCaseVersion.findFirst({
-        where: { testCaseId, versionNumber },
+        where: { testCaseId, versionNumber }
       });
 
       if (!version) {
-        throw new BaseError('Version not found', {
-          code: 'NOT_FOUND',
-          status: 404
-        });
+        throw ErrorFactory.create('NOT_FOUND', 'Version not found');
       }
 
-      const versionData = JSON.parse(version.data) as TestCaseData;
-      if (!isValidTestCaseData(versionData)) {
-        throw new BaseError('Invalid version data', {
-          code: 'INVALID_DATA',
-          status: 400
-        });
-      }
-      const newVersionNumber = version.versionNumber + 1;
+      const versionData = versionUtils.parseVersionData({ data: version.data as string });
 
-      // Create new version
-      await tx.testCaseVersion.create({
-        data: {
-          testCaseId,
-          versionNumber: newVersionNumber,
-          changes: `Restored from version ${versionNumber}`,
-          data: version.data as string,
-          userId: session.user.id,
-        },
-      });
-
-      // Update test case
-      return tx.testCase.update({
+      const updated = await tx.testCase.update({
         where: { id: testCaseId },
         data: {
           ...versionData,
-          currentVersion: newVersionNumber,
-        },
+          currentVersion: { increment: 1 }
+        }
       });
-    } catch (error) {
-      // Log the error
-      throw new BaseError('Failed to restore version', {
-        code: 'TRANSACTION_ERROR',
-        status: 500,
-        cause: error
-      });
-    }
-  });
-}
 
-// Add type guard for version data
-function isValidTestCaseData(data: unknown): data is TestCaseData {
-  return (
-    typeof data === 'object' &&
-    data !== null &&
-    'title' in data &&
-    'steps' in data &&
-    'expectedResult' in data &&
-    'status' in data &&
-    'priority' in data
-  );
+      await versionUtils.createVersion(
+        tx as Prisma.TransactionClient,
+        {
+          testCaseId,
+          versionNumber: updated.currentVersion,
+          changes: `Restored from version ${versionNumber}`,
+          data: versionData,
+          authorId: session.user.id
+        }
+      );
+
+      return updated;
+    });
+
+    return serviceResponse.success(result);
+  } catch (error) {
+    return serviceResponse.error(error instanceof Error ? error : new Error('Unknown error'));
+  }
 } 

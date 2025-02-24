@@ -34,6 +34,20 @@ export const commentSchema = z.object({
     .max(1000, 'Comment cannot exceed 1000 characters'),
 });
 
+export const createProjectSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
+
+export const createTestCaseSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  steps: z.string(),
+  expectedResult: z.string(),
+  priority: z.nativeEnum(TestCasePriority),
+  status: z.nativeEnum(TestCaseStatus),
+});
+
 export async function validateTestCase(data: unknown) {
   return testCaseSchema.parseAsync(data);
 }

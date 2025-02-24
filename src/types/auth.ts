@@ -1,12 +1,12 @@
 import { Session } from 'next-auth';
 
 // Define user roles
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  MEMBER = 'MEMBER',
-  EDITOR = 'EDITOR',
-  VIEWER = 'VIEWER'
-}
+export type UserRole = 
+  | 'ADMIN' 
+  | 'PROJECT_MANAGER' 
+  | 'TESTER' 
+  | 'VIEWER'
+  | 'USER'; // Add this to match schema default
 
 // Define account status type
 export enum AccountStatus {

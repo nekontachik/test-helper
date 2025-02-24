@@ -1,6 +1,3 @@
-import type { TestResult, TestResultWithEvidence } from './testResults';
-import type { TestCase } from './test-case';
-
 export enum TestRunStatus {
   PENDING = 'pending',
   IN_PROGRESS = 'in_progress',
@@ -29,8 +26,6 @@ export enum TestCaseResultStatus {
   SKIPPED = 'SKIPPED'
 }
 
-export type { TestResult, TestResultWithEvidence, TestCase };
-
 export interface User {
   id: string;
   name: string;
@@ -53,13 +48,13 @@ export interface Project {
 export interface TestRun {
   id: string;
   name: string;
+  description?: string;
   status: TestRunStatus;
   projectId: string;
   testCases: TestCase[];
-  testCaseResults: TestCaseResult[];
-  completedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 export interface TestSuite {
@@ -72,6 +67,18 @@ export interface TestSuite {
   updatedAt: Date;
 }
 
+export interface TestResult {
+  id: string;
+  testCaseId: string;
+  status: TestCaseResultStatus;
+  notes?: string;
+  evidence?: string[];
+  startedAt?: Date;
+  completedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TestCaseResult extends Omit<TestResult, 'evidence'> {
   id: string;
   testCase: TestCase;
@@ -79,14 +86,35 @@ export interface TestCaseResult extends Omit<TestResult, 'evidence'> {
   updatedAt: string;
 }
 
+export interface TestReportStatistics {
+  totalTests: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  skipped: number;
+  passRate: number;
+}
+
+export interface TestReportResult {
+  testCaseId: string;
+  status: TestCaseResultStatus;
+  notes?: string;
+  executedBy: string;
+  executedAt: string;
+}
+
 export interface TestReport {
   id: string;
-  name: string;
-  description: string;
   projectId: string;
   runId: string;
+  statistics: TestReportStatistics;
+  results: TestReportResult[];
+  createdById: string;
   createdAt: Date;
   updatedAt: Date;
+  testRun: {
+    testCases: TestCase[];
+  };
 }
 
 export interface TestCaseFormData {
@@ -215,3 +243,16 @@ export interface TestFormData {
 }
 
 export * from './operations';
+
+export interface TestCase {
+  id: string;
+  title: string;
+  description?: string;
+  steps: string[];
+  expectedResult: string;
+  priority: TestCasePriority;
+  status: TestCaseStatus;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+}

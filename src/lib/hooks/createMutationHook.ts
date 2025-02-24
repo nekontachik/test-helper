@@ -1,37 +1,65 @@
-import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
-import { logger } from '@/lib/utils/logger';
+import { useMutation } from '@tanstack/react-query';
+import { useToast } from '@chakra-ui/react';
 
-interface MutationConfig<TData, TVariables> {
-  mutationFn: (variables: TVariables) => Promise<TData>;
-  onSuccess?: (data: TData) => void | Promise<void>;
-  onError?: (error: Error) => void | Promise<void>;
-  successMessage?: string;
-  errorMessage?: string;
+interface MutationResult<TData> {
+  mutate: (variables: any) => void;
+  mutateAsync: (variables: any) => Promise<TData>;
+  isLoading: boolean;
+  error: Error | null;
+  data: TData | undefined;
 }
 
-export function createMutation<TData, TVariables>({
-  mutationFn,
-  onSuccess,
-  onError,
-  successMessage = 'Operation successful',
-  errorMessage = 'Operation failed'
-}: MutationConfig<TData, TVariables>) {
-  return (options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>) => {
-    return useMutation({
-      mutationFn,
-      onSuccess: async (data) => {
-        toast.success(successMessage);
-        await onSuccess?.(data);
-        await options?.onSuccess?.(data, {} as TVariables, undefined);
+interface MutationOptions<TData, TVariables> {
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: Error, variables: TVariables) => void;
+}
+
+interface MutationHookOptions<TData, TVariables> {
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  successMessage?: string;
+  errorMessage?: string;
+  onSuccess?: (data: TData, variables: TVariables) => void;
+}
+
+export function createMutation<TData, TVariables>(
+  options: MutationHookOptions<TData, TVariables>
+) {
+  return function useTypedMutation(
+    mutationOptions?: Partial<MutationOptions<TData, TVariables>>
+  ): MutationResult<TData> {
+    const toast = useToast();
+
+    const mutation = useMutation({
+      mutationFn: options.mutationFn,
+      onSuccess(data: TData, variables: TVariables) {
+        if (options.successMessage) {
+          toast({
+            title: options.successMessage,
+            status: 'success',
+            duration: 3000,
+          });
+        }
+        options.onSuccess?.(data, variables);
+        mutationOptions?.onSuccess?.(data, variables);
       },
-      onError: async (error: Error) => {
-        logger.error('Mutation error:', error);
-        toast.error(errorMessage);
-        await onError?.(error);
-        await options?.onError?.(error, {} as TVariables, undefined);
+      onError(error: Error, variables: TVariables) {
+        toast({
+          title: options.errorMessage || 'An error occurred',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+        });
+        mutationOptions?.onError?.(error, variables);
       },
-      ...options
     });
+
+    return {
+      mutate: mutation.mutate,
+      mutateAsync: mutation.mutateAsync,
+      isLoading: mutation.isPending,
+      error: mutation.error as Error | null,
+      data: mutation.data,
+    };
   };
 } 

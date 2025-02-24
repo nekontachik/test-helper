@@ -17,7 +17,7 @@ const STATUS_OPTIONS = Object.values(TestCaseResultStatus).map(status => ({
 }));
 
 interface TestResultFormProps {
-  testRunId: string;
+  runId: string;
   projectId: string;
   testCaseId: string;
   onSuccess: (data: TestResultFormData) => Promise<void>;
@@ -27,8 +27,8 @@ interface TestResultFormProps {
   onSubmit?: (data: TestResultFormData) => Promise<void>;
 }
 
-export function TestResultForm({ testRunId, projectId, testCaseId, onSuccess }: TestResultFormProps) {
-  const { submitTestResult, isSubmitting } = useTestRunManager(projectId, testRunId);
+export function TestResultForm({ runId, projectId, testCaseId, onSuccess }: TestResultFormProps) {
+  const { submitTestResult, isSubmitting } = useTestRunManager(projectId, runId);
   const form = useForm<TestResultFormData>({
     resolver: zodResolver(testResultSchema),
     defaultValues: {

@@ -1,94 +1,111 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { ApiError } from '@/lib/api/errorHandler';
-import { logger } from '@/lib/utils/logger';
-import type { QueryOptions } from '@/lib/db/queryBuilder';
-import { PrismaQueryBuilder } from '@/lib/db/queryBuilder';
+import type { PrismaClient, Prisma } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { ErrorFactory } from '@/lib/errors/ErrorFactory';
+import { ServiceErrorHandler } from '@/lib/services/ServiceErrorHandler';
+import type { ServiceResponse } from '@/lib/utils/serviceResponse';
+import { prisma } from '@/lib/prisma';
+import { authUtils } from '@/lib/utils/authUtils';
+import { AppError } from '@/lib/errors/types';
 
-export class BaseService<
-  T extends { id: string },
-  M extends keyof PrismaClient
-> {
-  protected queryBuilder: PrismaQueryBuilder<T>;
+interface QueryOptions<T> {
+  filters?: Partial<T>;
+  orderBy?: { [K in keyof T]?: 'asc' | 'desc' };
+  page?: number;
+  limit?: number;
+}
 
-  constructor(
-    protected readonly model: PrismaClient[M],
-    protected readonly modelName: string
-  ) {
-    this.queryBuilder = new PrismaQueryBuilder<T>(modelName);
+type PrismaDelegate = {
+  findUnique: (args: any) => Promise<any>;
+  findMany: (args: any) => Promise<any[]>;
+  create: (args: any) => Promise<any>;
+  update: (args: any) => Promise<any>;
+  delete: (args: any) => Promise<any>;
+  count: (args: any) => Promise<number>;
+};
+
+export abstract class BaseService<T extends { id: string }, M extends keyof PrismaClient> {
+  protected readonly prisma: PrismaClient;
+  protected readonly model: PrismaDelegate;
+  protected readonly modelName: string;
+
+  constructor(model: PrismaClient[M], modelName: string) {
+    this.prisma = prisma;
+    this.model = model as unknown as PrismaDelegate;
+    this.modelName = modelName;
   }
 
-  protected async handleServiceError(error: unknown, operation: string): Promise<never> {
-    logger.error(`${this.modelName} service error:`, { error, operation });
-    
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
-        case 'P2002': // Unique constraint
-          throw new ApiError(`${this.modelName} already exists`, 409);
-        case 'P2025': // Not found
-          throw new ApiError(`${this.modelName} not found`, 404);
-        case 'P2003': // Foreign key
-          throw new ApiError('Related record not found', 400);
-        default:
-          throw new ApiError('Database error', 500);
+  protected async checkAuth() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      throw ErrorFactory.unauthorized('Not authenticated');
+    }
+    return session;
+  }
+
+  protected async withAuth<R>(operation: () => Promise<R>): Promise<ServiceResponse<R>> {
+    try {
+      await authUtils.requireAuth();
+      return ServiceErrorHandler.execute(operation, { context: this.modelName });
+    } catch (error) {
+      const appError = error instanceof AppError ? error : 
+        ErrorFactory.create('UNAUTHORIZED', 'Authentication failed');
+      return { success: false, error: appError };
+    }
+  }
+
+  protected async withTransaction<R>(
+    operation: (tx: Prisma.TransactionClient) => Promise<R>
+  ): Promise<ServiceResponse<R>> {
+    return ServiceErrorHandler.withTransaction(
+      async () => {
+        const result = await this.prisma.$transaction(operation);
+        return { success: true, data: result };
       }
-    }
-
-    throw error instanceof ApiError ? error : new ApiError('Unexpected error', 500);
+    );
   }
 
-  async findById(id: string): Promise<T> {
-    try {
-      const item = await (this.model as any).findUnique({ where: { id } });
-      if (!item) throw new ApiError(`${this.modelName} not found`, 404);
-      return item;
-    } catch (error) {
-      throw this.handleServiceError(error, 'findById');
-    }
+  async findById(id: string): Promise<ServiceResponse<T>> {
+    return ServiceErrorHandler.execute(async () => {
+      const item = await this.model.findUnique({ where: { id } });
+      if (!item) throw ErrorFactory.notFound(this.modelName);
+      return item as T;
+    }, { context: `${this.modelName}FindById` });
   }
 
-  async findMany(options?: QueryOptions<T>): Promise<{ data: T[]; total: number }> {
-    try {
-      const query = this.queryBuilder.buildQuery(options || {});
+  async findMany(options: QueryOptions<T> = {}): Promise<ServiceResponse<{ data: T[]; total: number }>> {
+    return ServiceErrorHandler.execute(async () => {
+      const { filters, orderBy, page = 1, limit = 10 } = options;
       const [items, total] = await Promise.all([
-        (this.model as any).findMany(query),
-        (this.model as any).count(query)
+        this.model.findMany({
+          where: filters as any,
+          orderBy: orderBy as any,
+          skip: (page - 1) * limit,
+          take: limit
+        }),
+        this.model.count({ where: filters as any })
       ]);
-
-      return { data: items, total };
-    } catch (error) {
-      throw this.handleServiceError(error, 'findMany');
-    }
+      return { data: items as T[], total };
+    }, { context: `${this.modelName}FindMany` });
   }
 
-  async create(data: Omit<T, 'id'>): Promise<T> {
-    try {
-      return await (this.model as any).create({ data });
-    } catch (error) {
-      logger.error(`Error creating ${this.modelName}:`, error);
-      throw error;
-    }
+  async create(data: Omit<T, 'id'>): Promise<ServiceResponse<T>> {
+    return ServiceErrorHandler.execute(
+      async () => this.model.create({ data }) as Promise<T>,
+      { context: `${this.modelName}Create` }
+    );
   }
 
-  async update(id: string, data: Partial<T>): Promise<T> {
-    try {
-      return await (this.model as any).update({
-        where: { id },
-        data
-      });
-    } catch (error) {
-      logger.error(`Error updating ${this.modelName}:`, error);
-      throw error;
-    }
+  async update(id: string, data: Partial<T>): Promise<ServiceResponse<T>> {
+    return ServiceErrorHandler.execute(
+      async () => this.model.update({ where: { id }, data }) as Promise<T>,
+      { context: `${this.modelName}Update` }
+    );
   }
 
-  async delete(id: string): Promise<void> {
-    try {
-      await (this.model as any).delete({
-        where: { id }
-      });
-    } catch (error) {
-      logger.error(`Error deleting ${this.modelName}:`, error);
-      throw error;
-    }
+  async delete(id: string): Promise<ServiceResponse<void>> {
+    return ServiceErrorHandler.execute(async () => {
+      await this.model.delete({ where: { id } });
+    }, { context: `${this.modelName}Delete` });
   }
 } 

@@ -1,40 +1,47 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { QueryOptions } from '@/lib/db/queryBuilder';
-import { ApiError } from '@/lib/api/errorHandler';
-import { logger } from '@/lib/utils/logger';
+import { useQuery } from '@tanstack/react-query';
 
-interface QueryHookConfig<T, TParams> {
-  queryKey: (params: TParams) => string[];
-  queryFn: (params: TParams, queryOptions: QueryOptions<T>) => Promise<T[]>;
-  defaultOptions?: QueryOptions<T>;
+type QueryKey = readonly unknown[];
+
+interface QueryResult<TData> {
+  data: TData | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+interface QueryOptions<TData> {
+  queryKey: unknown[];
+  queryFn: () => Promise<TData>;
+  enabled?: boolean;
+}
+
+interface QueryHookOptions<TData, TParams> {
+  queryKey: (params: TParams) => QueryKey;
+  queryFn: (params: TParams) => Promise<TData>;
   enabled?: (params: TParams) => boolean;
 }
 
-export function createTypedQueryHook<T extends Record<string, any>, TParams = void>(
-  config: QueryHookConfig<T, TParams>
+export function createTypedQueryHook<TData, TParams>(
+  options: QueryHookOptions<TData, TParams>
 ) {
-  return (
+  return function useTypedQuery(
     params: TParams,
-    queryOptions: QueryOptions<T> = {},
-    options: Omit<UseQueryOptions<T[], ApiError>, 'queryKey' | 'queryFn'> = {}
-  ) => {
-    const mergedQueryOptions = {
-      ...config.defaultOptions,
+    queryOptions?: Partial<QueryOptions<TData>>
+  ): QueryResult<TData> {
+    const query = useQuery({
+      queryKey: options.queryKey(params),
+      queryFn: () => options.queryFn(params),
+      enabled: options.enabled ? options.enabled(params) : true,
       ...queryOptions,
-    };
-
-    return useQuery<T[], ApiError>({
-      queryKey: [...config.queryKey(params), mergedQueryOptions],
-      queryFn: async () => {
-        try {
-          return await config.queryFn(params, mergedQueryOptions);
-        } catch (error) {
-          logger.error('Query error:', { error, params, queryOptions });
-          throw error instanceof ApiError ? error : new ApiError('Unexpected error occurred');
-        }
-      },
-      enabled: config.enabled?.(params),
-      ...options,
     });
+
+    return {
+      data: query.data,
+      isLoading: query.isLoading,
+      error: query.error as Error | null,
+      refetch: async () => {
+        await query.refetch();
+      },
+    };
   };
 } 
