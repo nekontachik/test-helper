@@ -3,7 +3,10 @@ import { useErrorHandler } from './useErrorHandler';
 import { TestResultError } from '@/lib/errors/specific/testErrors';
 import type { TestResultFormData } from '@/lib/validations/testResult';
 
-export function useTestRunManager(projectId: string, testRunId: string) {
+export function useTestRunManager(projectId: string, testRunId: string): { 
+  isSubmitting: boolean;
+  submitTestResult: (data: TestResultFormData) => Promise<any>;
+} {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { withErrorHandling } = useErrorHandler();
 

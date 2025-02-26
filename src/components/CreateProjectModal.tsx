@@ -5,8 +5,6 @@ import {
   FormLabel,
   Input,
   FormErrorMessage,
-} from '@chakra-ui/react';
-import {
   Modal,
   ModalOverlay,
   ModalContent,
@@ -14,9 +12,9 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-} from '@chakra-ui/modal';
+} from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
-import { ProjectFormData } from '@/types';
+import type { ProjectFormData } from '@/types';
 import { useToast } from '@/hooks/useToast';
 
 interface CreateProjectModalProps {
@@ -29,7 +27,7 @@ export function CreateProjectModal({
   isOpen,
   onClose,
   onCreateProject,
-}: CreateProjectModalProps) {
+}: CreateProjectModalProps): JSX.Element {
   const {
     register,
     handleSubmit,
@@ -39,7 +37,7 @@ export function CreateProjectModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showSuccessToast, showErrorToast } = useToast();
 
-  const onSubmit = async (data: ProjectFormData) => {
+  const onSubmit = async (data: ProjectFormData): Promise<void> => {
     setIsSubmitting(true);
     try {
       await onCreateProject(data);

@@ -13,8 +13,8 @@ interface RoleCheckConfig {
 export function withRoleCheck<P extends object>(
   Component: React.ComponentType<P>,
   { action, resource, conditions, redirectTo = '/unauthorized' }: RoleCheckConfig
-) {
-  return function ProtectedComponent(props: P) {
+): React.FC<P> {
+  return function ProtectedComponent(props: P): JSX.Element {
     const { can } = usePermissions();
     const router = useRouter();
 
@@ -22,7 +22,7 @@ export function withRoleCheck<P extends object>(
       if (!can(action, resource, conditions)) {
         router.push(redirectTo);
       }
-    }, []);
+    }, [can, router]);
 
     return <Component {...props} />;
   };

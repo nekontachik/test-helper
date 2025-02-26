@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Button, Spinner } from '@chakra-ui/react';
+import React from 'react';
+import type { ButtonProps } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
 import { signOut } from 'next-auth/react';
-import { useToast } from '@chakra-ui/react';
-import { getErrorMessage } from '@/lib/utils/error';
+import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * SignOutButton Component
@@ -13,56 +14,36 @@ import { getErrorMessage } from '@/lib/utils/error';
  * and error handling.
  */
 
-interface SignOutButtonProps {
-  /** Button variant style */
-  variant?: 'solid' | 'outline' | 'ghost' | 'link';
-  /** Button size */
-  size?: 'xs' | 'sm' | 'md' | 'lg';
-  /** Optional className for custom styling */
-  className?: string;
-  /** URL to redirect after sign out */
-  redirectUrl?: string;
+interface SignOutButtonProps extends ButtonProps {
+  redirectPath?: string;
 }
 
-export function SignOutButton({ 
-  variant = 'ghost',
-  size = 'md',
-  className,
-  redirectUrl = '/auth/signin'
-}: SignOutButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const toast = useToast();
+export function SignOutButton({
+  redirectPath = '/',
+  ...props
+}: SignOutButtonProps): React.ReactElement {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      await signOut({ 
-        callbackUrl: redirectUrl,
-        redirect: true
-      });
+      logger.info('User signing out');
+      await signOut({ redirect: false });
+      router.push(redirectPath);
     } catch (error) {
-      console.error('Sign out error:', error);
-      toast({
-        title: 'Error signing out',
-        description: getErrorMessage(error),
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      logger.error('Error signing out', { error });
       setIsLoading(false);
     }
   };
 
   return (
     <Button
-      variant={variant}
-      size={size}
-      className={className}
       onClick={handleSignOut}
-      isDisabled={isLoading}
-      leftIcon={isLoading ? <Spinner thickness="2px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="xs" /> : undefined}
+      isLoading={isLoading}
+      {...props}
     >
-      {isLoading ? 'Signing Out...' : 'Sign Out'}
+      {props.children || 'Sign Out'}
     </Button>
   );
 }
@@ -81,7 +62,7 @@ export function SignOutButton({
  *   variant="solid"
  *   size="lg"
  *   className="custom-class"
- *   redirectUrl="/custom-redirect"
+ *   redirectPath="/custom-redirect"
  * />
  * ```
  */

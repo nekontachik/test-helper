@@ -29,7 +29,7 @@ interface ProfileInformationProps {
   user: AuthUser;
 }
 
-export function ProfileInformation({ user }: ProfileInformationProps) {
+export function ProfileInformation({ user }: ProfileInformationProps): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function ProfileInformation({ user }: ProfileInformationProps) {
     },
   });
 
-  const onSubmit = async (data: ProfileFormData) => {
+  const onSubmit = async (data: ProfileFormData): Promise<void> => {
     try {
       const response = await fetch('/api/user/profile', {
         method: 'PUT',

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatDistanceToNow } from 'date-fns';
+import React from 'react';
 
 /**
  * ActivityLog Component
@@ -26,7 +27,13 @@ interface ActivityLogEntry {
   ip: string;
   userAgent: string;
   createdAt: string;
-  metadata: Record<string, any>;
+  metadata: {
+    device?: {
+      browser?: string;
+      os?: string;
+    };
+    [key: string]: unknown;
+  };
 }
 
 interface ActivityLogProps {
@@ -40,7 +47,7 @@ interface ActivityLogProps {
  * Formats the activity message based on type and metadata
  */
 function getActivityMessage(activity: ActivityLogEntry): string {
-  const { type, metadata } = activity;
+  const { type } = activity;
   switch (type) {
     case 'LOGIN_SUCCESS':
       return 'Successful login';
@@ -57,20 +64,20 @@ function getActivityMessage(activity: ActivityLogEntry): string {
   }
 }
 
-export function ActivityLog({ userId, className }: ActivityLogProps) {
+export function ActivityLog({ userId, className }: ActivityLogProps): React.ReactElement {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchActivities = async () => {
+    const fetchActivities = async (): Promise<void> => {
       try {
         const response = await fetch(`/api/user/activity?userId=${userId}`);
         if (!response.ok) throw new Error('Failed to fetch activity log');
         
         const data = await response.json();
         setActivities(data.logs);
-      } catch (error) {
+      } catch {
         setError('Failed to load activity log');
       } finally {
         setLoading(false);
@@ -115,8 +122,8 @@ export function ActivityLog({ userId, className }: ActivityLogProps) {
                 </TableCell>
                 <TableCell>{activity.ip}</TableCell>
                 <TableCell>
-                  {activity.metadata.device?.browser} on{' '}
-                  {activity.metadata.device?.os}
+                  {activity.metadata.device?.browser || 'Unknown'} on{' '}
+                  {activity.metadata.device?.os || 'Unknown'}
                 </TableCell>
                 <TableCell>
                   {formatDistanceToNow(new Date(activity.createdAt), {

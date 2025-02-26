@@ -5,16 +5,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
+import React from 'react';
 
 interface TwoFactorQRCodeProps {
   onComplete: (secret: string, qrCode: string) => void;
 }
 
-export function TwoFactorQRCode({ onComplete }: TwoFactorQRCodeProps) {
+export function TwoFactorQRCode({ onComplete }: TwoFactorQRCodeProps): React.ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initiate2FASetup = async () => {
+  const initiate2FASetup = async (): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -47,7 +48,7 @@ export function TwoFactorQRCode({ onComplete }: TwoFactorQRCodeProps) {
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
             Enhance your account security by setting up two-factor authentication.
-            You'll need an authenticator app like Google Authenticator or Authy.
+            You&apos;ll need an authenticator app like Google Authenticator or Authy.
           </p>
 
           {error && (

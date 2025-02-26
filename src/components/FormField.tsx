@@ -5,8 +5,9 @@ import {
   FormLabel,
   FormErrorMessage,
 } from '@chakra-ui/form-control';
-import { Input, InputProps } from '@chakra-ui/input';
-import { UseFormRegisterReturn } from 'react-hook-form';
+import type { InputProps } from '@chakra-ui/input';
+import { Input } from '@chakra-ui/input';
+import type { UseFormRegisterReturn } from 'react-hook-form';
 
 interface FormFieldProps extends Omit<InputProps, 'name'> {
   label: string;

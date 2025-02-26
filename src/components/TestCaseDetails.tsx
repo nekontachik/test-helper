@@ -22,7 +22,8 @@ import {
 import { EditTestCaseForm } from './EditTestCaseForm';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { handleApiError } from '@/lib/errorReporting';
-import { TestCaseStatus, TestCasePriority, TestCaseFormData } from '@/types';
+import type { TestCaseFormData } from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 interface TestCaseDetailsProps {
   projectId: string;

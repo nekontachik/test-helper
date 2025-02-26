@@ -1,5 +1,5 @@
 import { useToast as useChakraToast } from '@chakra-ui/react';
-import type { UseToastOptions } from '@chakra-ui/react';
+import type { UseToastOptions, ToastId } from '@chakra-ui/react';
 
 export interface ToastProps extends UseToastOptions {
   title?: string;
@@ -7,7 +7,11 @@ export interface ToastProps extends UseToastOptions {
   variant?: 'default' | 'destructive';
 }
 
-export function useToast() {
+interface ToastReturn {
+  toast: (props: ToastProps) => ToastId;
+}
+
+export function useToast(): ToastReturn {
   const toast = useChakraToast();
 
   return {

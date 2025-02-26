@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 
 declare module '@prisma/client' {
   export interface PrismaClient {

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { TokenType } from '@/types/token';
+import type { TokenType } from '@/types/token';
 import { randomBytes } from 'crypto';
 import { addHours } from 'date-fns';
 import { prisma } from '@/lib/prisma';

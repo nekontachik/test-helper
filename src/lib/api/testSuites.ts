@@ -1,4 +1,4 @@
-import { TestSuite } from '@/models/testSuite';
+import type { TestSuite } from '@/models/testSuite';
 
 export async function getTestSuites(projectId: string): Promise<TestSuite[]> {
   // TODO: Implement actual API call

@@ -1,4 +1,4 @@
-import { UserRole } from '@/types/auth';
+import { UserRole as _UserRole } from '@/types/auth';
 
 export enum ActivityEventType {
   LOGIN_SUCCESS = 'login_success',

@@ -1,8 +1,8 @@
-import { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcrypt"
 import { prisma } from "@/lib/prisma"
-import { UserRole, AccountStatus, Permission } from "@/types/auth"
+import type { UserRole, AccountStatus, Permission } from "@/types/auth"
 import type { Session, User } from "next-auth"
 
 export const authOptions: NextAuthOptions = {

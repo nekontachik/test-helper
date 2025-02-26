@@ -4,7 +4,8 @@ import { TokenService } from '../tokens/tokenService';
 import { SecurityService } from '../securityService';
 import { compare } from 'bcrypt';
 import { UserRole } from '@/types/auth';
-import { TokenType, TokenPayload } from '@/types/token';
+import type { TokenPayload } from '@/types/token';
+import { TokenType } from '@/types/token';
 
 jest.mock('@/lib/prisma');
 jest.mock('bcrypt');

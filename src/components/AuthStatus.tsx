@@ -5,19 +5,17 @@ import {
   Text,
   Button,
   Spinner,
-} from '@chakra-ui/react';
-import {
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
-} from '@chakra-ui/menu';
-import { Avatar } from '@chakra-ui/avatar';
-import { useColorMode } from '@chakra-ui/color-mode';
-import { useToast } from '@chakra-ui/toast';
+  Avatar,
+  useColorMode,
+  useToast
+} from '@chakra-ui/react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { UserRole } from '@/types/rbac';
+import type { UserRole } from '@/types/rbac';
 import { ErrorBoundary } from './ErrorBoundary';
 import { memo } from 'react';
 
@@ -43,17 +41,17 @@ interface AuthStatusProps {
  * @param props - Component props
  * @returns JSX.Element
  */
-export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProps) {
+export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProps): JSX.Element {
   const { data: session, status } = useSession() as { 
     data: ExtendedSession | null, 
     status: 'loading' | 'authenticated' | 'unauthenticated' 
   };
   const router = useRouter();
-  const { colorMode } = useColorMode();
+  const { colorMode: _colorMode } = useColorMode();
   const toast = useToast();
 
   // Handle sign out with proper error handling
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<void> => {
     try {
       await signOut({ redirect: false });
       router.push('/auth/signin');
@@ -70,10 +68,10 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
   };
 
   // Memoize handlers to prevent unnecessary re-renders
-  const handleProfileClick = () => router.push('/profile');
-  const handleAdminClick = () => router.push('/admin');
-  const handleVerifyClick = () => router.push('/auth/verify');
-  const handleSignInClick = () => router.push('/auth/signin');
+  const handleProfileClick = (): void => router.push('/profile');
+  const handleAdminClick = (): void => router.push('/admin');
+  const handleVerifyClick = (): void => router.push('/auth/verify');
+  const handleSignInClick = (): void => router.push('/auth/signin');
 
   // Show loading state
   if (status === 'loading') {
@@ -124,7 +122,7 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
           <MenuItem onClick={handleProfileClick}>
             Profile
           </MenuItem>
-          {session.user.role === UserRole.ADMIN && (
+          {session.user.role === 'ADMIN' && (
             <MenuItem onClick={handleAdminClick}>
               Admin Panel
             </MenuItem>

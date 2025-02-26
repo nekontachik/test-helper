@@ -10,7 +10,7 @@ const transporter = createTransport({
   },
 });
 
-export async function sendVerificationEmail(email: string, name: string) {
+export async function sendVerificationEmail(email: string, name: string): Promise<void> {
   const token = jwt.sign(
     { email },
     process.env.JWT_SECRET!,

@@ -3,7 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
 import EditTestCasePage from '@/app/projects/[projectId]/test-cases/[testCaseId]/edit/page';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 jest.mock('next/navigation', () => ({
   useParams: jest.fn(),

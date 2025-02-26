@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 import logger from '@/lib/logger';
 
 interface AuthOptions {
@@ -14,7 +14,7 @@ interface AuthOptions {
 export async function authMiddleware(
   request: NextRequest,
   options: AuthOptions = {}
-) {
+): Promise<NextResponse> {
   try {
     // Skip auth check for public routes
     if (isPublicRoute(request.nextUrl.pathname)) {

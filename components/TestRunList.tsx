@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, VStack, Spinner } from '@chakra-ui/react';
-import { TestRun } from '@/types';
+import type { TestRun } from '@/types';
 
 export interface TestRunListProps {
   data: TestRun[];

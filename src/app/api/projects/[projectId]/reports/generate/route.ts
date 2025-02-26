@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ReportService } from '@/lib/services/reportService';
@@ -7,8 +8,8 @@ import { AppError } from '@/lib/errors';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
-) {
+  { params: _params }: { params: { projectId: string } }
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {

@@ -15,11 +15,11 @@ interface GenerateReportButtonProps {
   disabled?: boolean;
 }
 
-export function GenerateReportButton({ projectId, runId, disabled }: GenerateReportButtonProps) {
-  const { generateReport, isGenerating, error } = useReportGeneration();
+export function GenerateReportButton({ projectId, runId, disabled }: GenerateReportButtonProps): React.ReactElement {
+  const { generateReport, isGenerating } = useReportGeneration();
   const [format, setFormat] = useState<'PDF' | 'JSON'>('PDF');
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (): Promise<void> => {
     try {
       await generateReport(projectId, runId, format);
     } catch (error) {

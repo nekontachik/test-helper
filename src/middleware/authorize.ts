@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { prisma } from '@/lib/prisma';
+// import { prisma } from '@/lib/prisma';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { OwnershipService } from '@/lib/auth/ownership/service';
-import { Action, Resource, UserRole } from '@/types/rbac';
+import type { Action, UserRole } from '@/types/rbac';
+import { Resource } from '@/types/rbac';
 import { AuthorizationError } from '@/lib/errors';
 import logger from '@/lib/logger';
 

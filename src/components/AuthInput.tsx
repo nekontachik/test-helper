@@ -1,11 +1,12 @@
 'use client';
 
+import type {
+  InputProps} from '@chakra-ui/react';
 import {
   FormControl,
   FormLabel,
   Input,
-  FormErrorMessage,
-  InputProps,
+  FormErrorMessage
 } from '@chakra-ui/react';
 import { forwardRef } from 'react';
 

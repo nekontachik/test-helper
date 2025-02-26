@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { FilterCondition, WhereClause } from './filters';
+import type { FilterCondition, WhereClause } from './filters';
 import { ApiError } from 'next';
 
 export interface QueryOptions<T extends Record<string, any>> {

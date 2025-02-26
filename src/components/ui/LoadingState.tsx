@@ -7,7 +7,7 @@ interface LoadingStateProps {
   message?: string;
 }
 
-export function LoadingState({ message = 'Loading...' }: LoadingStateProps) {
+export function LoadingState({ message = 'Loading...' }: LoadingStateProps): JSX.Element {
   return (
     <MotionBox
       initial={{ opacity: 0 }}

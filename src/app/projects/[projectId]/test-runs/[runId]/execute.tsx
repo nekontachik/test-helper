@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { GetServerSideProps } from 'next';
+import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import { TestRun, TestCaseResult } from '../../../../../models/testRun';
+import type { TestRun, TestCaseResult } from '../../../../../models/testRun';
 import { getTestRun, updateTestRun } from '../../../../../lib/api/testRuns';
 import { ErrorMessage } from '../../../../../components/ErrorMessage';
 

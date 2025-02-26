@@ -1,5 +1,6 @@
-import { openDB, IDBPDatabase } from 'idb';
-import { CacheableRequest, CacheStrategy, CachedResponse } from '@/types/cache';
+import type { IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
+import type { CacheableRequest, CachedResponse } from '@/types/cache';
 
 const CACHE_VERSION = 1;
 const DB_NAME = 'app-cache';
@@ -67,10 +68,23 @@ export class CacheManager {
 
   private async networkFirst(request: CacheableRequest): Promise<Response | null> {
     try {
-      const response = await fetch(request);
+      const response = await fetch(request.url, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        cache: request.cache,
+        credentials: request.credentials,
+        integrity: request.integrity,
+        keepalive: request.keepalive,
+        mode: request.mode,
+        redirect: request.redirect,
+        referrer: request.referrer,
+        referrerPolicy: request.referrerPolicy,
+        signal: request.signal
+      });
       await this.cacheResponse(request.url, response.clone());
       return response;
-    } catch (error) {
+    } catch {
       return this.getCachedResponse(request.url);
     }
   }
@@ -79,7 +93,20 @@ export class CacheManager {
     const cached = await this.getCachedResponse(request.url);
     if (cached) return cached;
 
-    const response = await fetch(request);
+    const response = await fetch(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      cache: request.cache,
+      credentials: request.credentials,
+      integrity: request.integrity,
+      keepalive: request.keepalive,
+      mode: request.mode,
+      redirect: request.redirect,
+      referrer: request.referrer,
+      referrerPolicy: request.referrerPolicy,
+      signal: request.signal
+    });
     await this.cacheResponse(request.url, response.clone());
     return response;
   }
@@ -88,11 +115,23 @@ export class CacheManager {
     const cached = await this.getCachedResponse(request.url);
     
     // Start network request
-    const networkPromise = fetch(request)
-      .then(async response => {
-        await this.cacheResponse(request.url, response.clone());
-        return response;
-      });
+    const networkPromise = fetch(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      cache: request.cache,
+      credentials: request.credentials,
+      integrity: request.integrity,
+      keepalive: request.keepalive,
+      mode: request.mode,
+      redirect: request.redirect,
+      referrer: request.referrer,
+      referrerPolicy: request.referrerPolicy,
+      signal: request.signal
+    }).then(async response => {
+      await this.cacheResponse(request.url, response.clone());
+      return response;
+    });
 
     // Return cached response immediately if available
     if (cached) return cached;
@@ -114,7 +153,11 @@ export class CacheManager {
 
     if (!cached) return null;
 
-    const config = this.getConfigForRequest({ url } as CacheableRequest);
+    const config = this.getConfigForRequest({
+      url,
+      method: 'GET',
+      headers: new Headers()
+    });
     if (config.maxAge && Date.now() - cached.timestamp > config.maxAge) {
       await this.deleteCachedResponse(url);
       return null;

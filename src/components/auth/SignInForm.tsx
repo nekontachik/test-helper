@@ -61,7 +61,7 @@ const FormFields = memo(function FormFields({ isLoading }: { isLoading: boolean 
   );
 });
 
-export function SignInForm() {
+export function SignInForm(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -74,7 +74,7 @@ export function SignInForm() {
     },
   });
 
-  const onSubmit = async (data: SignInFormData) => {
+  const onSubmit = async (data: SignInFormData): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);

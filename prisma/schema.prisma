@@ -64,6 +64,7 @@ model User {
   testCaseVersions    TestCaseVersion[]
   testRunCases        TestRunCase[]
   testCaseResults     TestCaseResult[]
+  syncConflicts       SyncConflict[] @relation("UserSyncConflicts")
 
   @@index([email])
   @@index([resetToken])
@@ -273,19 +274,19 @@ enum TestResultStatus {
 }
 
 model TestCaseResult {
-  id          String          @id @default(uuid())
-  testCase    TestCase       @relation(fields: [testCaseId], references: [id])
+  id          String   @id @default(cuid())
+  testCase    TestCase @relation(fields: [testCaseId], references: [id])
   testCaseId  String
-  testRun     TestRun        @relation(fields: [testRunId], references: [id])
+  testRun     TestRun  @relation(fields: [testRunId], references: [id])
   testRunId   String
-  status      TestResultStatus
+  status      String
   notes       String?
-  evidence    String[]       @default([])
-  executedBy  User          @relation(fields: [executedById], references: [id])
+  evidence    String   @default("")
+  executedBy  User     @relation(fields: [executedById], references: [id])
   executedById String
-  executedAt  DateTime      @default(now())
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  executedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([testCaseId])
   @@index([testRunId])
@@ -506,17 +507,16 @@ enum SyncConflictStatus {
 }
 
 model SyncConflict {
-  id            String   @id @default(uuid())
-  clientVersion Json
-  serverVersion Json
-  userId        String
-  timestamp     DateTime
-  status        String   @default("PENDING")
-  resolution    String?
-  resolvedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  clientData  Json
+  serverData  Json
+  userId      String
+  timestamp   DateTime
+  status      String   @default("PENDING") // PENDING, RESOLVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation("UserSyncConflicts", fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])

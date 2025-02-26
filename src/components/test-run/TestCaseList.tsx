@@ -19,7 +19,7 @@ const TestCaseItem = React.memo(({ testCase, style }: TestCaseItemProps) => (
 
 TestCaseItem.displayName = 'TestCaseItem';
 
-export function TestCaseList({ testCases }: { testCases: TestCase[] }) {
+export function TestCaseList({ testCases }: { testCases: TestCase[] }): JSX.Element {
   const Row = React.useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => (
     <TestCaseItem 
       testCase={testCases[index]}

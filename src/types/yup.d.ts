@@ -1,13 +1,15 @@
-import { ObjectSchema, AnyObject } from 'yup';
+import type { AnyObject } from 'yup';
+import { ObjectSchema as _ObjectSchema } from 'yup';
 
 declare module 'yup' {
-  interface ObjectSchema<
+  // Using type alias instead of empty interface
+  type ExtendedObjectSchema<
     TShape extends AnyObject,
-    TContext = any,
+    TContext = unknown,
     TOut = TShape extends {
-      [key: string]: any;
+      [key: string]: unknown;
     }
       ? TShape
-      : any
-  > extends ObjectSchema<TShape, TContext, TOut> {}
+      : unknown
+  > = _ObjectSchema<TShape, TContext, TOut>;
 }

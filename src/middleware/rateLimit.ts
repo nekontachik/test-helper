@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { RateLimitError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import _logger from '@/lib/logger';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -22,7 +22,7 @@ const defaultConfig: RateLimitConfig = {
 export async function rateLimit(
   request: NextRequest,
   config: RateLimitConfig = defaultConfig
-) {
+): Promise<NextResponse | null> {
   const ip = request.ip ?? '127.0.0.1';
   const key = `rate-limit:${ip}`;
 

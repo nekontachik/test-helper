@@ -1,6 +1,7 @@
-import type { NextAuthOptions, DefaultSession, Session } from 'next-auth';
+import type { NextAuthOptions, DefaultSession as _DefaultSession, Session } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
-import { UserRole, AccountStatus, Permission } from '@/types/auth';
+import type { UserRole, AccountStatus} from '@/types/auth';
+import { Permission as _Permission } from '@/types/auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
@@ -18,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials, req): Promise<User | null> {
+      async authorize(credentials, _req): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Invalid credentials');
         }

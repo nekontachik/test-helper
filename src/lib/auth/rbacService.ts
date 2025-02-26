@@ -1,11 +1,13 @@
 import { RBAC_RULES } from './rbac/config';
-import { 
-  UserRole, 
-  Action,
+import type { 
+  UserRole,
   Resource,
   Permission,
   ResourceContext,
   RBACRule 
+} from '@/types/rbac';
+import { 
+  Action 
 } from '@/types/rbac';
 import { prisma } from '@/lib/prisma';
 import { AuthorizationError } from '@/lib/errors';

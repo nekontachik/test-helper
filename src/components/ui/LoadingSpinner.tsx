@@ -1,6 +1,7 @@
-import { Spinner, SpinnerProps, Center } from '@chakra-ui/react';
+import type { SpinnerProps} from '@chakra-ui/react';
+import { Spinner, Center } from '@chakra-ui/react';
 
-export function LoadingSpinner(props: SpinnerProps) {
+export function LoadingSpinner(props: SpinnerProps): JSX.Element {
   return (
     <Center p={4}>
       <Spinner 

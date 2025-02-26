@@ -1,16 +1,18 @@
 'use client';
 
 import * as React from 'react';
-import { 
-  useFormContext, 
-  FormProvider, 
+import type { 
   UseFormReturn, 
   FieldValues, 
   Path, 
-  Controller, 
   ControllerFieldState,
   ControllerRenderProps,
   Control
+} from 'react-hook-form';
+import { 
+  useFormContext, 
+  FormProvider, 
+  Controller
 } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +28,7 @@ const Form = <TFormValues extends FieldValues>({
   onSubmit, 
   children, 
   className 
-}: FormProps<TFormValues>) => (
+}: FormProps<TFormValues>): JSX.Element => (
   <FormProvider {...form}>
     <form onSubmit={form.handleSubmit(onSubmit)} className={cn(className)}>
       {children}
@@ -38,7 +40,7 @@ interface FormFieldContextValue<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
 }
 
-const FormFieldContext = React.createContext<FormFieldContextValue<any>>({} as FormFieldContextValue<any>);
+const FormFieldContext = React.createContext<FormFieldContextValue<FieldValues>>({} as FormFieldContextValue<FieldValues>);
 
 interface FormFieldProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
@@ -53,7 +55,7 @@ const FormField = <TFieldValues extends FieldValues>({
   name, 
   control, 
   render 
-}: FormFieldProps<TFieldValues>) => {
+}: FormFieldProps<TFieldValues>): JSX.Element => {
   return (
     <FormFieldContext.Provider value={{ name }}>
       <Controller<TFieldValues>
@@ -67,7 +69,14 @@ const FormField = <TFieldValues extends FieldValues>({
 
 FormField.displayName = 'FormField';
 
-const useFormField = () => {
+const useFormField = (): {
+  id: string;
+  name: Path<FieldValues>;
+  formItemId: string;
+  formDescriptionId: string;
+  formMessageId: string;
+  [key: string]: unknown;
+} => {
   const fieldContext = React.useContext(FormFieldContext);
   const itemContext = React.useContext(FormItemContext);
   const form = useFormContext();

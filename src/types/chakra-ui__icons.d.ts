@@ -1,6 +1,6 @@
 declare module '@chakra-ui/icons' {
-  import { ComponentType } from 'react';
-  import { IconProps } from '@chakra-ui/react';
+  import type { ComponentType } from 'react';
+  import type { IconProps } from '@chakra-ui/react';
 
   // Common icons
   export const CloseIcon: ComponentType<IconProps>;

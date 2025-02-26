@@ -8,7 +8,7 @@ interface ComponentTemplateProps {
 
 export const ComponentTemplate: React.FC<ComponentTemplateProps> = ({
   exampleProp,
-}) => {
+}): JSX.Element => {
   return (
     <Box>
       {/* Your component JSX goes here */}

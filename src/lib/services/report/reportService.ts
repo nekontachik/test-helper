@@ -7,18 +7,13 @@ import { TestRunService } from './testRunService';
 import type { ServiceResponse } from '@/lib/utils/serviceResponse';
 import type { 
   DetailedReport, 
-  PaginatedData, 
   ReportInput, 
   ReportMetrics, 
   TestRunData,
   TestRunWithRelations
 } from './types';
 import { ServiceErrorHandler } from '../ServiceErrorHandler';
-import { calculateMetrics } from '@/lib/utils/testMetrics';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
-
-const TEST_STATUSES = ['PASSED', 'FAILED', 'SKIPPED'] as const;
-type TestStatus = typeof TEST_STATUSES[number];
 
 export class ReportService extends BaseService<TestReport, 'testReport'> {
   constructor() {
@@ -103,19 +98,23 @@ export class ReportService extends BaseService<TestReport, 'testReport'> {
   }): Promise<TestReport> {
     return tx.testReport.create({
       data: {
-        title: params.data.title.trim(),
-        content: JSON.stringify({ 
-          metrics: params.metrics, 
-          testRunData: params.testRunData, 
-          filters: params.data.filters 
-        }),
+        name: params.data.title.trim(),
         projectId: params.data.projectId,
-        userId: params.userId
+        runId: params.data.testRunId!,
+        statistics: JSON.stringify(params.metrics),
+        results: JSON.stringify(params.testRunData || {}),
+        createdById: params.userId
       }
     });
   }
 
-  private calculateSummary(results: Array<{ testCase: TestCase; result: TestCaseResult }>, testRun: TestRun) {
+  private calculateSummary(results: Array<{ testCase: TestCase; result: TestCaseResult }>, testRun: TestRun): {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+    duration: number;
+  } {
     return {
       total: results.length,
       passed: results.filter(r => r.result.status === 'PASSED').length,
@@ -129,6 +128,4 @@ export class ReportService extends BaseService<TestReport, 'testReport'> {
     if (!completedAt) return 0;
     return completedAt.getTime() - createdAt.getTime();
   }
-
-  // ... other main service methods
 } 

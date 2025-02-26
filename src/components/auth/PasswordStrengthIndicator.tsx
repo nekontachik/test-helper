@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PasswordStrength } from '@/lib/auth/passwordValidation';
+import type { PasswordStrength } from '@/lib/auth/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
   /** Password to check strength for */
@@ -18,12 +18,12 @@ export function PasswordStrengthIndicator({
   password,
   email,
   onStrengthChange,
-}: PasswordStrengthIndicatorProps) {
+}: PasswordStrengthIndicatorProps): JSX.Element | null {
   const [strength, setStrength] = useState<PasswordStrength | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const checkStrength = async () => {
+    const checkStrength = async (): Promise<void> => {
       if (password.length === 0) {
         setStrength(null);
         onStrengthChange?.(false);

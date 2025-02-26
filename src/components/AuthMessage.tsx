@@ -1,12 +1,13 @@
 'use client';
 
+import type {
+  AlertProps} from '@chakra-ui/react';
 import {
   Alert,
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  Box,
-  AlertProps,
+  Box
 } from '@chakra-ui/react';
 
 interface AuthMessageProps extends Omit<AlertProps, 'title'> {
@@ -21,7 +22,7 @@ export function AuthMessage({
   message,
   showIcon = true,
   ...props
-}: AuthMessageProps) {
+}: AuthMessageProps): JSX.Element {
   return (
     <Alert
       status={status}

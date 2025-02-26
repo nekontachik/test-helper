@@ -38,7 +38,7 @@ describe('TestCaseForm', () => {
     queryClient.clear();
   });
 
-  const renderComponent = (props = {}) => {
+  const renderComponent = (props = {}): ReturnType<typeof render> => {
     return render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider>

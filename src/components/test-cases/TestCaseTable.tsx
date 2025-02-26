@@ -7,7 +7,7 @@ interface TestCaseTableProps {
   onSort: (field: string) => void;
 }
 
-export function TestCaseTable({ testCases, onSort }: TestCaseTableProps) {
+export function TestCaseTable({ testCases, onSort }: TestCaseTableProps): JSX.Element {
   return (
     <Table>
       <Thead>

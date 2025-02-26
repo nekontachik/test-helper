@@ -1,6 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Action, Resource } from '@/types/rbac';
+import type { Action, Resource } from '@/types/rbac';
 
 interface UsePermissionCheckOptions {
   action: Action;

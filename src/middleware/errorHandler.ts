@@ -5,7 +5,7 @@ import { formatErrorResponse, logError, normalizeError } from '@/lib/utils/error
 export async function errorHandler(
   request: NextRequest,
   handler: () => Promise<Response>
-) {
+): Promise<Response> {
   try {
     return await handler();
   } catch (error) {

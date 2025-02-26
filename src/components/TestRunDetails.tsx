@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Heading, Text, VStack, Badge } from '@chakra-ui/react';
-import { TestRun, TestCaseResult, TestCaseResultStatus } from '@/types';
+import type { TestRun, TestCaseResult} from '@/types';
+import { TestCaseResultStatus } from '@/types';
 
 interface TestRunDetailsProps {
   testRun: TestRun;

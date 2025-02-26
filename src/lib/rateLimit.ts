@@ -18,7 +18,7 @@ const rateLimitMiddleware = async (
   req: NextApiRequest,
   res: NextApiResponse,
   next: () => Promise<void>
-) => {
+): Promise<void> => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const { success } = await ratelimit.limit(ip as string);
 

@@ -1,5 +1,5 @@
 import { ROUTES } from '../routes';
-import { TestRun, TestRunFormData } from '@/models/testRun';
+import type { TestRun, TestRunFormData } from '@/models/testRun';
 
 export async function getTestRuns(projectId: string): Promise<TestRun[]> {
   const response = await fetch(ROUTES.API.PROJECT.TEST_RUNS.INDEX(projectId));

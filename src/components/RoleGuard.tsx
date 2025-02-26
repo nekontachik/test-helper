@@ -1,8 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { UserRole } from '@/types/auth';
-import { ReactNode } from 'react';
+import type { UserRole } from '@/types/auth';
+import type { ReactNode } from 'react';
 
 interface RoleGuardProps {
   children: ReactNode;

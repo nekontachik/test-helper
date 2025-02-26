@@ -1,15 +1,16 @@
 'use client';
 
 import { Box, Card, CardBody, Grid, Text, Badge } from '@chakra-ui/react';
-import { TestRun, TestCaseResultStatus } from '@/types';
+import type { TestRun} from '@/types';
+import { TestCaseResultStatus } from '@/types';
 import { formatDate } from '@/lib/utils/date';
 
 interface TestRunDetailsProps {
   testRun: TestRun;
 }
 
-export function TestRunDetails({ testRun }: TestRunDetailsProps) {
-  const getStatusColor = (status: string) => {
+export function TestRunDetails({ testRun }: TestRunDetailsProps): JSX.Element {
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case TestCaseResultStatus.PASSED:
         return 'green';

@@ -6,7 +6,7 @@ import {
   FormErrorMessage,
   FormHelperText,
 } from '@chakra-ui/form-control';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface FieldProps {
   children: ReactNode;
@@ -24,7 +24,7 @@ export function Field({
   helperText,
   required,
   invalid,
-}: FieldProps) {
+}: FieldProps): JSX.Element {
   return (
     <FormControl isInvalid={invalid || !!error} isRequired={required}>
       {label && <FormLabel>{label}</FormLabel>}

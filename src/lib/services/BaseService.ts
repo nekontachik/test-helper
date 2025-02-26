@@ -1,5 +1,5 @@
 import type { PrismaClient, Prisma } from '@prisma/client';
-import { getServerSession } from 'next-auth';
+import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
 import { ServiceErrorHandler } from '@/lib/services/ServiceErrorHandler';
@@ -15,27 +15,32 @@ interface QueryOptions<T> {
   limit?: number;
 }
 
-type PrismaDelegate = {
-  findUnique: (args: any) => Promise<any>;
-  findMany: (args: any) => Promise<any[]>;
-  create: (args: any) => Promise<any>;
-  update: (args: any) => Promise<any>;
-  delete: (args: any) => Promise<any>;
-  count: (args: any) => Promise<number>;
-};
+interface PrismaDelegate<T> {
+  findUnique: (args: { where: { id: string } }) => Promise<T | null>;
+  findMany: (args: { 
+    where?: Partial<T>;
+    orderBy?: { [K in keyof T]?: 'asc' | 'desc' };
+    skip?: number;
+    take?: number;
+  }) => Promise<T[]>;
+  create: (args: { data: Omit<T, 'id'> }) => Promise<T>;
+  update: (args: { where: { id: string }; data: Partial<T> }) => Promise<T>;
+  delete: (args: { where: { id: string } }) => Promise<T>;
+  count: (args: { where?: Partial<T> }) => Promise<number>;
+}
 
 export abstract class BaseService<T extends { id: string }, M extends keyof PrismaClient> {
   protected readonly prisma: PrismaClient;
-  protected readonly model: PrismaDelegate;
+  protected readonly model: PrismaDelegate<T>;
   protected readonly modelName: string;
 
   constructor(model: PrismaClient[M], modelName: string) {
     this.prisma = prisma;
-    this.model = model as unknown as PrismaDelegate;
+    this.model = model as unknown as PrismaDelegate<T>;
     this.modelName = modelName;
   }
 
-  protected async checkAuth() {
+  protected async checkAuth(): Promise<Session> {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       throw ErrorFactory.unauthorized('Not authenticated');
@@ -69,7 +74,7 @@ export abstract class BaseService<T extends { id: string }, M extends keyof Pris
     return ServiceErrorHandler.execute(async () => {
       const item = await this.model.findUnique({ where: { id } });
       if (!item) throw ErrorFactory.notFound(this.modelName);
-      return item as T;
+      return item;
     }, { context: `${this.modelName}FindById` });
   }
 
@@ -78,27 +83,27 @@ export abstract class BaseService<T extends { id: string }, M extends keyof Pris
       const { filters, orderBy, page = 1, limit = 10 } = options;
       const [items, total] = await Promise.all([
         this.model.findMany({
-          where: filters as any,
-          orderBy: orderBy as any,
+          where: filters,
+          orderBy,
           skip: (page - 1) * limit,
           take: limit
         }),
-        this.model.count({ where: filters as any })
+        this.model.count({ where: filters })
       ]);
-      return { data: items as T[], total };
+      return { data: items, total };
     }, { context: `${this.modelName}FindMany` });
   }
 
   async create(data: Omit<T, 'id'>): Promise<ServiceResponse<T>> {
     return ServiceErrorHandler.execute(
-      async () => this.model.create({ data }) as Promise<T>,
+      async () => this.model.create({ data }),
       { context: `${this.modelName}Create` }
     );
   }
 
   async update(id: string, data: Partial<T>): Promise<ServiceResponse<T>> {
     return ServiceErrorHandler.execute(
-      async () => this.model.update({ where: { id }, data }) as Promise<T>,
+      async () => this.model.update({ where: { id }, data }),
       { context: `${this.modelName}Update` }
     );
   }

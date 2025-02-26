@@ -33,11 +33,11 @@ interface TwoFactorBackupCodesProps {
 export function TwoFactorBackupCodes({
   codes,
   redirectUrl,
-}: TwoFactorBackupCodesProps) {
+}: TwoFactorBackupCodesProps): JSX.Element {
   const router = useRouter();
   const [copied, setCopied] = React.useState(false);
 
-  const copyToClipboard = React.useCallback(async () => {
+  const copyToClipboard = React.useCallback(async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(codes.join('\n'));
       setCopied(true);
@@ -47,7 +47,7 @@ export function TwoFactorBackupCodes({
     }
   }, [codes]);
 
-  const downloadCodes = React.useCallback(() => {
+  const downloadCodes = React.useCallback((): void => {
     try {
       const blob = new Blob([codes.join('\n')], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -63,7 +63,7 @@ export function TwoFactorBackupCodes({
     }
   }, [codes]);
 
-  const handleComplete = React.useCallback(() => {
+  const handleComplete = React.useCallback((): void => {
     router.push(redirectUrl);
   }, [router, redirectUrl]);
 

@@ -62,7 +62,7 @@ export class SecurityService {
     }
   }
 
-  static async checkBruteForce(ip: string, action: string): Promise<void> {
+  static async checkBruteForce(_ip: string, _action: string): Promise<void> {
     // Implementation for brute force protection
   }
 }

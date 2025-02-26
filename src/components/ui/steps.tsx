@@ -55,7 +55,7 @@ export function Steps({
   className,
   onStepClick,
   clickable = false
-}: StepsProps) {
+}: StepsProps): React.ReactElement {
   const handleStepClick = React.useCallback((index: number) => {
     if (clickable && onStepClick) {
       onStepClick(index);

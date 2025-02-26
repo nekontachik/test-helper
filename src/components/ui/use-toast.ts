@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 interface ToastProps {
   id: string;
@@ -8,9 +8,13 @@ interface ToastProps {
   variant?: 'default' | 'destructive';
 }
 
-interface ToastOptions extends Omit<ToastProps, 'id'> {}
+type ToastOptions = Omit<ToastProps, 'id'>;
 
-export function useToast() {
+export function useToast(): {
+  toasts: ToastProps[];
+  toast: (options: ToastOptions) => ToastProps;
+  dismiss: (id: string) => void;
+} {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 
   const addToast = useCallback((options: ToastOptions) => {

@@ -11,10 +11,14 @@ interface Props {
   onReset?: () => void;
 }
 
-export function TestRunErrorBoundary({ children, onRetry, onReset }: Props) {
+interface ErrorWithDetails extends Error {
+  details?: Record<string, unknown>;
+}
+
+export function TestRunErrorBoundary({ children, onRetry, onReset }: Props): JSX.Element {
   const { toast } = useToast();
 
-  const renderError = React.useCallback((error: Error) => {
+  const renderError = React.useCallback((error: Error): JSX.Element => {
     logger.error('Test run error:', error);
 
     let message = 'An error occurred while processing the test run';
@@ -57,12 +61,13 @@ export function TestRunErrorBoundary({ children, onRetry, onReset }: Props) {
     );
   }, [onRetry, onReset, toast]);
 
-  const handleError = React.useCallback((error: Error) => {
+  const handleError = React.useCallback((error: Error): JSX.Element => {
     logger.error('Test run error boundary caught:', error);
     
     // Log additional context if available
-    if ('details' in error && typeof (error as any).details === 'object') {
-      logger.error('Error details:', (error as any).details);
+    const errorWithDetails = error as ErrorWithDetails;
+    if (errorWithDetails.details && typeof errorWithDetails.details === 'object') {
+      logger.error('Error details:', errorWithDetails.details);
     }
 
     return renderError(error);

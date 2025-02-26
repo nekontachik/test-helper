@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import apiClient from '@/lib/apiClient';
-import type { Project } from '@/types';
+import apiClient from '../lib/apiClient';
+import type { Project } from '../types';
 
 interface UseProjectOptions {
   enabled?: boolean;
@@ -9,7 +9,10 @@ interface UseProjectOptions {
   cacheTime?: number;
 }
 
-export function useProject(projectId: string | null, options: UseProjectOptions = {}) {
+export function useProject(
+  projectId: string | null, 
+  options: UseProjectOptions = {}
+): ReturnType<typeof useQuery> {
   return useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {

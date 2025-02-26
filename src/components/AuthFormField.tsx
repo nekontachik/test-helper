@@ -1,14 +1,15 @@
 'use client';
 
+import type {
+  InputProps} from '@chakra-ui/react';
 import {
   FormControl,
   FormLabel,
   FormErrorMessage,
   FormHelperText,
-  Input,
-  InputProps,
+  Input
 } from '@chakra-ui/react';
-import { UseFormRegisterReturn } from 'react-hook-form';
+import type { UseFormRegisterReturn } from 'react-hook-form';
 
 interface AuthFormFieldProps extends Omit<InputProps, 'name'> {
   label: string;
@@ -27,7 +28,7 @@ export function AuthFormField({
   registration,
   isRequired,
   ...props
-}: AuthFormFieldProps) {
+}: AuthFormFieldProps): JSX.Element {
   return (
     <FormControl 
       isInvalid={!!error} 

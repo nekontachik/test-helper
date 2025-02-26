@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 const mockTestCase: TestCase = {
   id: '1',

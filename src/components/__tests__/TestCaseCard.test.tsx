@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { TestCaseCard } from '../TestCaseCard';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 describe('TestCaseCard', () => {
   const mockTestCase: TestCase = {

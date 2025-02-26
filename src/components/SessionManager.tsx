@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   VStack,
   Box,
-  Text,
   Button,
   useToast,
   Table,
@@ -25,18 +24,18 @@ interface Session {
   isCurrent: boolean;
 }
 
-export function SessionManager() {
+export function SessionManager(): React.ReactElement {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/sessions');
       if (!response.ok) throw new Error('Failed to fetch sessions');
       const data = await response.json();
       setSessions(data);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to fetch active sessions',
@@ -44,13 +43,13 @@ export function SessionManager() {
         duration: 5000,
       });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
-  const handleTerminateSession = async (sessionId: string) => {
+  const handleTerminateSession = async (sessionId: string): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/auth/sessions/${sessionId}`, {
@@ -68,7 +67,7 @@ export function SessionManager() {
 
       // Refresh sessions list
       fetchSessions();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to terminate session',
@@ -80,7 +79,7 @@ export function SessionManager() {
     }
   };
 
-  const handleTerminateAllSessions = async () => {
+  const handleTerminateAllSessions = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/sessions', {
@@ -98,7 +97,7 @@ export function SessionManager() {
 
       // Refresh sessions list
       fetchSessions();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to terminate all sessions',

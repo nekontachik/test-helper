@@ -6,7 +6,7 @@ import { Box, Heading } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/react';
 import { EditTestCaseForm } from '@/components/EditTestCaseForm';
 import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
-import { TestCaseFormData } from '@/types';
+import type { TestCaseFormData } from '@/types';
 
 export default function EditTestCasePage() {
   const params = useParams();

@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ExecuteTestRun } from '../ExecuteTestRun';
-import { TestRun, TestCase, TestCaseStatus, TestCasePriority, TestCaseResultStatus } from '@/types';
+import type { TestCase} from '@/types';
+import { TestRun, TestCaseStatus, TestCasePriority, TestCaseResultStatus } from '@/types';
 import { useUpdateTestRun } from '@/hooks/useTestRuns';
 import { ChakraProvider } from '@chakra-ui/react';
 

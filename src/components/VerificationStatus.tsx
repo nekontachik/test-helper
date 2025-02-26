@@ -10,14 +10,14 @@ interface VerificationStatusProps {
   email: string;
 }
 
-export function VerificationStatus({ email }: VerificationStatusProps) {
+export function VerificationStatus({ email }: VerificationStatusProps): JSX.Element {
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const toast = useToast();
 
   useEffect(() => {
-    const checkVerificationStatus = async () => {
+    const checkVerificationStatus = async (): Promise<void> => {
       try {
         const response = await fetch('/api/auth/verification-status', {
           method: 'POST',
@@ -42,7 +42,7 @@ export function VerificationStatus({ email }: VerificationStatusProps) {
     checkVerificationStatus();
   }, [email, toast]);
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/resend-verification', {
         method: 'POST',
@@ -95,7 +95,7 @@ export function VerificationStatus({ email }: VerificationStatusProps) {
             message="Please verify your email to continue."
           />
           <Text>
-            We've sent a verification link to {email}. Please check your email and
+            We&apos;ve sent a verification link to {email}. Please check your email and
             click the link to verify your account.
           </Text>
           <Button onClick={handleResendVerification}>

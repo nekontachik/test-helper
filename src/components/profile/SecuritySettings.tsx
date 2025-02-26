@@ -20,20 +20,20 @@ interface SecuritySettingsProps {
   user: AuthUser;
 }
 
-export function SecuritySettings({ user }: SecuritySettingsProps) {
+export function SecuritySettings({ user }: SecuritySettingsProps): JSX.Element {
   const router = useRouter();
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = (): void => {
     router.push('/auth/reset-password/request');
   };
 
-  const handle2FASetup = () => {
+  const handle2FASetup = (): void => {
     router.push('/auth/2fa/setup');
   };
 
-  const handleEmailNotifications = async (enabled: boolean) => {
+  const handleEmailNotifications = async (enabled: boolean): Promise<void> => {
     try {
       const response = await fetch('/api/user/notifications', {
         method: 'PUT',
@@ -47,7 +47,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
 
       setStatus('success');
       setMessage('Notification settings updated successfully');
-    } catch (error) {
+    } catch {
       setStatus('error');
       setMessage('Failed to update notification settings');
     }

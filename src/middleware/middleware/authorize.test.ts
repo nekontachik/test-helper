@@ -1,7 +1,7 @@
-import { NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import { authorizeMiddleware } from './authorize';
 import { AuthorizationError } from '@/lib/errors';
-import { AuthenticatedRequest } from './authenticate';
+import type { AuthenticatedRequest } from './authenticate';
 import { UserRole } from '@/types/auth';
 
 describe('authorizeMiddleware', () => {

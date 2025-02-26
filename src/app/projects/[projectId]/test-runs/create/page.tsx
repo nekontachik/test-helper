@@ -7,8 +7,9 @@ import { useToast } from '@chakra-ui/react';
 import { useTestCases } from '@/hooks/useTestCases';
 import { useCreateTestRun } from '@/hooks/useTestRuns';
 import { TestRunForm } from '@/components/TestRunForm';
+import type {
+  TestRunFormData} from '@/types';
 import {
-  TestRunFormData,
   TestRunStatus,
   TestCase,
   TestCaseStatus,

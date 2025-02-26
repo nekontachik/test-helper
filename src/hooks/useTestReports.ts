@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
-import { TestReport, TestReportFormData } from '@/types';
+import type { TestReport, TestReportFormData } from '@/types';
 
 export function useTestReports(projectId: string) {
   return useQuery({

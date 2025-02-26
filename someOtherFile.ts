@@ -1,4 +1,4 @@
-import {
+import type {
   TestCaseStatus,
   TestCasePriority,
   TestCaseResultStatus,

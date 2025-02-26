@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SyncManager, SyncOperation } from '@/lib/sync/syncManager';
+import type { SyncOperation } from '@/lib/sync/syncManager';
+import { SyncManager } from '@/lib/sync/syncManager';
 
 export function useSyncManager() {
   const [syncManager] = useState(() => new SyncManager());

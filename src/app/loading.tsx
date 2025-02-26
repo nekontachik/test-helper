@@ -1,6 +1,6 @@
 import { Box, Spinner, Text } from '@chakra-ui/react';
 
-export default function Loading() {
+export default function Loading(): JSX.Element {
   return (
     <Box 
       display="flex" 

@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { TestSuiteForm } from '@/components/TestSuiteForm';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 const mockTestCases: TestCase[] = [
   {

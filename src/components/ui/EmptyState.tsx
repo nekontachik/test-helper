@@ -10,7 +10,7 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({ message, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ message, actionLabel, onAction }: EmptyStateProps): JSX.Element {
   return (
     <MotionVStack
       spacing={4}

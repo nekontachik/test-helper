@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Box, Heading, Text, VStack } from '@chakra-ui/react';
-import  apiClient from '@/lib/apiClient';
-import { TestCase } from '@/types';
+import apiClient from '@/lib/apiClient';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
 
@@ -10,7 +9,7 @@ interface TestCaseDetailProps {
   testCaseId: string;
 }
 
-export function TestCaseDetail({ projectId, testCaseId }: TestCaseDetailProps) {
+export function TestCaseDetail({ projectId, testCaseId }: TestCaseDetailProps): React.ReactElement {
   const {
     data: testCase,
     isLoading,

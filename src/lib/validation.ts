@@ -48,6 +48,6 @@ export const createTestCaseSchema = z.object({
   status: z.nativeEnum(TestCaseStatus),
 });
 
-export async function validateTestCase(data: unknown) {
+export async function validateTestCase(data: unknown): Promise<z.infer<typeof testCaseSchema>> {
   return testCaseSchema.parseAsync(data);
 }

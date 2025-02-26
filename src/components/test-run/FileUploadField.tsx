@@ -16,7 +16,7 @@ interface FileUploadFieldProps {
   isDisabled?: boolean;
 }
 
-export function FileUploadField({ form, projectId, files, onFilesChange }: FileUploadFieldProps) {
+export function FileUploadField({ form, projectId, files, onFilesChange }: FileUploadFieldProps): JSX.Element {
   const {
     handleFileChange,
     isUploading,
@@ -25,13 +25,13 @@ export function FileUploadField({ form, projectId, files, onFilesChange }: FileU
     clearError
   } = useFileUploadHandler(projectId, form);
 
-  const handleFileRemove = (index: number) => {
+  const handleFileRemove = (index: number): void => {
     const newFiles = [...files];
     newFiles.splice(index, 1);
     onFilesChange(newFiles);
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     try {
       const fileList = event.target.files;
       if (!fileList?.length) return;

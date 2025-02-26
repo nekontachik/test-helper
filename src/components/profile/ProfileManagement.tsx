@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+// Card is imported but never used, so we'll remove it
+// import { Card } from '@/components/ui/card';
 import { ProfileInformation } from './ProfileInformation';
 import { SecuritySettings } from './SecuritySettings';
 import { SessionsOverview } from './SessionsOverview';
@@ -23,7 +24,7 @@ interface ProfileManagementProps {
   currentSessionId: string;
 }
 
-export function ProfileManagement({ user, currentSessionId }: ProfileManagementProps) {
+export function ProfileManagement({ user, currentSessionId }: ProfileManagementProps): JSX.Element {
   const [activeTab, setActiveTab] = useState('profile');
 
   return (

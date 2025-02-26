@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useApi } from '@/hooks/useApi';
-import axios, { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios from 'axios';
 
 describe('useApi', () => {
   beforeEach(() => {

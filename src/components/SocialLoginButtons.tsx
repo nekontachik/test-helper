@@ -1,6 +1,6 @@
 'use client';
 
-import { VStack, Button, Icon, Text, Divider } from '@chakra-ui/react';
+import { VStack, Button, Icon, Divider } from '@chakra-ui/react';
 import { signIn } from 'next-auth/react';
 import { FaGithub, FaGoogle } from 'react-icons/fa';
 
@@ -8,7 +8,7 @@ interface SocialLoginButtonsProps {
   callbackUrl?: string;
 }
 
-export function SocialLoginButtons({ callbackUrl = '/' }: SocialLoginButtonsProps) {
+export function SocialLoginButtons({ callbackUrl = '/' }: SocialLoginButtonsProps): JSX.Element {
   return (
     <VStack spacing={4} width="100%">
       <Divider />

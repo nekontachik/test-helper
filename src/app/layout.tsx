@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Providers } from '@/components/providers';
 import logger from '@/lib/utils/logger';
 import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
@@ -10,7 +10,7 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): JSX.Element {
   logger.debug('Rendering RootLayout');
 
   return (

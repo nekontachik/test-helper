@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { EditTestCaseForm } from '../EditTestCaseForm';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockTestCase: TestCase = {
@@ -37,7 +38,7 @@ describe('EditTestCaseForm', () => {
     queryClient.clear();
   });
 
-  const renderComponent = (props = {}) => {
+  const renderComponent = (props = {}): ReturnType<typeof render> => {
     return render(
       <QueryClientProvider client={queryClient}>
         <ChakraProvider>

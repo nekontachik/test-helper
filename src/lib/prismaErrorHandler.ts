@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 
 export class PrismaErrorHandler {
-  static handle(error: unknown) {
+  static handle(error: unknown): { message: string; status: number } {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {
         case 'P2002': // Unique constraint violation

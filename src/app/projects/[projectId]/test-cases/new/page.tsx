@@ -6,7 +6,7 @@ import { Box, Heading } from '@chakra-ui/react';
 import { TestCaseForm } from '@/components/TestCaseForm';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
-import { TestCaseFormData } from '@/types';
+import type { TestCaseFormData } from '@/types';
 import { useToast } from '@/hooks/useToast';
 
 export default function NewTestCasePage() {

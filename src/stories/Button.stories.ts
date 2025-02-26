@@ -11,6 +11,6 @@ const meta: Meta<typeof Button> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Button>;
+type _Story = StoryObj<typeof Button>;
 
 // Export your stories here

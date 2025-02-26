@@ -30,4 +30,10 @@ export interface TestCase extends TestCaseBase {
   id: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TestCaseFilters {
+  title?: string;
+  status?: string;
+  priority?: string;
 } 

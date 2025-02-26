@@ -1,5 +1,5 @@
 import { getSession } from 'next-auth/react';
-import { TestCaseStatus, TestCasePriority, TestCase, TestRun, PaginatedResponse } from '@/types';
+import type { TestCaseStatus, TestCasePriority, TestCase, TestRun, PaginatedResponse } from '@/types';
 import { AppError, ApiError } from '@/lib/errors';
 
 interface RequestConfig {

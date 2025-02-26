@@ -34,7 +34,7 @@ const signUpSchema = z.object({
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
 
-export function SignUpForm() {
+export function SignUpForm(): JSX.Element {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,7 +47,7 @@ export function SignUpForm() {
     },
   });
 
-  const onSubmit = async (data: SignUpFormData) => {
+  const onSubmit = async (data: SignUpFormData): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/signup', {

@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { TestReport } from '@/types';
+import type { TestReport } from '@/types';
 
 interface UseReportReturn {
   data: TestReport | undefined;

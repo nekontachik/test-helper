@@ -1,7 +1,8 @@
-import React, { useState, ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
+import React, { useState } from 'react';
 import { Button, VStack, Heading, Text, Textarea } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
-import { TestRun, TestReport, TestReportFormData } from '@/types';
+import type { TestRun, TestReport, TestReportFormData } from '@/types';
 import apiClient from '@/lib/apiClient';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { ApiError, ValidationError, DatabaseError } from '@/lib/errors';

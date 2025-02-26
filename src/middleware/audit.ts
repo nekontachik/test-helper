@@ -1,8 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditLogType } from '@/types/audit';
 import logger from '@/lib/logger';
-import { Session } from 'next-auth';
+import type { Session } from 'next-auth';
 
 interface AuditParams {
   request: Request;

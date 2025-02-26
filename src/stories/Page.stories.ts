@@ -8,6 +8,6 @@ const meta: Meta<typeof Page> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Page>;
+type _Story = StoryObj<typeof Page>;
 
 // Export your stories here

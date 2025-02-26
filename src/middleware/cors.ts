@@ -25,7 +25,7 @@ const ALLOWED_HEADERS = [
   'X-Request-Signature',
 ];
 
-export function corsMiddleware(request: NextRequest) {
+export function corsMiddleware(request: NextRequest): NextResponse {
   const origin = request.headers.get('origin');
   
   // Handle preflight requests

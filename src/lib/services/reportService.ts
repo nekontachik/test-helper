@@ -1,16 +1,16 @@
 import { prisma } from '@/lib/prisma';
-import { TestRunReport } from '@/types/report';
+import type { TestRunReport } from '@/types/report';
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { TestRun, TestCaseResult, User } from '@prisma/client';
+import type { TestRun, TestCaseResult } from '@prisma/client';
 import { Parser } from 'json2csv';
 
 interface TestResultWithRelations extends TestCaseResult {
   testCase: {
-    name: string;
+    title: string;
   };
-  user: {
+  executedBy: {
     name: string | null;
   };
 }
@@ -34,8 +34,12 @@ export class ReportService {
       include: {
         testResults: {
           include: {
-            testCase: true,
-            user: {
+            testCase: {
+              select: {
+                title: true
+              }
+            },
+            executedBy: {
               select: {
                 id: true,
                 name: true
@@ -63,16 +67,16 @@ export class ReportService {
       statistics,
       results: testRun.testResults.map(result => ({
         testCaseId: result.testCaseId,
-        testCaseName: result.testCase.name,
+        testCaseName: result.testCase.title,
         status: result.status,
-        executedBy: result.user.name || 'Unknown',
+        executedBy: result.executedBy.name || 'Unknown',
         executedAt: result.createdAt,
         notes: result.notes || undefined
       }))
     };
   }
 
-  private calculateStatistics(results: any[]): TestRunReport['statistics'] {
+  private calculateStatistics(results: TestResultWithRelations[]): TestRunReport['statistics'] {
     const total = results.length;
     const passed = results.filter(r => r.status === 'PASSED').length;
     const failed = results.filter(r => r.status === 'FAILED').length;
@@ -118,7 +122,8 @@ export class ReportService {
     doc.text(`Duration: ${Math.round(report.statistics.duration / 1000 / 60)}min`, 14, 86);
     
     // Add results table
-    (doc as any).autoTable({
+    const docWithAutoTable = doc as jsPDF & { autoTable: (options: unknown) => void };
+    docWithAutoTable.autoTable({
       startY: 100,
       head: [['Test Case', 'Status', 'Executed By', 'Date', 'Notes']],
       body: report.results.map(result => [

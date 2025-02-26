@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, Badge } from '@chakra-ui/react';
-import { TestRun } from '@/types';
+import type { TestRun } from '@/types';
 
 interface TestRunItemProps {
   testRun: TestRun;

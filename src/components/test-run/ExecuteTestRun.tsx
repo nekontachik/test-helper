@@ -7,7 +7,7 @@ import { TestResultForm } from './TestResultForm';
 import { OfflineIndicator } from './OfflineIndicator';
 import { useRouter } from 'next/navigation';
 import type { TestRun } from '@/types';
-import type { TestResult } from '@/types/testResults';
+import type { TestResultFormData } from '@/lib/validations/testResult';
 
 interface ExecuteTestRunProps {
   testRun: TestRun;
@@ -15,17 +15,7 @@ interface ExecuteTestRunProps {
   runId: string;
 }
 
-interface TestResultFormProps {
-  testCaseId: string;
-  runId: string;
-  projectId: string;
-  isSubmitting: boolean;
-  isLastCase: boolean;
-  onSubmit: (result: TestResult) => Promise<void>;
-  onSuccess: (data: Record<string, any>) => Promise<void>;
-}
-
-export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProps) {
+export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProps): JSX.Element | null {
   const router = useRouter();
   const toast = useToast();
   
@@ -34,7 +24,7 @@ export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProp
     isLastTestCase,
     completionProgress,
     isSubmitting,
-    error,
+    error: _error,
     handleSubmitResult,
     handleComplete,
     hasQueuedOperations
@@ -58,7 +48,7 @@ export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProp
     return null;
   }
 
-  const handleSuccess = async (data: Record<string, any>) => {
+  const handleSuccess = async (_data: TestResultFormData): Promise<void> => {
     await handleComplete();
     return Promise.resolve();
   };
@@ -78,7 +68,7 @@ export function ExecuteTestRun({ testRun, projectId, runId }: ExecuteTestRunProp
           projectId={projectId}
           isSubmitting={isSubmitting}
           isLastCase={isLastTestCase}
-          onSubmit={handleSubmitResult}
+          onSubmit={handleSubmitResult as unknown as (data: TestResultFormData) => Promise<void>}
           onSuccess={handleSuccess}
         />
       </Box>

@@ -1,13 +1,14 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import type { StoryFn, Meta } from '@storybook/react';
 import { TestRunDetails } from './TestRunDetails';
-import {
+import type {
   TestRun,
+  TestCase,
+  TestCaseResult} from '@/types';
+import {
   TestRunStatus,
   TestCaseStatus,
   TestCasePriority,
-  TestCase,
-  TestCaseResult,
   TestCaseResultStatus,
 } from '@/types';
 

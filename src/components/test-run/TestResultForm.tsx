@@ -27,7 +27,7 @@ interface TestResultFormProps {
   onSubmit?: (data: TestResultFormData) => Promise<void>;
 }
 
-export function TestResultForm({ runId, projectId, testCaseId, onSuccess }: TestResultFormProps) {
+export function TestResultForm({ runId, projectId, testCaseId, onSuccess }: TestResultFormProps): JSX.Element {
   const { submitTestResult, isSubmitting } = useTestRunManager(projectId, runId);
   const form = useForm<TestResultFormData>({
     resolver: zodResolver(testResultSchema),
@@ -35,11 +35,11 @@ export function TestResultForm({ runId, projectId, testCaseId, onSuccess }: Test
       testCaseId,
       status: TestCaseResultStatus.PASSED,
       notes: '',
-      evidenceUrls: []
+      evidence: []
     }
   });
 
-  const onSubmit = async (data: TestResultFormData) => {
+  const onSubmit = async (data: TestResultFormData): Promise<void> => {
     try {
       const result = await submitTestResult(data);
       if (result) {
@@ -87,7 +87,7 @@ export function TestResultForm({ runId, projectId, testCaseId, onSuccess }: Test
 
       <FormField
         control={form.control}
-        name="evidenceUrls"
+        name="evidence"
         render={({ field: { onChange, value } }) => (
           <FormItem>
             <FormLabel>Evidence</FormLabel>

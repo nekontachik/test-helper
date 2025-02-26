@@ -9,9 +9,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import type { UseFormReturn } from 'react-hook-form';
+
+interface AuthFormValues {
+  email: string;
+  password: string;
+  name?: string;
+}
 
 interface AuthFieldProps {
-  _form: any;
+  _form: UseFormReturn<AuthFormValues>;
   isLoading: boolean;
   type: 'signin' | 'signup';
 }
@@ -25,6 +32,7 @@ export const AuthFormFields = memo(function AuthFormFields({
     <>
       {type === 'signup' && (
         <FormField
+          control={_form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
@@ -39,6 +47,7 @@ export const AuthFormFields = memo(function AuthFormFields({
       )}
 
       <FormField
+        control={_form.control}
         name="email"
         render={({ field }) => (
           <FormItem>
@@ -52,6 +61,7 @@ export const AuthFormFields = memo(function AuthFormFields({
       />
 
       <FormField
+        control={_form.control}
         name="password"
         render={({ field }) => (
           <FormItem>

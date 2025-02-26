@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import crypto from 'crypto';
+import type { User } from '@prisma/client';
 
 export async function generateVerificationToken(email: string): Promise<string> {
   const token = crypto.randomBytes(32).toString('hex');
@@ -16,7 +17,7 @@ export async function generateVerificationToken(email: string): Promise<string> 
   return token;
 }
 
-export async function validateVerificationToken(token: string) {
+export async function validateVerificationToken(token: string): Promise<User | null> {
   const user = await prisma.user.findFirst({
     where: {
       emailVerificationToken: token,

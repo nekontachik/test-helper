@@ -4,7 +4,7 @@ interface TestCaseViewProps {
   testCase: TestCase;
 }
 
-export function TestCaseView({ testCase }: TestCaseViewProps) {
+export function TestCaseView({ testCase }: TestCaseViewProps): JSX.Element {
   return (
     <div className="border p-4 rounded-md">
       <h3 className="font-semibold">{testCase.title}</h3>

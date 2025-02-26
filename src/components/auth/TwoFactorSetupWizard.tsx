@@ -13,7 +13,7 @@ interface TwoFactorSetupWizardProps {
 
 type SetupStep = 'qr-code' | 'verification' | 'backup-codes';
 
-export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps) {
+export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps): JSX.Element {
   const [currentStep, setCurrentStep] = useState<SetupStep>('qr-code');
   const [setupData, setSetupData] = useState<{
     secret?: string;
@@ -27,12 +27,12 @@ export function TwoFactorSetupWizard({ redirectUrl }: TwoFactorSetupWizardProps)
     { id: 'backup-codes', title: 'Save Backup Codes' },
   ];
 
-  const handleQRCodeComplete = (secret: string, qrCode: string) => {
+  const handleQRCodeComplete = (secret: string, qrCode: string): void => {
     setSetupData(prev => ({ ...prev, secret, qrCode }));
     setCurrentStep('verification');
   };
 
-  const handleVerificationComplete = (backupCodes: string[]) => {
+  const handleVerificationComplete = (backupCodes: string[]): void => {
     setSetupData(prev => ({ ...prev, backupCodes }));
     setCurrentStep('backup-codes');
   };

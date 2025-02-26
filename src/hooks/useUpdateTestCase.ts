@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/apiClient';
-import { TestCaseFormData, TestCase } from '@/types';
+import apiClient from '../lib/apiClient';
+import type { TestCaseFormData } from '../types';
 
-export const useUpdateTestCase = (projectId: string) => {
+export function useUpdateTestCase(projectId: string): ReturnType<typeof useMutation> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -12,4 +12,4 @@ export const useUpdateTestCase = (projectId: string) => {
       queryClient.invalidateQueries(['testCase', projectId]);
     },
   });
-};
+}

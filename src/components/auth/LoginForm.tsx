@@ -31,7 +31,7 @@ interface LoginError {
   lockoutRemaining?: number;
 }
 
-export function LoginForm() {
+export function LoginForm(): JSX.Element {
   const [error, setError] = useState<LoginError | null>(null);
   const router = useRouter();
 
@@ -43,7 +43,7 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData): Promise<void> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -98,6 +98,7 @@ export function LoginForm() {
 
       <Form form={form} onSubmit={onSubmit} className="space-y-4">
         <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -111,6 +112,7 @@ export function LoginForm() {
         />
 
         <FormField
+          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>

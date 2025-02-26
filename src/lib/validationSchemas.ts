@@ -49,13 +49,13 @@ export const validateSchema = (
   }
 };
 
-export const validateTestCase = (data: unknown) =>
+export const validateTestCase = (data: unknown): { isValid: boolean; errors: string[] | null } =>
   validateSchema(testCaseSchema, data);
-export const validateTestRun = (data: unknown) =>
+export const validateTestRun = (data: unknown): { isValid: boolean; errors: string[] | null } =>
   validateSchema(testRunSchema, data);
-export const validateProject = (data: unknown) =>
+export const validateProject = (data: unknown): { isValid: boolean; errors: string[] | null } =>
   validateSchema(projectSchema, data);
-export const validateTestSuite = (data: unknown) =>
+export const validateTestSuite = (data: unknown): { isValid: boolean; errors: string[] | null } =>
   validateSchema(testSuiteSchema, data);
 
 // Add similar validation functions for other schemas if needed

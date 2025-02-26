@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { GET, PUT, DELETE } from '@/app/api/projects/[projectId]/test-runs/[runId]/route';
 import {prisma } from '@/lib/prisma';
 import { TestRunStatus } from '@/types';

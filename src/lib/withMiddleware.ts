@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { rateLimitMiddleware } from './rateLimitMiddleware';
 
 type Middleware = (
@@ -22,7 +22,7 @@ async function runMiddleware(
   req: NextApiRequest,
   res: NextApiResponse,
   middlewares: Middleware[]
-) {
+): Promise<void> {
   for (const middleware of middlewares) {
     await new Promise<void>((resolve) => {
       middleware(req, res, async () => {

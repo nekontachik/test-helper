@@ -1,10 +1,20 @@
-import { useState, useCallback } from 'react';
-import { ConflictResolver, ConflictResolutionStrategy } from '@/lib/sync/conflictResolver';
-import { TestCaseResult } from '@prisma/client';
+import { useState, useCallback, useMemo } from 'react';
+import type { ConflictResolutionStrategy } from '@/lib/sync/conflictResolver';
+import { ConflictResolver } from '@/lib/sync/conflictResolver';
+import type { TestCaseResult } from '@prisma/client';
 
-export function useConflictResolution(strategy: ConflictResolutionStrategy = 'last-write-wins') {
+export function useConflictResolution(strategy: ConflictResolutionStrategy = 'last-write-wins'): {
+  resolveConflict: (
+    clientVersion: TestCaseResult,
+    serverVersion: TestCaseResult,
+    metadata: { userId: string; timestamp: number }
+  ) => Promise<TestCaseResult>;
+  isResolving: boolean;
+} {
   const [isResolving, setIsResolving] = useState(false);
-  const resolver = new ConflictResolver(strategy);
+  
+  // Use useMemo to create the resolver only when strategy changes
+  const resolver = useMemo(() => new ConflictResolver(strategy), [strategy]);
 
   const resolveConflict = useCallback(async (
     clientVersion: TestCaseResult,

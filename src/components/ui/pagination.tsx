@@ -7,7 +7,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps): React.ReactElement {
   return (
     <HStack spacing={2} justify="center" mt={4}>
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (

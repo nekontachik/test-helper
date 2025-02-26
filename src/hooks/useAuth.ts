@@ -2,8 +2,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { DEFAULT_LOGIN_REDIRECT } from '@/lib/auth/redirects';
+import type { Session } from 'next-auth';
 
-export function useAuth(requireAuth = true) {
+export function useAuth(requireAuth = true): {
+  session: Session | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+  isLoading: boolean;
+} {
   const { data: session, status } = useSession();
   const router = useRouter();
 

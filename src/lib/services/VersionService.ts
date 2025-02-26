@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import type { PrismaClient, Prisma, TestCaseVersion } from '@prisma/client';
 import { ErrorFactory } from '@/lib/errors/BaseError';
 import type { TestCase } from '@/types';
 
@@ -10,8 +10,16 @@ interface VersionData {
   versionNumber: number;
 }
 
+interface VersionWithUser extends TestCaseVersion {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+}
+
 export class VersionService {
-  static async createVersion(tx: PrismaClient, params: VersionData) {
+  static async createVersion(tx: PrismaClient, params: VersionData): Promise<VersionWithUser> {
     return tx.testCaseVersion.create({
       data: {
         testCase: { connect: { id: params.testCaseId } },
@@ -32,7 +40,7 @@ export class VersionService {
     });
   }
 
-  static async getVersions(tx: PrismaClient, testCaseId: string) {
+  static async getVersions(tx: PrismaClient, testCaseId: string): Promise<VersionWithUser[]> {
     return tx.testCaseVersion.findMany({
       where: { testCaseId },
       orderBy: { versionNumber: 'desc' },
@@ -48,7 +56,7 @@ export class VersionService {
     });
   }
 
-  static async getVersion(tx: PrismaClient, testCaseId: string, versionNumber: number) {
+  static async getVersion(tx: PrismaClient, testCaseId: string, versionNumber: number): Promise<VersionWithUser> {
     const version = await tx.testCaseVersion.findFirst({
       where: { testCaseId, versionNumber },
       include: {
@@ -69,7 +77,7 @@ export class VersionService {
     return version;
   }
 
-  static async getLatestVersion(tx: PrismaClient, testCaseId: string) {
+  static async getLatestVersion(tx: PrismaClient, testCaseId: string): Promise<VersionWithUser | null> {
     return tx.testCaseVersion.findFirst({
       where: { testCaseId },
       orderBy: { versionNumber: 'desc' },

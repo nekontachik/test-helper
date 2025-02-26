@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { Project } from '@prisma/client';
+import type { Project } from '@prisma/client';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -10,7 +10,13 @@ interface UploadState {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 seconds
 
-export function useFileUpload(projectId: string) {
+export function useFileUpload(projectId: string): {
+  uploadFiles: (files: File[]) => Promise<string[]>;
+  isUploading: boolean;
+  progress: number;
+  error: string | null;
+  canRetry: boolean;
+} {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,

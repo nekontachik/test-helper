@@ -18,7 +18,24 @@ export function useTestRunState({
   projectId: string;
   testRunId: string;
   onComplete: () => void;
-}) {
+}): {
+  currentTestCase: TestCase | undefined;
+  isLastTestCase: boolean;
+  progress: {
+    currentIndex: number;
+    results: any[];
+  };
+  completionProgress: number;
+  isSubmitting: boolean;
+  error: string | null;
+  handleSubmit: (formData: TestResultFormData) => Promise<void>;
+  handleRetry: () => Promise<void>;
+  isCompleted: boolean;
+  handleComplete: () => Promise<void>;
+  updateProgress: (updates: any) => void;
+  clearProgress: () => void;
+  executeTestRun: (results: TestResultWithEvidence[]) => Promise<any>;
+} {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { executeTestRun } = useTestRunExecution(projectId, testRunId);

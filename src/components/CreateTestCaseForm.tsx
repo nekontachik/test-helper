@@ -11,7 +11,8 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
-import { TestCaseFormData, TestCasePriority, TestCaseStatus } from '@/types';
+import type { TestCaseFormData} from '@/types';
+import { TestCasePriority, TestCaseStatus } from '@/types';
 
 interface CreateTestCaseFormProps {
   onSubmit: (data: TestCaseFormData) => void;

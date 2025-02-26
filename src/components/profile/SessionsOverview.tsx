@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { Laptop, Smartphone, Globe } from 'lucide-react';
@@ -21,22 +20,18 @@ interface SessionsOverviewProps {
   currentSessionId: string;
 }
 
-export function SessionsOverview({ currentSessionId }: SessionsOverviewProps) {
+export function SessionsOverview({ currentSessionId }: SessionsOverviewProps): JSX.Element {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/sessions');
       if (!response.ok) throw new Error('Failed to fetch sessions');
       const data = await response.json();
       setSessions(data.sessions);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load sessions',
@@ -45,9 +40,13 @@ export function SessionsOverview({ currentSessionId }: SessionsOverviewProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const handleRevokeSession = async (sessionId: string) => {
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
+
+  const handleRevokeSession = async (sessionId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/auth/sessions/${sessionId}`, {
         method: 'DELETE',
@@ -61,7 +60,7 @@ export function SessionsOverview({ currentSessionId }: SessionsOverviewProps) {
         title: 'Success',
         description: 'Session revoked successfully',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to revoke session',
@@ -70,7 +69,7 @@ export function SessionsOverview({ currentSessionId }: SessionsOverviewProps) {
     }
   };
 
-  const getDeviceIcon = (deviceType: Session['deviceType']) => {
+  const getDeviceIcon = (deviceType: Session['deviceType']): JSX.Element => {
     switch (deviceType) {
       case 'mobile':
         return <Smartphone className="h-4 w-4" />;

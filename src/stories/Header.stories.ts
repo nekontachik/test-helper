@@ -8,6 +8,6 @@ const meta: Meta<typeof Header> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Header>;
+type _Story = StoryObj<typeof Header>;
 
 // Export your stories here

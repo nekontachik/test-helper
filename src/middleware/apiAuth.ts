@@ -1,7 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { UserRole } from '@/types/auth';
-import { Action, Resource } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
+import type { Action, Resource } from '@/types/rbac';
 import { authOptions } from '@/lib/auth';
 import logger from '@/lib/logger';
 
@@ -48,7 +48,7 @@ export function withApiAuth(
 
       // Check ownership if required
       if (options.checkOwnership && options.getProjectId) {
-        const projectId = options.getProjectId(req);
+        const _projectId = options.getProjectId(req);
         // Add your ownership check logic here
       }
 

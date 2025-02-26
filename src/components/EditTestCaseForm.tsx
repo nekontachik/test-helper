@@ -10,9 +10,10 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
-import {
+import type {
   TestCase,
-  TestCaseFormData,
+  TestCaseFormData} from '@/types';
+import {
   TestCaseStatus,
   TestCasePriority,
 } from '@/types';

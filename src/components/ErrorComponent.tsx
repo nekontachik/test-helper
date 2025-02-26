@@ -6,7 +6,7 @@ interface ErrorComponentProps {
 
 const ErrorComponent: React.FC<ErrorComponentProps> = ({
   message = 'An error occurred',
-}) => {
+}): JSX.Element => {
   return (
     <div className="error-container">
       <h2>Error</h2>

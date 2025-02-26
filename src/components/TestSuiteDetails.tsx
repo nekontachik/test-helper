@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text, VStack, Button } from '@chakra-ui/react';
-import { TestSuite, TestCase } from '@/types';
+import type { TestSuite } from '@/types';
 import NextLink from 'next/link';
 import { useTestCases } from '@/hooks/useTestCases';
 import { Loading } from '@/components/ui/loading';
@@ -12,18 +12,19 @@ interface TestSuiteDetailsProps {
 
 export const TestSuiteDetails = ({
   testSuite,
-}: TestSuiteDetailsProps) => {
+}: TestSuiteDetailsProps): React.ReactElement => {
   logger.debug('TestSuiteDetails Component Mounted', { testSuiteId: testSuite.id });
 
   const {
-    data: testCasesResponse,
+    testCases: testCasesResponse,
     isLoading,
     error,
   } = useTestCases({
     projectId: testSuite.projectId,
-    status: [],
-    page: 1,
-    limit: 100
+    initialFilters: {
+      page: 1,
+      limit: 100
+    }
   });
 
   if (isLoading) {
@@ -36,9 +37,9 @@ export const TestSuiteDetails = ({
     );
   }
 
-  const testCases = testCasesResponse?.data || [];
+  const testCases = testCasesResponse ?? [];
   const testCasesForSuite = testCases.filter(
-    (tc: TestCase) => testSuite.testCases?.includes(tc.id) ?? false
+    (tc: { id: string }) => testSuite.testCases?.includes(tc.id) ?? false
   );
 
   return (
@@ -53,7 +54,12 @@ export const TestSuiteDetails = ({
       <Text mb={2}>Total Test Cases: {testCasesForSuite.length}</Text>
       {testCasesForSuite.length > 0 ? (
         <VStack align="stretch" spacing={4}>
-          {testCasesForSuite.map((testCase: TestCase) => (
+          {testCasesForSuite.map((testCase: { 
+            id: string; 
+            title: string; 
+            priority?: string; 
+            status: string 
+          }) => (
             <Box key={testCase.id} p={4} borderWidth={1} borderRadius="md">
               <Heading as="h4" size="md">
                 {testCase.title}
@@ -77,4 +83,4 @@ export const TestSuiteDetails = ({
       )}
     </Box>
   );
-}
+};

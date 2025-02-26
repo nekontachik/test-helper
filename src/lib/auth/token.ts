@@ -1,5 +1,5 @@
 import { jwtVerify, SignJWT } from 'jose'
-import { AuthUser } from './types'
+import type { AuthUser } from './types'
 import { AuthError } from '@/lib/errors/AuthError'
 
 const JWT_SECRET = new TextEncoder().encode(

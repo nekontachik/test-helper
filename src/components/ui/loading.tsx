@@ -6,7 +6,7 @@ interface LoadingProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Loading({ text = 'Loading...', size = 'md' }: LoadingProps) {
+export function Loading({ text = 'Loading...', size = 'md' }: LoadingProps): React.ReactElement {
   return (
     <VStack spacing={4}>
       <Spinner size={size} />

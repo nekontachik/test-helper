@@ -16,8 +16,8 @@ export function ConflictResolutionDialog({
   localChanges,
   serverChanges,
   onResolve
-}: ConflictResolutionDialogProps) {
-  const handleResolve = (useLocal: boolean) => {
+}: ConflictResolutionDialogProps): JSX.Element {
+  const handleResolve = (useLocal: boolean): void => {
     onResolve(useLocal ? localChanges : serverChanges);
     onClose();
   };

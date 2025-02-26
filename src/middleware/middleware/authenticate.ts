@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError } from '@/lib/errors';
 
@@ -14,7 +14,7 @@ export function authenticateMiddleware(
   req: AuthenticatedRequest,
   res: NextApiResponse,
   next: () => void
-) {
+): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -31,7 +31,7 @@ export function authenticateMiddleware(
     };
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch (_error) {
     throw new AuthenticationError('Invalid token');
   }
 }

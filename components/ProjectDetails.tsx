@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text, VStack, Button, Flex } from '@chakra-ui/react';
-import { Project, TestRun } from '@/types';
+import type { Project, TestRun } from '@/types';
 import Link from 'next/link';
 import { TestRunList } from './TestRunList';
 import { useTestRuns } from '@/hooks/useTestRuns';

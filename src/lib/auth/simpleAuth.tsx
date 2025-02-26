@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { AuthUser, UserRole, AccountStatus, Permission } from '@/types/auth';
+import type { AuthUser, Permission } from '@/types/auth';
+import { UserRole, AccountStatus } from '@/types/auth';
 
 // Define mock permissions
 const MOCK_PERMISSIONS: Permission[] = [

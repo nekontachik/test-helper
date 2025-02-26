@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { compare } from 'bcryptjs';
 import { UserRole } from '@/types/auth';
 import type { CredentialsConfig } from 'next-auth/providers/credentials';
-import { createMockUser, createMockCredentials, MockUser } from '@/lib/testUtils';
+import type { MockUser } from '@/lib/testUtils';
+import { createMockUser, createMockCredentials } from '@/lib/testUtils';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {

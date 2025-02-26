@@ -3,9 +3,20 @@ import { useOfflineState } from './useOfflineState';
 import { useBackgroundSync } from './useBackgroundSync';
 import { useOperationQueue } from './useOperationQueue';
 import { useQueueProcessor } from './useQueueProcessor';
-import { QueuedOperation, OperationType, OperationPriority } from '@/types/operations';
+import type { QueuedOperation, OperationType} from '@/types/operations';
+import { OperationPriority } from '@/types/operations';
 
-export function useTestRunSync(projectId: string, testRunId: string) {
+export function useTestRunSync(projectId: string, testRunId: string): {
+  isOnline: boolean;
+  queueOperation: <T extends OperationType>(operation: Omit<QueuedOperation<T>, 'id' | 'timestamp' | 'retryCount'>) => QueuedOperation<T> | undefined;
+  hasQueuedOperations: boolean;
+  hasPendingOperations: boolean;
+  isProcessing: boolean;
+  isSyncing: boolean;
+  queueLength: number;
+  pendingOperations: any[];
+  syncNow: () => Promise<void>;
+} {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { 
     hasPendingOperations, 
@@ -16,8 +27,8 @@ export function useTestRunSync(projectId: string, testRunId: string) {
   const { isProcessing, queueLength } = useQueueProcessor(projectId);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = (): void => setIsOnline(true);
+    const handleOffline = (): void => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -30,7 +41,7 @@ export function useTestRunSync(projectId: string, testRunId: string) {
 
   const queueOperation = useCallback(<T extends OperationType>(
     operation: Omit<QueuedOperation<T>, 'id' | 'timestamp' | 'retryCount'>
-  ) => {
+  ): QueuedOperation<T> | undefined => {
     if (!operation.type || !operation.data) return;
     
     return {

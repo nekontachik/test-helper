@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Box,
   Container,
@@ -10,7 +11,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 
-export function AuthFooter() {
+export function AuthFooter(): React.ReactElement {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 

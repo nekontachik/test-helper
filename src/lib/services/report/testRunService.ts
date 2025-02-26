@@ -1,7 +1,7 @@
-import type { Prisma, TestRun, TestCase, TestRunCase } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import type { TestRunData, TestRunWithRelations } from './types';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
-import { TEST_RESULT_STATUS, TestResultStatus, TEST_RUN_ERROR_CODES, type TestRunErrorCode } from './constants';
+import { TEST_RESULT_STATUS, type TestResultStatus, TEST_RUN_ERROR_CODES, type TestRunErrorCode } from './constants';
 
 interface TestRunOptions {
   projectId: string;
@@ -249,13 +249,41 @@ export class TestRunService {
       this.validateExecuteOptions(options);
 
       // Update test run status and start time
-      const testRun = await tx.testRun.update({
+      await tx.testRun.update({
         where: { id: options.testRunId },
         data: {
           status: TEST_RESULT_STATUS.IN_PROGRESS,
-          startTime: new Date(),
-          updatedAt: new Date()
+          startTime: new Date()
         },
+        include: {
+          testRunCases: {
+            include: {
+              testCase: true
+            }
+          }
+        }
+      });
+
+      // Update test case results if provided
+      if (options.results?.length) {
+        await Promise.all(options.results.map(result => 
+          tx.testRunCase.update({
+            where: {
+              testRunId_testCaseId: {
+                testRunId: options.testRunId,
+                testCaseId: result.testCaseId
+              }
+            },
+            data: {
+              status: result.status
+            }
+          })
+        ));
+      }
+
+      // Fetch updated test run with all relations
+      const finalTestRun = await tx.testRun.findUnique({
+        where: { id: options.testRunId },
         include: {
           testRunCases: {
             include: {
@@ -265,48 +293,16 @@ export class TestRunService {
         }
       }) as TestRunWithRelations;
 
-      // Create test results if provided
-      if (options.results?.length) {
-        try {
-          await Promise.all([
-            tx.testRunCase.updateMany({
-              where: {
-                testRunId: options.testRunId,
-                testCaseId: { in: options.results.map(r => r.testCaseId) }
-              },
-              data: {
-                status: TEST_RESULT_STATUS.IN_PROGRESS,
-                updatedAt: new Date()
-              }
-            }),
-            tx.testCaseResult.createMany({
-              data: options.results.map(result => ({
-                testRunId: options.testRunId,
-                testCaseId: result.testCaseId,
-                status: result.status,
-                notes: result.notes || null,
-                userId: options.userId,
-                startedAt: new Date()
-              }))
-            })
-          ]);
-        } catch (error) {
-          throw ErrorFactory.validation('Failed to create test results');
-        }
-      }
-
-      const updatedTestRun = await this.findTestRun(tx, options.testRunId);
       return {
         success: true,
-        data: this.processTestRunData(updatedTestRun!)
+        data: this.processTestRunData(finalTestRun)
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
           code: TEST_RUN_ERROR_CODES.EXECUTION_ERROR,
-          message: error instanceof Error ? error.message : 'Failed to execute test run',
-          details: error
+          message: 'Failed to execute test run'
         }
       };
     }
@@ -317,7 +313,17 @@ export class TestRunService {
     testRunId: string
   ): Promise<TestRunResult> {
     try {
-      const testRun = await this.findTestRun(tx, testRunId);
+      const testRun = await tx.testRun.findUnique({
+        where: { id: testRunId },
+        include: {
+          testRunCases: {
+            include: {
+              testCase: true
+            }
+          }
+        }
+      }) as TestRunWithRelations;
+
       if (!testRun) {
         return {
           success: false,
@@ -348,13 +354,12 @@ export class TestRunService {
         success: true,
         data: this.processTestRunData(updatedTestRun)
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: {
-          code: TEST_RUN_ERROR_CODES.COMPLETION_ERROR,
-          message: error instanceof Error ? error.message : 'Failed to complete test run',
-          details: error
+          code: TEST_RUN_ERROR_CODES.EXECUTION_ERROR,
+          message: 'Failed to complete test run'
         }
       };
     }

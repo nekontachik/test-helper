@@ -1,5 +1,14 @@
-import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { ApiResult, ApiError } from '@/types/api';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import type { QueryObserverResult, MutationObserverResult } from '@tanstack/react-query';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
 
 interface ApiHookConfig<TData, TInput> {
   queryKey: string[];
@@ -11,14 +20,19 @@ interface ApiHookConfig<TData, TInput> {
   };
 }
 
+type ApiQueryHook<TData> = () => QueryObserverResult<ApiResponse<TData>, Error>;
+type ApiMutationHook<TData, TInput> = () => MutationObserverResult<ApiResponse<TData>, Error, TInput>;
+
 export function createApiHook<TData, TInput = void>({
   queryKey,
   url,
   method = 'GET',
   options = {}
-}: ApiHookConfig<TData, TInput>) {
-  const fetchData = async (input?: TInput): Promise<ApiResult<TData>> => {
-    const response = await fetch(url, {
+}: ApiHookConfig<TData, TInput>): ApiQueryHook<TData> | ApiMutationHook<TData, TInput> {
+  const fetchData = async (input?: TInput): Promise<ApiResponse<TData>> => {
+    const targetUrl = typeof url === 'function' ? url(input as TInput) : url;
+    
+    const response = await fetch(targetUrl, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -29,21 +43,21 @@ export function createApiHook<TData, TInput = void>({
     const data = await response.json();
     
     if (!response.ok) {
-      throw new ApiError(data.error.message, data.error.code);
+      throw new Error(data.error?.message || 'API request failed');
     }
 
     return data;
   };
 
   if (method === 'GET') {
-    return () => useQuery<ApiResult<TData>>({
+    return () => useQuery({
       queryKey,
       queryFn: () => fetchData(),
       ...options,
     });
   }
 
-  return () => useMutation<ApiResult<TData>, ApiError, TInput>({
+  return () => useMutation({
     mutationFn: fetchData,
     ...options,
   });

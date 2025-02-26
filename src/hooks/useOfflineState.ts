@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TestCaseResultStatus } from '@/types';
+import type { TestCaseResultStatus } from '@/types';
 
 // Use a more specific type for operation data
 interface TestResultData {

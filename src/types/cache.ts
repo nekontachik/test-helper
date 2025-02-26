@@ -1,8 +1,17 @@
-export type CacheableRequest = Omit<Request, 'cache'> & {
+export type CacheableRequest = {
   url: string;
   method: string;
   headers: Headers;
-  cache?: RequestCache | undefined;
+  cache?: RequestCache;
+  body?: BodyInit | null;
+  credentials?: RequestCredentials;
+  integrity?: string;
+  keepalive?: boolean;
+  mode?: RequestMode;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  signal?: AbortSignal | null;
 };
 
 export interface CacheStrategy {

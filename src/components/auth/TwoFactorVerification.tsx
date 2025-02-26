@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import type { SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -52,7 +53,7 @@ export function TwoFactorVerification({
   secret,
   onComplete,
   redirectUrl,
-}: TwoFactorVerificationProps) {
+}: TwoFactorVerificationProps): JSX.Element {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
 
@@ -63,7 +64,7 @@ export function TwoFactorVerification({
     },
   });
 
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
+  const onSubmit: SubmitHandler<FormData> = async (data): Promise<void> => {
     try {
       setError(null);
       const response = await fetch('/api/auth/2fa/verify', {

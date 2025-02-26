@@ -1,5 +1,4 @@
 // import { ErrorType } from './BaseError';
-import { AppError } from './types';
 import type { ErrorSeverity } from './types';
 import type { ErrorCode } from './errorTypes';
 

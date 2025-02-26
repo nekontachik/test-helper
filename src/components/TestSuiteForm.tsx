@@ -10,7 +10,7 @@ import {
   Textarea,
   FormErrorMessage,
 } from '@chakra-ui/react';
-import { TestCase as BaseTestCase } from '@/types';
+import type { TestCase as BaseTestCase } from '@/types';
 
 interface TestSuiteFormTestCase extends Omit<BaseTestCase, 'description'> {
   description: string;

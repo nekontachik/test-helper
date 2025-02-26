@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { AuditAction, AuditLogType, type AuditLogData } from '@/types/audit';
+import type { AuditLogType} from '@/types/audit';
+import { AuditAction, type AuditLogData } from '@/types/audit';
 import logger from '@/lib/logger';
 
 export class AuditService {

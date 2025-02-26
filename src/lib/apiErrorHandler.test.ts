@@ -1,7 +1,7 @@
 import { handleApiError } from './apiErrorHandler';
 import { ZodError, z } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { NextResponse } from 'next/server';
+import { NextResponse as _NextResponse } from 'next/server';
 
 describe('handleApiError', () => {
   it('should handle ZodError correctly', () => {

@@ -1,9 +1,9 @@
 import { BaseService } from '@/lib/services/BaseService';
 import { prisma } from '@/lib/prisma';
-import { TestCase, TestCaseInput } from '@/types';
-import { validateRequest } from '@/lib/validations/validateRequest';
+import type { TestCase, TestCaseInput } from '@/types';
+// import { validateRequest } from '@/lib/validations/validateRequest';
 import { testCaseSchema } from '@/lib/validations/schema';
-import { FilterCondition } from '@/lib/db/filters';
+import type { FilterCondition } from '@/lib/db/filters';
 
 export class TestCaseService extends BaseService<TestCase> {
   constructor() {
@@ -15,7 +15,7 @@ export class TestCaseService extends BaseService<TestCase> {
     return this.create(validated);
   }
 
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string): Promise<TestCase[]> {
     return this.findMany({
       filters: { projectId },
       sortBy: 'createdAt',
@@ -35,7 +35,7 @@ export class TestCaseService extends BaseService<TestCase> {
       priority?: TestCasePriority;
       search?: string;
     } = {}
-  ) {
+  ): Promise<TestCase[]> {
     const filters = [
       { field: 'projectId', operator: 'equals', value: projectId },
       ...(options.status ? [{ field: 'status', operator: 'equals', value: options.status }] : []),
@@ -78,7 +78,7 @@ export class TestCaseService extends BaseService<TestCase> {
     updatedAfter?: Date;
     page?: number;
     limit?: number;
-  }) {
+  }): Promise<TestCase[]> {
     const filters: FilterCondition<TestCase>[] = [
       { field: 'projectId', operator: 'equals', value: params.projectId },
       ...(params.status ? [{ field: 'status', operator: 'in', value: params.status }] : []),

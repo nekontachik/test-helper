@@ -2,7 +2,7 @@ import { createMocks } from 'node-mocks-http';
 import { GET, POST } from '@/app/api/projects/[projectId]/test-runs/[runId]/results/route';
 import {prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),

@@ -9,7 +9,13 @@ import { FileUploadError } from '@/lib/errors/specific/testErrors';
 export function useFileUploadHandler(
   projectId: string,
   _form: UseFormReturn<TestResultFormData> // Prefix with _ to indicate it's intentionally unused
-) {
+): {
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => Promise<string[] | undefined>;
+  isUploading: boolean;
+  uploadProgress: number;
+  error: string | null;
+  clearError: () => void;
+} {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +91,11 @@ export function useFileUploadHandler(
         setIsUploading(false);
       }
     }, {
-      retryCount: 2,
-      retryDelay: 1000,
+      retry: true,
+      retryOptions: {
+        maxAttempts: 2,
+        delayMs: 1000
+      },
       silent: true // We handle the error display ourselves
     });
   }, [projectId, validateFile, toast, withErrorHandling, clearError]);

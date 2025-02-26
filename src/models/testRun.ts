@@ -1,5 +1,5 @@
-import { TestCase } from './testCase';
-import { Project } from './project';
+import type { TestCase } from './testCase';
+import type { Project } from './project';
 
 export interface TestCaseResult {
   id: string;

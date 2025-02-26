@@ -1,6 +1,6 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Control, FieldValues, Path } from 'react-hook-form';
+import type { Control, FieldValues, Path } from 'react-hook-form';
 
 interface FormSelectProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
@@ -18,7 +18,7 @@ export function FormSelect<TFieldValues extends FieldValues>({
   placeholder = 'Select an option',
   options,
   disabled
-}: FormSelectProps<TFieldValues>) {
+}: FormSelectProps<TFieldValues>): JSX.Element {
   return (
     <FormField
       control={control}

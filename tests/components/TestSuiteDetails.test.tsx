@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { TestSuiteDetails } from '../TestSuiteDetails';
 import { useTestCases } from '@/hooks/useTestCases';
-import { TestSuite, TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestSuite, TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 jest.mock('@/hooks/useTestCases');
 jest.mock('next/navigation', () => ({

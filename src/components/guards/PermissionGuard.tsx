@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
-import { Action, Resource } from '@/types/rbac';
+import type { Action, Resource } from '@/types/rbac';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -52,7 +52,7 @@ export function PermissionGuard({
   fallback,
   loadingComponent,
   onPermissionCheck,
-}: PermissionGuardProps) {
+}: PermissionGuardProps): React.ReactNode {
   const { hasPermission, isLoading } = usePermissionCheck({
     action,
     resource,

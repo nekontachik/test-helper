@@ -16,13 +16,13 @@ import { useRouter } from 'next/navigation';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import { SignOutButton } from './SignOutButton';
 
-export function AuthNav() {
+export function AuthNav(): JSX.Element {
   const { data: session } = useSession();
   const router = useRouter();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const bgColor = useColorModeValue('white', 'gray.800');
 
-  const NavContent = () => (
+  const NavContent = (): JSX.Element => (
     <>
       {session ? (
         <HStack spacing={4}>

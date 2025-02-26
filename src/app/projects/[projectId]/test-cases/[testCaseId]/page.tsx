@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { TestCaseForm } from '@/components/TestCaseForm';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { useParams } from 'next/navigation';
-import { TestCaseFormData } from '@/types';
+import type { TestCaseFormData } from '@/types';
 
 interface TestCasePageProps {
   params: {

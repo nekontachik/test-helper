@@ -3,32 +3,32 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import logger from '@/lib/utils/logger';
 
-export async function GET() {
+export async function GET(): Promise<never> {
   const requestId = crypto.randomUUID();
-  logger.debug({ requestId }, '[ROOT] Handling root route request');
+  logger.debug('[ROOT] Handling root route request', { requestId });
 
   try {
     const session = await getServerSession(authOptions);
-    logger.debug({ 
+    logger.debug('[ROOT] Session check', { 
       requestId, 
       hasSession: !!session 
-    }, '[ROOT] Session check');
+    });
 
     if (!session) {
-      logger.info({ requestId }, '[ROOT] No session found, redirecting to signin');
+      logger.info('[ROOT] No session found, redirecting to signin', { requestId });
       redirect('/auth/signin');
     }
 
-    logger.info({ 
+    logger.info('[ROOT] Session found, redirecting to dashboard', { 
       requestId,
       userId: session.user.id 
-    }, '[ROOT] Session found, redirecting to dashboard');
+    });
     redirect('/dashboard');
   } catch (error) {
-    logger.error({ 
+    logger.error('[ROOT] Error handling root route', { 
       requestId,
       error 
-    }, '[ROOT] Error handling root route');
+    });
     redirect('/auth/signin');
   }
 } 

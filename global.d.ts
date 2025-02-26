@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/extend-expect';
-import { expect as jestExpect } from '@jest/globals';
+import type { expect as jestExpect } from '@jest/globals';
 
 declare global {
   namespace NodeJS {

@@ -1,7 +1,15 @@
 import React from 'react';
 import { Toast } from '../components/Toast';
 
-export function useErrorToast() {
+export function useErrorToast(): {
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  ErrorComponent: React.ReactElement | null;
+  setToast: React.Dispatch<React.SetStateAction<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>>;
+  ToastComponent: React.ReactElement | null;
+} {
   const [error, setError] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<{
     message: string;

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, ProjectFormData } from '@/types';
+import type { ProjectFormData } from '@/types';
+import { Project } from '@/types';
 import apiClient from '@/lib/apiClient';
 
 export function useProjects() {

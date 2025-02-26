@@ -1,13 +1,13 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export function withAuth<P extends object>(
   Component: React.ComponentType<P>,
   allowedRoles: UserRole[]
-) {
-  return function ProtectedRoute(props: P) {
+): React.FC<P> {
+  return function ProtectedRoute(props: P): JSX.Element | null {
     const { data: session, status } = useSession();
     const router = useRouter();
 

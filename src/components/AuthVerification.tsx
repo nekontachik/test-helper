@@ -20,14 +20,14 @@ interface AuthVerificationProps {
   token: string;
 }
 
-export function AuthVerification({ token }: AuthVerificationProps) {
+export function AuthVerification({ token }: AuthVerificationProps): JSX.Element {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
   const toast = useToast();
 
   useEffect(() => {
-    const verifyEmail = async () => {
+    const verifyEmail = async (): Promise<void> => {
       try {
         const response = await fetch('/api/auth/verify', {
           method: 'POST',
@@ -51,7 +51,7 @@ export function AuthVerification({ token }: AuthVerificationProps) {
         setTimeout(() => {
           router.push('/auth/signin');
         }, 3000);
-      } catch (error) {
+      } catch {
         toast({
           title: 'Verification Failed',
           description: 'Failed to verify your email. Please try again.',
@@ -109,7 +109,7 @@ export function AuthVerification({ token }: AuthVerificationProps) {
                 Verification Failed
               </AlertTitle>
               <AlertDescription maxWidth="sm">
-                We couldn't verify your email. The link may have expired or is
+                We couldn&apos;t verify your email. The link may have expired or is
                 invalid.
               </AlertDescription>
             </Alert>

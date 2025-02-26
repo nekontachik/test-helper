@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TestCaseResultStatus } from '@/types';
+import { useState, useCallback } from 'react';
+import type { TestCaseResultStatus } from '@/types';
 
 interface TestResultInput {
   status: TestCaseResultStatus;
@@ -15,7 +15,14 @@ interface QueuedOperation {
   retryCount: number;
 }
 
-export function useTestRunQueue(projectId: string, runId: string) {
+interface TestRunQueueResult {
+  addToQueue: (data: TestResultInput) => void;
+  processQueue: () => Promise<void>;
+  hasQueuedOperations: boolean;
+  queueLength: number;
+}
+
+export function useTestRunQueue(projectId: string, runId: string): TestRunQueueResult {
   const queueKey = `test-run-queue:${projectId}:${runId}`;
   const [operations, setOperations] = useState<QueuedOperation[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -23,7 +30,7 @@ export function useTestRunQueue(projectId: string, runId: string) {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const addToQueue = useCallback((data: TestResultInput) => {
+  const addToQueue = useCallback((data: TestResultInput): void => {
     const operation: QueuedOperation = {
       type: 'TEST_RESULT',
       data,
@@ -37,7 +44,7 @@ export function useTestRunQueue(projectId: string, runId: string) {
     });
   }, [queueKey]);
 
-  const processQueue = useCallback(async () => {
+  const processQueue = useCallback(async (): Promise<void> => {
     if (!navigator.onLine || !operations.length) return;
 
     const operation = operations[0];
@@ -53,7 +60,7 @@ export function useTestRunQueue(projectId: string, runId: string) {
         localStorage.setItem(queueKey, JSON.stringify(updated));
         return updated;
       });
-    } catch (error) {
+    } catch {
       if (operation.retryCount < 3) {
         setOperations(prev => {
           const updated = [

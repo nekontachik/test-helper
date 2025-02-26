@@ -4,7 +4,7 @@ import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import logger from '@/lib/logger';
 
-export default function NotFound() {
+export default function NotFound(): JSX.Element {
   const router = useRouter();
   
   logger.info('Rendering NotFound page');
@@ -24,7 +24,7 @@ export default function NotFound() {
         Page Not Found
       </Text>
       <Text color={'gray.500'} mb={6}>
-        The page you're looking for does not seem to exist
+        The page you&apos;re looking for does not seem to exist
       </Text>
 
       <Button

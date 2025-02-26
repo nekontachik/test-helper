@@ -1,4 +1,4 @@
-import { TestCase } from '@/models/testCase';
+import type { TestCase } from '@/models/testCase';
 
 export async function getTestCases(projectId: string): Promise<TestCase[]> {
   // TODO: Implement actual API call

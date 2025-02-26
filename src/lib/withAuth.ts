@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { UserRole } from '@/types/auth';
-import { NextRequest } from 'next/server';
+import { getToken as _getToken } from 'next-auth/jwt';
+import type { UserRole } from '@/types/auth';
+import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth';
 
@@ -13,7 +13,7 @@ abstract class BaseAuthError extends Error {
   abstract statusCode: number;
 }
 
-class UnauthorizedError extends BaseAuthError {
+class _UnauthorizedError extends BaseAuthError {
   statusCode = 401;
   constructor(message = 'Unauthorized') {
     super(message);
@@ -21,7 +21,7 @@ class UnauthorizedError extends BaseAuthError {
   }
 }
 
-class ForbiddenError extends BaseAuthError {
+class _ForbiddenError extends BaseAuthError {
   statusCode = 403;
   constructor(message = 'Forbidden') {
     super(message);
@@ -30,7 +30,7 @@ class ForbiddenError extends BaseAuthError {
 }
 
 export async function withAuth(
-  handler: Function,
+  handler: (req: NextRequest, session: any) => Promise<Response>,
   options: AuthOptions
 ) {
   return async function (req: NextRequest) {

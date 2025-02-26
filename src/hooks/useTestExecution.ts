@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TestResultStatus } from '@/types/testRun';
+import type { TestResultStatus } from '@/types/testRun';
 import { ROUTES } from '@/lib/routes';
 import { logger } from '@/lib/utils/logger';
 

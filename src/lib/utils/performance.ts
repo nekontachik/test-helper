@@ -13,7 +13,7 @@ export const withCache = <T>(fn: () => Promise<T>, key: string, ttl = 5 * 60 * 1
   });
 };
 
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   fn: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -24,7 +24,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   };
 };
 
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   fn: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {

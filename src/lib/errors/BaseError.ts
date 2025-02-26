@@ -1,6 +1,6 @@
-import type { AppError, ApiErrorCode, ApiErrorOptions } from './types';
+import type { ApiErrorCode, ApiErrorOptions } from './types';
 
-export class BaseError extends Error implements AppError {
+export class BaseError extends Error {
   public readonly code: ApiErrorCode;
   public readonly status: number;
   public readonly details?: unknown;
@@ -19,7 +19,7 @@ export class BaseError extends Error implements AppError {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
-  toJSON() {
+  toJSON(): { success: false; error: { code: ApiErrorCode; message: string; details?: unknown } } {
     return {
       success: false,
       error: {
@@ -38,25 +38,24 @@ export class ErrorFactory {
     message: string, 
     details?: Record<string, unknown>
   ): BaseError {
-    const errorMap: Record<ApiErrorCode, number> = {
+    const errorMap: Record<string, number> = {
       'UNAUTHORIZED': 401,
       'FORBIDDEN': 403,
       'NOT_FOUND': 404,
       'VALIDATION_ERROR': 400,
-      'CONFLICT': 409,
+      'NETWORK_ERROR': 500,
+      'TIMEOUT_ERROR': 504,
+      'DATABASE_ERROR': 500,
       'RATE_LIMITED': 429,
       'INTERNAL_ERROR': 500,
-      'BAD_REQUEST': 400,
-      'TEST_RUN_ERROR': 500,
-      'FILE_UPLOAD_ERROR': 500,
-      'TEST_RESULT_ERROR': 500,
-      'INVALID_DATA': 400,
-      'TRANSACTION_ERROR': 500
+      'UNKNOWN_ERROR': 500,
+      'SERVER_ERROR': 500,
+      'PROCESSING_ERROR': 500
     };
 
     return new BaseError(message, {
       code: type,
-      status: errorMap[type],
+      status: errorMap[type] || 500,
       details
     });
   }

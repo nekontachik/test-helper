@@ -8,7 +8,7 @@ interface TestCaseFiltersProps {
   onChange: (filters: Filters) => void;
 }
 
-export function TestCaseFilters({ filters, onChange }: TestCaseFiltersProps) {
+export function TestCaseFilters({ filters, onChange }: TestCaseFiltersProps): JSX.Element {
   return (
     <Box>
       <Select

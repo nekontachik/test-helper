@@ -44,7 +44,23 @@ export function useTestRunForm(
   testCaseId: string,
   initialData?: Partial<FormData>,
   options: FileValidationOptions = {}
-) {
+): {
+  isSubmitting: boolean;
+  error: string | null;
+  isDirty: boolean;
+  isValid: boolean;
+  form: ReturnType<typeof useForm<FormData>>;
+  handleSubmit: (onSubmit: (data: FormData) => Promise<void>) => Promise<void>;
+  handleFileChange: (files: File[]) => File[];
+  reset: (data?: Partial<FormData>) => void;
+  getValues: ReturnType<typeof useForm<FormData>>["getValues"];
+  setValue: ReturnType<typeof useForm<FormData>>["setValue"];
+  watch: ReturnType<typeof useForm<FormData>>["watch"];
+  errors: ReturnType<typeof useForm<FormData>>["formState"]["errors"];
+  clearSavedData: () => void;
+  saveToStorage: (data: FormData) => void;
+  loadFromStorage: () => FormData | null;
+} {
   const [formState, setFormState] = useState<FormState>({
     isSubmitting: false,
     error: null,
@@ -63,7 +79,7 @@ export function useTestRunForm(
   });
 
   // Remove duplicate storageKey definition
-  const getStorageKey = useCallback((id: string) => 
+  const getStorageKey = useCallback((id: string): string => 
     `testrun:${projectId}:${testRunId}:${id}` as const
   , [projectId, testRunId]);
 
@@ -80,12 +96,12 @@ export function useTestRunForm(
         localStorage.removeItem(storageKey);
       }
     }
-  }, [projectId, testRunId, testCaseId, getStorageKey]);
+  }, [projectId, testRunId, testCaseId, getStorageKey, form]);
 
   // Auto-save form data
   const storageKey = getStorageKey(testCaseId);
 
-  const saveToStorage = useCallback((data: FormData) => {
+  const saveToStorage = useCallback((data: FormData): void => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(data));
     } catch (error) {
@@ -125,7 +141,7 @@ export function useTestRunForm(
     return () => subscription.unsubscribe();
   }, [form, saveToStorage]);
 
-  const handleFormError = useCallback((error: unknown) => {
+  const handleFormError = useCallback((error: unknown): string => {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     setFormState(prev => ({ 
       ...prev, 
@@ -135,12 +151,12 @@ export function useTestRunForm(
     return message;
   }, []);
 
-  const clearSavedData = useCallback(() => {
+  const clearSavedData = useCallback((): void => {
     const storageKey = getStorageKey(testCaseId);
     localStorage.removeItem(storageKey);
   }, [getStorageKey, testCaseId]);
 
-  const safeSubmit = useCallback(async (onSubmit: (data: FormData) => Promise<void>) => {
+  const safeSubmit = useCallback(async (onSubmit: (data: FormData) => Promise<void>): Promise<void> => {
     try {
       setFormState(prev => ({ ...prev, isSubmitting: true, error: null }));
       await form.handleSubmit(onSubmit)();
@@ -162,7 +178,8 @@ export function useTestRunForm(
       };
     }
 
-    if (!allowedTypes.includes(file.type as any)) {
+    // Type-safe check for file type
+    if (!allowedTypes.some(type => type === file.type)) {
       return {
         valid: false,
         error: `File ${file.name} has unsupported type ${file.type}`
@@ -172,7 +189,7 @@ export function useTestRunForm(
     return { valid: true, file };
   }, [options]);
 
-  const handleFileChange = useCallback((files: File[]) => {
+  const handleFileChange = useCallback((files: File[]): File[] => {
     const results = files.map(validateFile);
     const errors = results.filter(r => !r.valid).map(r => r.error);
     
@@ -189,7 +206,7 @@ export function useTestRunForm(
     return validFiles.map(r => r.file);
   }, [form, validateFile]);
 
-  const resetForm = useCallback((data?: Partial<FormData>) => {
+  const resetForm = useCallback((data?: Partial<FormData>): void => {
     form.reset({ ...form.getValues(), ...data });
     if (!data) {
       clearSavedData();

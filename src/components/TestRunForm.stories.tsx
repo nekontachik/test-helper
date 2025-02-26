@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { TestRunForm } from './TestRunForm';
-import { TestCase, TestCaseStatus, TestCasePriority, TestRunFormData } from '@/types';
+import type { TestCase, TestRunFormData } from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 const meta: Meta<typeof TestRunForm> = {
   title: 'Components/TestRunForm',

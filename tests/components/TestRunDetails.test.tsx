@@ -2,8 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { TestRunDetails } from '@/components/TestRunDetails';
+import type {
+  TestRun} from '@/types';
 import {
-  TestRun,
   TestRunStatus,
   TestCaseStatus,
   TestCasePriority,

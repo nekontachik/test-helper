@@ -29,7 +29,11 @@ export function getErrorMessage(error: unknown): string {
   return 'An unexpected error occurred';
 }
 
-export function createErrorContext(error: unknown) {
+export function createErrorContext(error: unknown): {
+  message: string;
+  stack: string | undefined;
+  details: unknown;
+} {
   return {
     message: getErrorMessage(error),
     stack: isError(error) ? error.stack : undefined,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text, Badge, Flex } from '@chakra-ui/react';
-import { Project } from '@/types';
+import type { Project } from '@/types';
 
 interface ProjectCardProps {
   project: Project;

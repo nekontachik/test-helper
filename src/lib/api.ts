@@ -2,24 +2,22 @@ import { logger } from '@/lib/utils/logger';
 import { prisma } from '@/lib/prisma';
 import type { 
   TestCase, 
-  TestRun, 
   TestRunCase, 
   TestCaseResult,
   Prisma 
 } from '@prisma/client';
+import type { TestCaseFilters } from '@/types/testCase';
 
-interface TestCaseFilters {
-  title?: string;
-  status?: string;
-  priority?: string;
-}
-
-type TestRunWithRelations = TestRun & {
-  testRunCases: Array<TestRunCase & {
-    testCase: TestCase;
-  }>;
-  results: TestCaseResult[];
-};
+type TestRunWithRelations = Prisma.TestRunGetPayload<{
+  include: {
+    testRunCases: {
+      include: {
+        testCase: true;
+      };
+    };
+    testResults: true;
+  };
+}>;
 
 export class ApiError extends Error {
   constructor(public statusCode: number, message: string) {
@@ -40,7 +38,7 @@ export async function getTestRuns(projectId: string): Promise<TestRunWithRelatio
             testCase: true,
           },
         },
-        results: true,
+        testResults: true,
       },
     });
 
@@ -51,7 +49,7 @@ export async function getTestRuns(projectId: string): Promise<TestRunWithRelatio
 
     return testRuns.map(testRun => ({
       ...testRun,
-      testRunCases: testRun.testRunCases.map(trc => ({
+      testRunCases: testRun.testRunCases.map((trc: TestRunCase & { testCase: TestCase }) => ({
         ...trc,
         testCase: {
           ...trc.testCase,
@@ -59,7 +57,7 @@ export async function getTestRuns(projectId: string): Promise<TestRunWithRelatio
           expectedResult: trc.testCase.expectedResult ?? '',
         },
       })),
-      results: testRun.results.map(result => ({
+      testResults: testRun.testResults.map((result: TestCaseResult) => ({
         ...result,
         notes: result.notes ?? '',
       })),

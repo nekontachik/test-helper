@@ -13,7 +13,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { SignOutButton } from './SignOutButton';
 
-export function AuthHeader() {
+export function AuthHeader(): JSX.Element {
   const { data: session } = useSession();
   const router = useRouter();
   const bgColor = useColorModeValue('white', 'gray.800');

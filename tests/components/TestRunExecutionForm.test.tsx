@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { TestRunExecutionForm } from '@/components/TestRunExecutionForm';
-import { TestCase, TestCaseResultStatus, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseResultStatus, TestCaseStatus, TestCasePriority } from '@/types';
 
 // Create a test wrapper component to reduce re-renders
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (

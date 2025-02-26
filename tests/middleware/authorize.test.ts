@@ -1,6 +1,6 @@
-import { NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import { authorizeMiddleware } from '../authorize';
-import { AuthenticatedRequest } from '../authenticate';
+import type { AuthenticatedRequest } from '../authenticate';
 import { AuthorizationError, AuthenticationError } from '@/lib/errors';
 import { UserRole } from '@/types/auth';
 

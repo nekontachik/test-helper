@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Body,
   Button,
@@ -19,7 +20,7 @@ interface VerificationEmailProps {
 export function VerificationEmail({
   name,
   verificationUrl,
-}: VerificationEmailProps) {
+}: VerificationEmailProps): React.ReactElement {
   return (
     <Html>
       <Head />
@@ -49,7 +50,7 @@ export function VerificationEmail({
             </Link>
           </Text>
           <Text style={text}>
-            If you didn't request this email, you can safely ignore it.
+            If you didn&apos;t request this email, you can safely ignore it.
           </Text>
         </Container>
       </Body>

@@ -1,5 +1,5 @@
 import { createMocks } from 'node-mocks-http';
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import NextAuth from 'next-auth';
 import { authOptions } from '../../../../pages/api/auth/[...nextauth]';
 

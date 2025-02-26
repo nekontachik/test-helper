@@ -1,22 +1,36 @@
 'use client';
 
-import { CacheProvider } from '@chakra-ui/next-js';
+import type { ReactNode } from 'react';
+import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SimpleAuthProvider } from '@/lib/auth/simpleAuth';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import theme from '../../theme';
+import { ErrorBoundary } from './ErrorBoundary';
 
-const queryClient = new QueryClient();
+interface ProvidersProps {
+  children: ReactNode;
+}
 
-export function Providers({ children }: { children: React.ReactNode }) {
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+export function Providers({ children }: ProvidersProps): React.ReactElement {
   return (
-    <CacheProvider>
-      <ChakraProvider>
-        <SimpleAuthProvider>
-          <QueryClientProvider client={queryClient}>
-            {children}
-          </QueryClientProvider>
-        </SimpleAuthProvider>
-      </ChakraProvider>
-    </CacheProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ChakraProvider theme={theme}>
+          {children}
+        </ChakraProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

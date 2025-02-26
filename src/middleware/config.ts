@@ -1,6 +1,6 @@
 import { UserRole } from '@/types/rbac';
 
-const ROLES = {
+const _ROLES = {
   ADMIN: 'ADMIN',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   TESTER: 'TESTER',

@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { AppError } from '@/lib/errors';
 import { dbLogger } from '@/lib/logger';
-import { TestCase, TestCaseResultStatus, TestCasePriority, TestCaseStatus } from '@/types';
-import { Prisma } from '@prisma/client';
+import type { TestCaseResultStatus, TestCasePriority, TestCaseStatus } from '@/types';
+import { TestCase } from '@/types';
+import type { Prisma } from '@prisma/client';
 
 type TestReportWithRelations = Prisma.TestReportGetPayload<{
   include: {

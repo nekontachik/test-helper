@@ -28,7 +28,7 @@ interface TestCaseCardProps {
   onDelete: (id: string) => void;
 }
 
-export function TestCaseCard({ testCase, projectId, onUpdate, onDelete }: TestCaseCardProps) {
+export function TestCaseCard({ testCase, projectId, onUpdate, onDelete }: TestCaseCardProps): JSX.Element {
   const { can } = usePermissions();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -44,7 +44,7 @@ export function TestCaseCard({ testCase, projectId, onUpdate, onDelete }: TestCa
     HIGH: 'red',
   };
 
-  const handleUpdate = async (data: TestCase | CreateTestCase) => {
+  const handleUpdate = async (data: TestCase | CreateTestCase): Promise<void> => {
     if (!testCase.id) return;
 
     try {
@@ -78,7 +78,7 @@ export function TestCaseCard({ testCase, projectId, onUpdate, onDelete }: TestCa
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     if (!testCase.id) return;
 
     try {

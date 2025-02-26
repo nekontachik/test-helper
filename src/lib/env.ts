@@ -36,7 +36,7 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW: z.coerce.number().default(60),
 });
 
-function validateEnv() {
+function validateEnv(): z.infer<typeof envSchema> {
   try {
     return envSchema.parse(process.env);
   } catch (error) {

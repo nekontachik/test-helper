@@ -6,7 +6,11 @@ interface TestRunProgress {
   results: TestResult[];
 }
 
-export function useTestRunProgress(projectId: string, testRunId: string) {
+export function useTestRunProgress(projectId: string, testRunId: string): {
+  progress: TestRunProgress;
+  updateProgress: (updates: Partial<TestRunProgress>) => void;
+  clearProgress: () => void;
+} {
   const storageKey = `testrun:${projectId}:${testRunId}`;
   
   const [progress, setProgress] = useState<TestRunProgress>(() => {
@@ -18,7 +22,7 @@ export function useTestRunProgress(projectId: string, testRunId: string) {
     }
   });
 
-  const updateProgress = (updates: Partial<TestRunProgress>) => {
+  const updateProgress = (updates: Partial<TestRunProgress>): void => {
     setProgress(prev => {
       const newProgress = { ...prev, ...updates };
       localStorage.setItem(storageKey, JSON.stringify(newProgress));
@@ -26,7 +30,7 @@ export function useTestRunProgress(projectId: string, testRunId: string) {
     });
   };
 
-  const clearProgress = () => {
+  const clearProgress = (): void => {
     localStorage.removeItem(storageKey);
     setProgress({ currentIndex: 0, results: [] });
   };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TestCase } from '@/models/testCase';
+import type { TestCase } from '@/models/testCase';
 
 interface TestCaseItemProps {
   testCase: TestCase;

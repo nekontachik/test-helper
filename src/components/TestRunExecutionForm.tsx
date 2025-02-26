@@ -13,7 +13,7 @@ import {
   FormErrorMessage,
 } from '@chakra-ui/react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { TestCase, TestCaseResultStatus } from '@/types';
+import type { TestCase, TestCaseResultStatus } from '@/types';
 
 interface TestRunExecutionFormProps {
   testCases: TestCase[];

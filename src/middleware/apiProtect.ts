@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
-import { Action, Resource, UserRole } from '@/types/rbac';
+import type { Action, Resource, UserRole } from '@/types/rbac';
 import { RateLimitError } from '@/lib/errors/RateLimitError';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import logger from '@/lib/logger';

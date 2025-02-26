@@ -1,4 +1,5 @@
-import { Role, Resource, Action, ActionType, ResourceType, Permission } from './types';
+import type { Role, ActionType, ResourceType, Permission } from './types';
+import { Resource, Action } from './types';
 
 // Define base permissions that can be reused
 const BASE_USER_PERMISSIONS: Permission[] = [

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Alert, AlertIcon, AlertTitle, AlertDescription, Box, Button } from '@chakra-ui/react';
 import { getErrorMessage } from '@/lib/errors/errorMessages';
-import type { ErrorCode } from '@/lib/errors/errorMessages';
 import { AppError } from '@/lib/errors/types';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
 
@@ -11,7 +10,7 @@ interface ErrorMessageProps {
   variant?: 'toast' | 'inline' | 'full';
 }
 
-export function ErrorMessage({ error, onRetry, variant = 'inline' }: ErrorMessageProps) {
+export function ErrorMessage({ error, onRetry, variant = 'inline' }: ErrorMessageProps): JSX.Element {
   // Convert any error to AppError for consistent handling
   const appError = error instanceof AppError 
     ? error 
@@ -22,7 +21,7 @@ export function ErrorMessage({ error, onRetry, variant = 'inline' }: ErrorMessag
 
   const errorDetails = getErrorMessage(appError);
   
-  const renderContent = () => (
+  const renderContent = (): JSX.Element => (
     <>
       <AlertIcon />
       <Box flex="1">

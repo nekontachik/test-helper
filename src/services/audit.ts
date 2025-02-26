@@ -1,4 +1,5 @@
-import { AuditLogData, AuditLogType } from '@/types/audit';
+import type { AuditLogData} from '@/types/audit';
+import { AuditLogType } from '@/types/audit';
 import { logger } from '@/lib/utils/logger';
 
 /**

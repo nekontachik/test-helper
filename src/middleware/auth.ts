@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { UserRole } from '@/types/auth';
-import { Action, Resource } from '@/lib/auth/rbac/types';
+import type { UserRole } from '@/types/auth';
+import type { Action, Resource } from '@/lib/auth/rbac/types';
 
 type HandlerFunction<T extends Record<string, string> = Record<string, string>> = (
   req: Request,
@@ -54,7 +54,7 @@ export function withAuth<T extends Record<string, string>>(
 
     // Check ownership if required
     if (options.checkOwnership && options.getProjectId) {
-      const projectId = options.getProjectId(req);
+      const _projectId = options.getProjectId(req);
       // Add your ownership check logic here
     }
 

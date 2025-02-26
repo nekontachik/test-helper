@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Check, X } from 'lucide-react';
-import { PasswordStrengthResult } from '@/lib/auth/passwordPolicy';
+import type { PasswordStrengthResult } from '@/lib/auth/passwordPolicy';
 
 /**
  * PasswordValidation is a component that provides real-time password validation feedback.
@@ -41,11 +41,11 @@ export function PasswordValidation({
   password,
   context,
   onValidationChange,
-}: PasswordValidationProps) {
+}: PasswordValidationProps): JSX.Element | null {
   const [validation, setValidation] = React.useState<PasswordStrengthResult | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const validatePassword = React.useCallback(async () => {
+  const validatePassword = React.useCallback(async (): Promise<void> => {
     if (!password) {
       setValidation(null);
       onValidationChange?.(false);

@@ -1,11 +1,11 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import logger from '@/lib/logger';
 
 export async function performanceLogger(
   req: NextApiRequest,
   res: NextApiResponse,
   next: () => Promise<void>
-) {
+): Promise<void> {
   const start = Date.now();
   await next();
   const duration = Date.now() - start;

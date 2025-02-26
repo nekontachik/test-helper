@@ -18,7 +18,8 @@ import {
   ModalCloseButton,
 } from '@chakra-ui/modal';
 import { useForm } from 'react-hook-form';
-import { TestCaseFormData, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCaseFormData} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 
 interface CreateTestCaseModalProps {
   isOpen: boolean;

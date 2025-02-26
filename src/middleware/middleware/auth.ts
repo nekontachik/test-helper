@@ -1,11 +1,11 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { AuthenticationError } from '@/lib/errors';
 
 export function authMiddleware(
   req: NextApiRequest,
   res: NextApiResponse,
   next: () => void
-) {
+): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {

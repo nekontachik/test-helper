@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@chakra-ui/react';
 import { useToast } from '@/hooks/use-toast';
@@ -16,23 +16,19 @@ interface Device {
   isCurrent: boolean;
 }
 
-export function SessionDevices() {
+export function SessionDevices(): JSX.Element {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { data: session } = useSession();
+  const { data: _session } = useSession();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchDevices();
-  }, []);
-
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/sessions');
       if (!response.ok) throw new Error('Failed to fetch devices');
       const data = await response.json();
       setDevices(data.devices);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load active sessions',
@@ -41,9 +37,13 @@ export function SessionDevices() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const handleRevokeSession = async (deviceId: string) => {
+  useEffect(() => {
+    fetchDevices();
+  }, [fetchDevices]);
+
+  const handleRevokeSession = async (deviceId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/auth/sessions/${deviceId}`, {
         method: 'DELETE',
@@ -57,7 +57,7 @@ export function SessionDevices() {
         title: 'Success',
         description: 'Session revoked successfully',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to revoke session',
@@ -66,7 +66,7 @@ export function SessionDevices() {
     }
   };
 
-  const getDeviceIcon = (deviceType: Device['deviceType']) => {
+  const getDeviceIcon = (deviceType: Device['deviceType']): JSX.Element => {
     switch (deviceType) {
       case 'mobile':
         return <Smartphone className="h-4 w-4" />;

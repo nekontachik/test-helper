@@ -19,13 +19,13 @@ const ratelimit = redis
     })
   : null;
 
-export async function rateLimitMiddleware(request: NextRequest) {
+export async function rateLimitMiddleware(request: NextRequest): Promise<NextResponse> {
   if (!ratelimit) {
     return NextResponse.next();
   }
 
   const ip = request.ip ?? '127.0.0.1';
-  const { success, pending, limit, reset, remaining } = await ratelimit.limit(
+  const { success, limit, reset, remaining, ..._rest } = await ratelimit.limit(
     `ratelimit_${ip}`
   );
 

@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { AuthError } from '@/lib/errors/AuthError';
 import { validateToken } from '@/lib/auth/token';
-import type { AuthUser, Permission } from '@/lib/auth/types';
+import type { Permission } from '@/lib/auth/types';
+import type { AuthUser } from '@/types/auth';
 
 export async function authenticate(
   request: NextRequest,
   requiredPermissions?: Permission[]
-) {
+): Promise<AuthUser> {
   const token = request.headers.get('authorization')?.split('Bearer ')[1];
 
   if (!token) {

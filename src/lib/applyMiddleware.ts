@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 type Middleware = (
   req: NextApiRequest,
@@ -7,7 +7,7 @@ type Middleware = (
 ) => void;
 
 export function applyMiddleware(middleware: Middleware[]) {
-  return (req: NextApiRequest, res: NextApiResponse, next: () => void) => {
+  return (req: NextApiRequest, res: NextApiResponse, next: () => void): void => {
     const runMiddleware = (i: number) => {
       if (i < middleware.length) {
         middleware[i](req, res, () => runMiddleware(i + 1));

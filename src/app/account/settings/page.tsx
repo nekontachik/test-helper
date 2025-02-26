@@ -5,7 +5,7 @@ import { AuthLayout } from '@/components/AuthLayout';
 import { AccountSettings } from '@/components/AccountSettings';
 import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
-import { AuthUser, UserRole, AccountStatus, Permission } from '@/types/auth';
+import type { AuthUser, UserRole, AccountStatus, Permission } from '@/types/auth';
 
 // Define a consistent user type that matches both auth and session
 interface SessionUser {

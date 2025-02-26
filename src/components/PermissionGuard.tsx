@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePermission } from '@/hooks/usePermission';
-import { Action, Resource } from '@/lib/auth/rbac/types';
+import type { Action, Resource } from '@/lib/auth/rbac/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 

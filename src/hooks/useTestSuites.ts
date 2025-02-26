@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/apiClient';
-import { TestSuite, TestSuiteFormData } from '@/types';
+import apiClient from '../lib/apiClient';
+import type { TestSuite, TestSuiteFormData } from '../types';
 
 const TEST_SUITES_QUERY_KEY = 'testSuites';
 
-export function useTestSuites(projectId: string) {
+export function useTestSuites(projectId: string): ReturnType<typeof useQuery> {
   return useQuery({
     queryKey: [TEST_SUITES_QUERY_KEY, projectId],
     queryFn: () => apiClient.getTestSuites(projectId),
@@ -12,7 +12,7 @@ export function useTestSuites(projectId: string) {
   });
 }
 
-export function useCreateTestSuite(projectId: string) {
+export function useCreateTestSuite(projectId: string): ReturnType<typeof useMutation> {
   const queryClient = useQueryClient();
 
   return useMutation({

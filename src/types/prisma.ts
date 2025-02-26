@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma as _Prisma } from '@prisma/client';
 
 export interface BackupCodesData {
   codes: string[];
@@ -7,9 +7,8 @@ export interface BackupCodesData {
 
 // Extend Prisma JSON value type
 declare global {
-  namespace Prisma {
-    type BackupCodesJson = BackupCodesData;
-  }
+  // Using type instead of namespace
+  type PrismaBackupCodesJson = BackupCodesData;
 }
 
 // Type guard

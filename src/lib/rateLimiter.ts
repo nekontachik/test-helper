@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 

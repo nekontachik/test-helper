@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Container, VStack } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthNav } from './AuthNav';
 import { AuthStatus } from './AuthStatus';
 
@@ -17,7 +17,7 @@ export function AuthLayout({
   showNav = true,
   showStatus = true,
   maxWidth = "container.md"
-}: AuthLayoutProps) {
+}: AuthLayoutProps): JSX.Element {
   return (
     <Box minH="100vh" bg="gray.50">
       {showNav && (

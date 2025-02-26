@@ -9,7 +9,7 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { useTestReports } from '@/hooks/useTestReports';
-import { TestReport } from '@/types';
+import type { TestReport } from '@/types';
 import Link from 'next/link';
 
 interface TestReportListProps {

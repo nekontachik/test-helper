@@ -3,7 +3,6 @@ import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { AppError } from './types';
 import { logger } from '@/lib/utils/logger';
-import type { ApiErrorCode } from './types';
 import type { ServiceResponse } from '../utils/serviceResponse';
 import { ErrorTracker } from '../monitoring/ErrorTracker';
 import { ErrorRecovery } from './ErrorRecovery';

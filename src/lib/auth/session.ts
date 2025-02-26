@@ -1,6 +1,7 @@
 import type { SessionStrategy } from "next-auth"
 import { prisma } from '@/lib/prisma';
-import { Session, AuthUser } from './types'
+import type { AuthUser } from './types';
+import { Session } from './types'
 import { AuthError } from '@/lib/errors/AuthError'
 
 export const SESSION_DURATIONS = {

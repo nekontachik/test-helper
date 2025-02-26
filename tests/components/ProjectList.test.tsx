@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider } from 'next-auth/react';
 import ProjectList from '../ProjectList';
 import { useProjects } from '@/hooks/useProjects';
-import { Project } from '@/types';
+import type { Project } from '@/types';
 
 // Mock the useProjects hook
 jest.mock('@/hooks/useProjects');

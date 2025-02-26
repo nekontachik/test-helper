@@ -22,7 +22,7 @@ export function OfflineIndicator({
   queueLength,
   pendingOperations,
   onSync
-}: OfflineIndicatorProps) {
+}: OfflineIndicatorProps): JSX.Element | null {
   if (!hasQueuedOperations && !hasPendingOperations) return null;
 
   return (

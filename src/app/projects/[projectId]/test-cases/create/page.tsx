@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Box, Heading } from '@chakra-ui/react';
 import { TestCaseForm } from '@/components/TestCaseForm';
 import { useCreateTestCase } from '@/hooks/useTestCase';
-import { TestCaseFormData } from '@/types';
+import type { TestCaseFormData } from '@/types';
 
 export default function CreateTestCasePage() {
   const params = useParams();

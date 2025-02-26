@@ -20,7 +20,7 @@ interface TestCaseFormProps {
   isEditing?: boolean;
 }
 
-export function TestCaseForm({ initialData, onSubmit, isEditing }: TestCaseFormProps) {
+export function TestCaseForm({ initialData, onSubmit, isEditing }: TestCaseFormProps): JSX.Element {
   const toast = useToast();
   const {
     register,
@@ -31,7 +31,7 @@ export function TestCaseForm({ initialData, onSubmit, isEditing }: TestCaseFormP
     defaultValues: initialData,
   });
 
-  const onSubmitHandler = async (data: TestCase | CreateTestCase) => {
+  const onSubmitHandler = async (data: TestCase | CreateTestCase): Promise<void> => {
     try {
       await onSubmit(data);
       toast({

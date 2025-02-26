@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { TestCaseResult } from '@prisma/client';
+import { SyncConflictStatus } from '@prisma/client';
+import type { TestCaseResult, Prisma } from '@prisma/client';
 
 export type ConflictResolutionStrategy = 'client-wins' | 'server-wins' | 'last-write-wins' | 'manual';
 
@@ -28,11 +29,11 @@ export class ConflictResolver {
       case 'server-wins':
         return this.resolveServerWins(clientVersion, serverVersion);
       case 'last-write-wins':
-        return this.resolveLastWriteWins(clientVersion, serverVersion, metadata);
+        return this.resolveLastWriteWins(clientVersion, serverVersion);
       case 'manual':
         return this.resolveManually(clientVersion, serverVersion, metadata);
       default:
-        return this.resolveLastWriteWins(clientVersion, serverVersion, metadata);
+        return this.resolveLastWriteWins(clientVersion, serverVersion);
     }
   }
 
@@ -59,8 +60,7 @@ export class ConflictResolver {
 
   private async resolveLastWriteWins(
     clientVersion: TestCaseResult,
-    serverVersion: TestCaseResult,
-    metadata: ConflictMetadata
+    serverVersion: TestCaseResult
   ): Promise<TestCaseResult> {
     const clientTimestamp = new Date(clientVersion.updatedAt).getTime();
     const serverTimestamp = new Date(serverVersion.updatedAt).getTime();
@@ -78,15 +78,31 @@ export class ConflictResolver {
     // Store conflict for manual resolution
     await prisma.syncConflict.create({
       data: {
-        clientVersion: clientVersion as any,
-        serverVersion: serverVersion as any,
-        userId: metadata.userId,
+        clientData: this.serializeTestCaseResult(clientVersion),
+        serverData: this.serializeTestCaseResult(serverVersion),
+        status: SyncConflictStatus.PENDING,
         timestamp: new Date(metadata.timestamp),
-        status: 'PENDING'
+        user: {
+          connect: { id: metadata.userId }
+        }
       }
     });
 
     // Return server version for now
     return serverVersion;
+  }
+
+  private serializeTestCaseResult(result: TestCaseResult): Prisma.JsonObject {
+    const { id, status, notes, testCaseId, testRunId, executedById, createdAt, updatedAt } = result;
+    return {
+      id,
+      status,
+      notes,
+      testCaseId,
+      testRunId,
+      executedById,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString()
+    };
   }
 } 

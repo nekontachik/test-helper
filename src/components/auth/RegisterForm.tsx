@@ -39,7 +39,7 @@ const registerSchema = z.object({
 // Type inference
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-export function RegisterForm() {
+export function RegisterForm(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -53,7 +53,7 @@ export function RegisterForm() {
     },
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData): Promise<void> => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',

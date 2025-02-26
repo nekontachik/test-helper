@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { ActivityEventType } from '@/types/activity';
+import type { ActivityEventType } from '@/types/activity';
 
 export enum ActivityType {
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',

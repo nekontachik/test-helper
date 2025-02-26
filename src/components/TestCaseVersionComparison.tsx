@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Table, Thead, Tbody, Tr, Th, Td, Text, VStack } from '@chakra-ui/react';
-import { TestCaseVersion } from '@/types';
+import type { TestCaseVersion } from '@/types';
 
 interface TestCaseVersionComparisonProps {
   oldVersion: TestCaseVersion;

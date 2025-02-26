@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod';
 import { errorResponse } from '@/lib/api/response';
 
 interface ValidationConfig {
@@ -18,7 +18,7 @@ interface RequestWithParams extends NextRequest {
 export async function validateRequestWithConfig(
   request: RequestWithParams,
   config: ValidationConfig
-) {
+): Promise<Record<string, unknown> | NextResponse> {
   try {
     const result = {
       query: undefined,

@@ -1,6 +1,7 @@
-import { NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
-import { authenticateMiddleware, AuthenticatedRequest } from './authenticate';
+import type { AuthenticatedRequest } from './authenticate';
+import { authenticateMiddleware } from './authenticate';
 import { AuthenticationError } from '../src/lib/errors';
 
 jest.mock('jsonwebtoken');

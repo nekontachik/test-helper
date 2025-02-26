@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { TestRunList } from '../../components/TestRunList';
-import { TestRun, TestRunStatus } from '@/types';
+import type { TestRun} from '@/types';
+import { TestRunStatus } from '@/types';
 
 const mockTestRuns: TestRun[] = [
   {

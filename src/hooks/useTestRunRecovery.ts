@@ -8,23 +8,29 @@ interface RecoveryState {
   timestamp: number;
 }
 
-export function useTestRunRecovery(projectId: string, testRunId: string) {
+export function useTestRunRecovery(projectId: string, testRunId: string): {
+  savedState: RecoveryState | null;
+  saveState: (state: Omit<RecoveryState, 'timestamp'>) => void;
+  clearRecovery: () => void;
+  isRecovering: boolean;
+  attemptRecovery: () => Promise<void>;
+} {
   const storageKey = `testrun:${projectId}:${testRunId}:recovery`;
   const [savedState, setSavedState] = useLocalStorage<RecoveryState | null>(storageKey, null);
   const [isRecovering, setIsRecovering] = useState(false);
 
-  const saveState = useCallback((state: Omit<RecoveryState, 'timestamp'>) => {
+  const saveState = useCallback((state: Omit<RecoveryState, 'timestamp'>): void => {
     setSavedState({
       ...state,
       timestamp: Date.now()
     });
   }, [setSavedState]);
 
-  const clearRecovery = useCallback(() => {
+  const clearRecovery = useCallback((): void => {
     setSavedState(null);
   }, [setSavedState]);
 
-  const attemptRecovery = useCallback(async () => {
+  const attemptRecovery = useCallback(async (): Promise<void> => {
     if (!savedState || isRecovering) return;
     
     try {
@@ -39,7 +45,7 @@ export function useTestRunRecovery(projectId: string, testRunId: string) {
 
   // Attempt recovery when coming back online
   useEffect(() => {
-    const handleOnline = () => {
+    const handleOnline = (): void => {
       if (savedState) {
         attemptRecovery();
       }

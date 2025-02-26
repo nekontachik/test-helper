@@ -8,7 +8,7 @@ interface ErrorMessageProps {
   message: string;
 }
 
-export function ErrorMessage({ title = 'Error', message }: ErrorMessageProps) {
+export function ErrorMessage({ title = 'Error', message }: ErrorMessageProps): JSX.Element {
   return (
     <MotionBox
       initial={{ opacity: 0, y: 20 }}

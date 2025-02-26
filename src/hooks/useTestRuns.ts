@@ -1,25 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
-import {
+import type {
   TestRun,
-  TestCase,
-  PaginatedResponse,
   TestCaseFormData,
-  TestRunStatus,
-  TestCaseStatus,
-  TestCaseResult,
-  TestRunFormData,
-} from '@/types';
+  TestRunFormData} from '@/types';
 import { createApiHook } from '@/lib/hooks/createApiHook';
 import { ROUTES } from '@/lib/routes';
 
-interface TestRunsResponse {
-  testRuns: TestRun[];
-  totalPages: number;
-  currentPage: number;
-}
-
-export function useTestRuns(projectId: string, page: number = 1, limit: number = 10) {
+export function useTestRuns(projectId: string, page: number = 1, limit: number = 10): {
+  data?: {
+    testRuns: TestRun[];
+    totalPages: number;
+    currentPage: number;
+  };
+  isLoading: boolean;
+  error: unknown;
+} {
   return useQuery({
     queryKey: ['testRuns', projectId, page, limit],
     queryFn: () => apiClient.getTestRuns(projectId, { page, limit }),
@@ -27,7 +23,11 @@ export function useTestRuns(projectId: string, page: number = 1, limit: number =
   });
 }
 
-export function useTestRun(projectId: string, runId: string) {
+export function useTestRun(projectId: string, runId: string): {
+  data?: TestRun;
+  isLoading: boolean;
+  error: unknown;
+} {
   return useQuery({
     queryKey: ['testRun', projectId, runId],
     queryFn: () => apiClient.getTestRun(projectId, runId),
@@ -46,7 +46,11 @@ export const useCreateTestRun = createApiHook<TestRun, TestRunFormData>({
   }
 });
 
-export function useUpdateTestRun(projectId: string) {
+export function useUpdateTestRun(projectId: string): {
+  mutate: (params: { runId: string; data: Partial<TestRunFormData> }) => Promise<TestRun>;
+  isLoading: boolean;
+  error: unknown;
+} {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -58,7 +62,11 @@ export function useUpdateTestRun(projectId: string) {
   });
 }
 
-export function useDeleteTestRun(projectId: string) {
+export function useDeleteTestRun(projectId: string): {
+  mutate: (runId: string) => Promise<void>;
+  isLoading: boolean;
+  error: unknown;
+} {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -69,7 +77,11 @@ export function useDeleteTestRun(projectId: string) {
   });
 }
 
-export function useCreateTestCase(projectId: string) {
+export function useCreateTestCase(projectId: string): {
+  mutate: (data: TestCaseFormData) => Promise<any>;
+  isLoading: boolean;
+  error: unknown;
+} {
   const queryClient = useQueryClient();
 
   return useMutation({

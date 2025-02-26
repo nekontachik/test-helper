@@ -4,7 +4,7 @@ import { securityHeaders } from './securityHeaders';
 import { rateLimitMiddleware } from './rateLimit';
 import { auditLogMiddleware } from './audit';
 
-export async function securityMiddleware(request: Request) {
+export async function securityMiddleware(request: Request): Promise<NextResponse> {
   try {
     // Skip security checks for static files and images
     if (request.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {

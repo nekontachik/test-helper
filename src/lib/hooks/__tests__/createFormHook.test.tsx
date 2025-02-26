@@ -18,7 +18,7 @@ const testSchema = z.object({
 
 describe('createFormHook', () => {
   const queryClient = new QueryClient();
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
+  const wrapper = ({ children }: { children: React.ReactNode }): React.ReactElement => (
     <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>

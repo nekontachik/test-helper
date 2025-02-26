@@ -1,11 +1,11 @@
 import React from 'react';
-import { NextPageContext } from 'next';
+import type { NextPageContext } from 'next';
 
 interface ErrorPageProps {
   statusCode?: number;
 }
 
-function ErrorPage({ statusCode }: ErrorPageProps) {
+function ErrorPage({ statusCode }: ErrorPageProps): React.ReactElement {
   console.error('ErrorPage: Unhandled error occurred');
   console.error('ErrorPage: Status code:', statusCode);
   return (

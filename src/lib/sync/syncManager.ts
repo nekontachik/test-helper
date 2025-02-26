@@ -2,10 +2,9 @@ import { prisma } from '@/lib/prisma';
 import { ConflictResolver } from './conflictResolver';
 import { CacheManager } from '../cache/cacheStrategy';
 import { dbLogger } from '@/lib/logger';
-import { Prisma, PrismaClient, TestCaseResult } from '@prisma/client';
+import type { PrismaClient, TestCaseResult } from '@prisma/client';
 
 type PrismaModels = Exclude<keyof PrismaClient, `$${string}`>;
-type ModelActions = 'create' | 'update' | 'delete' | 'findUnique';
 
 export interface SyncOperation {
   id: string;
@@ -27,7 +26,7 @@ export class SyncManager {
     this.cacheManager = new CacheManager();
   }
 
-  async queueOperation(operation: Omit<SyncOperation, 'id' | 'timestamp' | 'retryCount'>) {
+  async queueOperation(operation: Omit<SyncOperation, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
     const syncOp: SyncOperation = {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
@@ -43,7 +42,7 @@ export class SyncManager {
     }
   }
 
-  async sync() {
+  async sync(): Promise<void> {
     if (this.isSyncing || !navigator.onLine || this.syncQueue.length === 0) {
       return;
     }
@@ -73,7 +72,7 @@ export class SyncManager {
     }
   }
 
-  private async processSyncOperation(operation: SyncOperation) {
+  private async processSyncOperation(operation: SyncOperation): Promise<unknown> {
     switch (operation.type) {
       case 'CREATE':
         return this.handleCreate(operation);
@@ -86,17 +85,17 @@ export class SyncManager {
     }
   }
 
-  private async handleCreate(operation: SyncOperation) {
+  private async handleCreate(operation: SyncOperation): Promise<unknown> {
     const { entity, data } = operation;
-    const model = prisma[entity] as unknown as { create: (args: unknown) => Promise<unknown> };
-    return model.create({ data: data as any });
+    const model = prisma[entity] as unknown as { create: (args: { data: unknown }) => Promise<unknown> };
+    return model.create({ data });
   }
 
-  private async handleUpdate(operation: SyncOperation) {
+  private async handleUpdate(operation: SyncOperation): Promise<unknown> {
     const { entity, data } = operation;
     const model = prisma[entity] as unknown as {
-      findUnique: (args: unknown) => Promise<unknown>;
-      update: (args: unknown) => Promise<unknown>;
+      findUnique: (args: { where: { id: string } }) => Promise<unknown>;
+      update: (args: { where: { id: string }; data: unknown }) => Promise<unknown>;
     };
     
     const typedData = data as TestCaseResult;
@@ -117,7 +116,7 @@ export class SyncManager {
           clientVersion: typedData,
           serverVersion,
           timestamp: operation.timestamp,
-          userId: typedData.userId
+          userId: typedData.executedById
         }
       );
     }
@@ -128,9 +127,11 @@ export class SyncManager {
     });
   }
 
-  private async handleDelete(operation: SyncOperation) {
+  private async handleDelete(operation: SyncOperation): Promise<unknown> {
     const { entity, data } = operation;
-    const model = prisma[entity] as unknown as { delete: (args: unknown) => Promise<unknown> };
+    const model = prisma[entity] as unknown as { 
+      delete: (args: { where: { id: string } }) => Promise<unknown> 
+    };
     const typedData = data as { id: string };
     
     return model.delete({
@@ -138,13 +139,13 @@ export class SyncManager {
     });
   }
 
-  private async persistQueue() {
+  private async persistQueue(): Promise<void> {
     if (typeof window !== 'undefined') {
       localStorage.setItem('syncQueue', JSON.stringify(this.syncQueue));
     }
   }
 
-  private async loadQueue() {
+  private async loadQueue(): Promise<void> {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('syncQueue');
       this.syncQueue = saved ? JSON.parse(saved) : [];

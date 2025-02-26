@@ -3,7 +3,7 @@ import { useToast } from '@chakra-ui/react';
 import { logger } from '@/lib/utils/logger';
 import { getErrorMessage } from '@/lib/errors/errorMessages';
 import { AppError } from '@/lib/errors/types';
-import { ErrorFactory } from '@/lib/errors/ErrorFactory';
+import type { ErrorCode } from '@/lib/errors/types';
 import { ErrorRecovery } from '@/lib/errors/ErrorRecovery';
 import { ErrorTracker } from '@/lib/monitoring/ErrorTracker';
 
@@ -20,7 +20,13 @@ interface ErrorHandlerOptions {
   context?: string;
 }
 
-export function useErrorHandler() {
+export function useErrorHandler(): {
+  error: AppError | null;
+  loading: boolean;
+  handleError: (error: Error | AppError, options?: ErrorHandlerOptions) => void;
+  clearError: () => void;
+  withErrorHandling: <T>(operation: () => Promise<T>, options?: ErrorHandlerOptions) => Promise<T | undefined>;
+} {
   const [error, setError] = useState<AppError | null>(null);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -53,7 +59,16 @@ export function useErrorHandler() {
       });
     }
 
-    setError(isAppError ? error : ErrorFactory.create('UNKNOWN_ERROR', error.message));
+    if (isAppError) {
+      setError(error);
+    } else {
+      // Create a new AppError with the UNKNOWN_ERROR code
+      const appError = new AppError(error.message, {
+        code: 'INTERNAL_ERROR' as ErrorCode,
+        status: 500
+      });
+      setError(appError);
+    }
   }, [toast]);
 
   const clearError = useCallback(() => setError(null), []);

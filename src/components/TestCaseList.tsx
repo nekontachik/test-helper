@@ -21,7 +21,7 @@ export interface TestCaseFilters {
   orderBy?: Record<string, 'asc' | 'desc'>;
 }
 
-export function TestCaseList({ projectId }: TestCaseListProps) {
+export function TestCaseList({ projectId }: TestCaseListProps): JSX.Element {
   const [filters, setFilters] = useState<TestCaseFilters>({
     projectId,
     status: [TestCaseStatus.ACTIVE],

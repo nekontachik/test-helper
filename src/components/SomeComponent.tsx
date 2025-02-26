@@ -1,4 +1,6 @@
-const SomeComponent: React.FC = () => {
+import type { FC } from 'react';
+
+const SomeComponent: FC = (): JSX.Element | null => {
   return null;
 };
 

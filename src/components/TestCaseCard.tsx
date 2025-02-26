@@ -7,7 +7,8 @@ import {
   Flex,
   Button,
 } from '@chakra-ui/react';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 import Link from 'next/link';
 
 interface TestCaseCardProps {
@@ -15,7 +16,7 @@ interface TestCaseCardProps {
   projectId: string;
 }
 
-export function TestCaseCard({ testCase, projectId }: TestCaseCardProps) {
+export function TestCaseCard({ testCase, projectId }: TestCaseCardProps): JSX.Element {
   return (
     <Box borderWidth="1px" borderRadius="lg" p={4}>
       <Flex justifyContent="space-between" alignItems="center">

@@ -1,95 +1,144 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react';
 import TestRunList from './TestRunList';
-import { TestRun, TestRunStatus } from '@/types';
+import { ChakraProvider } from '@chakra-ui/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TestRunStatus } from '@/types';
 
-export default {
-  title: 'Components/TestRunList',
-  component: TestRunList,
-  decorators: [(Story) => <div style={{ padding: '3rem' }}><Story /></div>],
-} as Meta<typeof TestRunList>;
+// Mock the API client
+jest.mock('@/lib/apiClient', () => ({
+  getTestRuns: jest.fn(),
+}));
 
-const Template: StoryFn<React.ComponentProps<typeof TestRunList>> = (args) => (
-  <TestRunList {...args} />
-);
-
-const mockTestRuns: TestRun[] = [
+const mockTestRuns = [
   {
     id: '1',
-    name: 'Test Run 1',
+    name: 'Smoke Test Run',
     status: TestRunStatus.COMPLETED,
-    projectId: 'project1',
-    createdAt: new Date('2023-01-01'),
-    updatedAt: new Date('2023-01-02'),
+    projectId: 'project-1',
+    createdAt: new Date('2023-01-01').toISOString(),
+    updatedAt: new Date('2023-01-02').toISOString(),
+    completedAt: new Date('2023-01-02').toISOString(),
+    testCaseCount: 5,
+    passRate: 80,
   },
   {
     id: '2',
-    name: 'Test Run 2',
+    name: 'Regression Test Run',
     status: TestRunStatus.IN_PROGRESS,
-    projectId: 'project1',
-    createdAt: new Date('2023-01-03'),
-    updatedAt: new Date('2023-01-04'),
+    projectId: 'project-1',
+    createdAt: new Date('2023-01-03').toISOString(),
+    updatedAt: new Date('2023-01-03').toISOString(),
+    completedAt: null,
+    testCaseCount: 10,
+    passRate: 60,
+  },
+  {
+    id: '3',
+    name: 'Performance Test Run',
+    status: TestRunStatus.PENDING,
+    projectId: 'project-1',
+    createdAt: new Date('2023-01-04').toISOString(),
+    updatedAt: new Date('2023-01-04').toISOString(),
+    completedAt: null,
+    testCaseCount: 3,
+    passRate: null,
   },
 ];
 
-export const Default = Template.bind({});
-Default.args = {
-  projectId: 'project1',
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
+const meta: Meta<typeof TestRunList> = {
+  title: 'Components/TestRunList',
+  component: TestRunList,
+  decorators: [
+    (Story): React.ReactElement => (
+      <ChakraProvider>
+        <QueryClientProvider client={queryClient}>
+          <Story />
+        </QueryClientProvider>
+      </ChakraProvider>
+    ),
+  ],
+  parameters: {
+    layout: 'fullscreen',
+  },
 };
 
-export const Loading = Template.bind({});
-Loading.args = {
-  projectId: 'project1',
-};
+export default meta;
+type Story = StoryObj<typeof TestRunList>;
 
-export const Error = Template.bind({});
-Error.args = {
-  projectId: 'project1',
-};
-
-// Mock the useTestRuns hook for Storybook
-jest.mock('@/hooks/useTestRuns', () => ({
-  useTestRuns: jest.fn(),
-}));
-
-Default.parameters = {
-  mockData: [
-    {
-      url: '/api/projects/project1/test-runs',
-      method: 'GET',
-      status: 200,
-      response: {
-        data: mockTestRuns,
-        totalPages: 1,
-        currentPage: 1,
+// Set up mock responses for each story
+export const Default: Story = {
+  args: {
+    projectId: 'project-1',
+  },
+  parameters: {
+    mockData: [
+      {
+        path: 'getTestRuns',
+        response: {
+          data: mockTestRuns,
+          total: mockTestRuns.length,
+          page: 1,
+          limit: 10,
+          totalPages: 1
+        },
       },
-    },
-  ],
+    ],
+  },
 };
 
-Loading.parameters = {
-  mockData: [
-    {
-      url: '/api/projects/project1/test-runs',
-      method: 'GET',
-      status: 200,
-      response: {
-        data: [],
-        totalPages: 0,
-        currentPage: 1,
+export const Loading: Story = {
+  args: {
+    projectId: 'project-1',
+  },
+  parameters: {
+    mockData: [
+      {
+        path: 'getTestRuns',
+        loading: true,
       },
-      delay: 2000, // Simulate a 2-second delay
-    },
-  ],
+    ],
+  },
 };
 
-Error.parameters = {
-  mockData: [
-    {
-      url: '/api/projects/project1/test-runs',
-      method: 'GET',
-      status: 500,
-      response: { error: 'An error occurred' },
-    },
-  ],
+export const ErrorState: Story = {
+  args: {
+    projectId: 'project-1',
+  },
+  parameters: {
+    mockData: [
+      {
+        path: 'getTestRuns',
+        error: new Error('Failed to load test runs'),
+      },
+    ],
+  },
+};
+
+export const Empty: Story = {
+  args: {
+    projectId: 'project-1',
+  },
+  parameters: {
+    mockData: [
+      {
+        path: 'getTestRuns',
+        response: {
+          data: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0
+        },
+      },
+    ],
+  },
 };

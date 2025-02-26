@@ -8,7 +8,9 @@ export function useTestRunWebSocket(
   projectId: string,
   testRunId: string,
   onConflict: (changes: TestResult[]) => void
-) {
+): {
+  disconnect: () => void;
+} {
   const { showErrorToast } = useToast();
 
   const connect = useCallback(() => {

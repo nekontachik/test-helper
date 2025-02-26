@@ -4,7 +4,7 @@ import { TestSuiteList } from '@/components/TestSuiteList';
 import { useTestSuites } from '@/hooks/useTestSuites';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ChakraProvider } from '@chakra-ui/react';
-import { TestSuite } from '@/models/types'; // Import from the correct location
+import type { TestSuite } from '@/models/types'; // Import from the correct location
 
 jest.mock('@/hooks/useTestSuites');
 jest.mock('@/hooks/useErrorHandler');

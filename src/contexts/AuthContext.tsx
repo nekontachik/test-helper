@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 import { useSession } from 'next-auth/react';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 import type { Session } from 'next-auth';
 
 interface ExtendedSession extends Session {
@@ -38,10 +39,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const { data: session, status } = useSession() as { data: ExtendedSession | null, status: string };
 
-  const hasPermission = (roles: UserRole[]) => {
+  const hasPermission = (roles: UserRole[]): boolean => {
     if (!session?.user?.role) return false;
     return roles.includes(session.user.role);
   };
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

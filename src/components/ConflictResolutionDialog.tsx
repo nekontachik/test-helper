@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TestResult } from '@/types/testResults';
+import type { TestResult } from '@/types/testResults';
 
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export function ConflictResolutionDialog({
   localChanges,
   serverChanges,
   onResolve,
-}: ConflictResolutionDialogProps) {
+}: ConflictResolutionDialogProps): JSX.Element {
   const [conflicts, setConflicts] = useState<ConflictItem[]>(() => 
     localChanges.map((local, index) => ({
       testCaseId: local.testCaseId,
@@ -55,7 +55,7 @@ export function ConflictResolutionDialog({
     }
   }, [isOpen, localChanges, serverChanges]);
 
-  const handleSelect = (testCaseId: string, selection: 'local' | 'server') => {
+  const handleSelect = (testCaseId: string, selection: 'local' | 'server'): void => {
     setConflicts(prev => 
       prev.map(conflict => 
         conflict.testCaseId === testCaseId
@@ -65,7 +65,7 @@ export function ConflictResolutionDialog({
     );
   };
 
-  const handleResolve = async () => {
+  const handleResolve = async (): Promise<void> => {
     try {
       const resolvedResults = conflicts.map(conflict => 
         conflict.selected === 'server' ? conflict.server : conflict.local
@@ -76,7 +76,7 @@ export function ConflictResolutionDialog({
     }
   };
 
-  const getStatusStyles = (status: string) => {
+  const getStatusStyles = (status: string): string => {
     const baseStyles = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
     switch (status) {
       case 'PASSED': return cn(baseStyles, "bg-green-100 text-green-800");
@@ -87,7 +87,7 @@ export function ConflictResolutionDialog({
     }
   };
 
-  const renderConflict = (conflict: ConflictItem) => {
+  const renderConflict = (conflict: ConflictItem): JSX.Element | null => {
     const hasChanges = 
       conflict.local.status !== conflict.server.status ||
       conflict.local.notes !== conflict.server.notes;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text, VStack, Button, Flex } from '@chakra-ui/react';
-import { TestSuite } from '../models/types';
+import type { TestSuite } from '../models/types';
 import NextLink from 'next/link';
 
 interface TestSuiteListProps {

@@ -6,7 +6,7 @@ export interface ToastProps {
   onClose: () => void;
 }
 
-export function Toast({ message, type, onClose }: ToastProps) {
+export function Toast({ message, type, onClose }: ToastProps): JSX.Element {
   const bgColor =
     type === 'success'
       ? 'bg-green-500'

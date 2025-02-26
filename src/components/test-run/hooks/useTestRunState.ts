@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { TestCase, TestCaseResult, TestCaseResultStatus } from '@/types';
+import type { TestCase, TestCaseResultStatus } from '@/types';
 import { useTestRunQueue } from '@/hooks/useTestRunQueue';
 
 interface UseTestRunStateProps {
@@ -53,7 +53,7 @@ export function useTestRunState({
     return () => clearInterval(syncInterval);
   }, [processQueue]);
 
-  const handleSubmitResult = useCallback(async (result: TestResultInput) => {
+  const handleSubmitResult = useCallback(async (result: TestResultInput): Promise<void> => {
     try {
       setIsSubmitting(true);
       setError(null);

@@ -1,4 +1,4 @@
-import { TestCase } from './testCase';
+import type { TestCase } from './testCase';
 
 export interface TestSuite {
   id: string;

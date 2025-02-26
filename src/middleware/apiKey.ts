@@ -5,7 +5,7 @@ import { ApiKeyService } from '@/lib/auth/apiKeyService';
 export async function apiKeyMiddleware(
   request: NextRequest,
   requiredScopes: string[] = []
-) {
+): Promise<NextResponse> {
   const apiKey = request.headers.get('X-API-Key');
 
   if (!apiKey) {

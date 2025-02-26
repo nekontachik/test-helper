@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import TestCaseVersionComparison from '../TestCaseVersionComparison';
-import { TestCaseVersion, TestCasePriority, TestCaseStatus } from '@/types';
+import type { TestCaseVersion} from '@/types';
+import { TestCasePriority, TestCaseStatus } from '@/types';
 
 describe('TestCaseVersionComparison', () => {
   const mockOldVersion: TestCaseVersion = {

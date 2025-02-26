@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { Checkbox } from '@chakra-ui/checkbox';
 import { useForm } from 'react-hook-form';
-import { TestRunFormData, TestCase } from '@/types';
+import type { TestRunFormData, TestCase } from '@/types';
 
 interface TestRunFormProps {
   onSubmit: (data: TestRunFormData) => void;

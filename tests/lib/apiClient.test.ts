@@ -1,8 +1,9 @@
 import axios from 'axios';
 import apiClient from '@/lib/apiClient';
-import {
+import type {
   Project,
-  TestCase,
+  TestCase} from '@/types';
+import {
   TestRun,
   TestReport,
   TestCaseStatus,

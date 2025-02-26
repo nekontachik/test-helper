@@ -5,7 +5,7 @@ interface ErrorAlertProps {
   message?: string;
 }
 
-export function ErrorAlert({ error, message }: ErrorAlertProps) {
+export function ErrorAlert({ error, message }: ErrorAlertProps): JSX.Element {
   const errorMessage = error?.message || message || 'An error occurred';
   
   return (

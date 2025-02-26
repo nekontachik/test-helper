@@ -8,7 +8,7 @@ interface ErrorBoundaryProps {
   fallback?: React.ReactNode;
 }
 
-export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
+export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps): JSX.Element {
   const { handleError } = useErrorHandler();
 
   return (

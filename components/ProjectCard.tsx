@@ -1,5 +1,5 @@
 import { Box, Heading, Text, VStack } from '@chakra-ui/react'
-import { Project } from '@prisma/client'
+import type { Project } from '@prisma/client'
 
 interface ProjectCardProps {
   project: Project

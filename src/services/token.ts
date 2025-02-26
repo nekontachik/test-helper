@@ -1,8 +1,8 @@
-import { EmailVerificationToken } from '@/types/auth';
+import type { EmailVerificationToken } from '@/types/auth';
 import { randomBytes } from 'crypto';
 
 export class TokenService {
-  static async createToken({ type, userId, expiresIn }: {
+  static async createToken({ type: _type, userId: _userId, expiresIn }: {
     type: string;
     userId: string;
     expiresIn: string;
@@ -30,7 +30,7 @@ export class TokenService {
     };
   }
 
-  static async verifyToken(token: string, type: string): Promise<{
+  static async verifyToken(_token: string, _type: string): Promise<{
     userId: string;
     email: string;
   }> {

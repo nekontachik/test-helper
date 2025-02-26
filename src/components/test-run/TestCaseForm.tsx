@@ -19,14 +19,14 @@ interface TestCaseFormProps {
   onCancel: () => void;
 }
 
-export function TestCaseForm({ projectId, testCase, onSubmit, isSubmitting, isLastCase, onCancel }: TestCaseFormProps) {
+export function TestCaseForm({ projectId, testCase, onSubmit, isSubmitting, isLastCase, onCancel }: TestCaseFormProps): JSX.Element {
   const form = useForm<TestResultFormData>({
     resolver: zodResolver(testResultSchema),
     defaultValues: {
       testCaseId: testCase.id,
       status: TestCaseResultStatus.PASSED,
       notes: '',
-      evidenceUrls: [],
+      evidence: [],
     },
   });
 
@@ -79,8 +79,8 @@ export function TestCaseForm({ projectId, testCase, onSubmit, isSubmitting, isLa
             <FileUploadField 
               form={form} 
               projectId={projectId}
-              files={form.watch('evidenceUrls') || []}
-              onFilesChange={(files) => form.setValue('evidenceUrls', files)}
+              files={form.watch('evidence') || []}
+              onFilesChange={(files) => form.setValue('evidence', files)}
               isDisabled={isSubmitting}
             />
           </div>

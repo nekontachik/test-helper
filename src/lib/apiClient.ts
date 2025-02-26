@@ -1,6 +1,7 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { getSession } from 'next-auth/react';
-import { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
+import type { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
 
 // Custom error class for API errors
 class ApiError extends Error {
@@ -31,17 +32,17 @@ const handleApiError = (error: unknown): never => {
 };
 
 const apiClient = {
-  async get<T>(url: string, params?: any): Promise<T> {
+  async get<T>(url: string, params?: unknown): Promise<T> {
     const response = await api.get<T>(url, { params });
     return response.data;
   },
 
-  async post<T>(url: string, data: any): Promise<T> {
+  async post<T>(url: string, data: unknown): Promise<T> {
     const response = await api.post<T>(url, data);
     return response.data;
   },
 
-  async put<T>(url: string, data: any): Promise<T> {
+  async put<T>(url: string, data: unknown): Promise<T> {
     const response = await api.put<T>(url, data);
     return response.data;
   },

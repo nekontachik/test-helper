@@ -5,7 +5,7 @@ interface ErrorMessageProps {
   message: string;
 }
 
-export function ErrorMessage({ message }: ErrorMessageProps) {
+export function ErrorMessage({ message }: ErrorMessageProps): JSX.Element {
   return (
     <Alert status="error">
       <AlertIcon />

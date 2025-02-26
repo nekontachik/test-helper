@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export function securityHeaders(request: Request) {
+export function securityHeaders(request: Request): NextResponse {
   const headers = new Headers(request.headers);
 
   // Security Headers

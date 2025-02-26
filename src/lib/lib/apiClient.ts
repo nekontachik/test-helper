@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { Project, TestCase, TestRun, PaginatedResponse } from '@/types';
+import type { TestCase, TestRun, PaginatedResponse } from '@/types';
+import { Project } from '@/types';
 
 const api = axios.create({
   baseURL: '/api',

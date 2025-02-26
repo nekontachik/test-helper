@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { TestReport, TestCase, TestCaseResultStatus } from '@/types';
+import type { TestReport, TestCase, TestCaseResultStatus } from '@/types';
 import { formatDate } from '@/lib/utils/date';
 
 interface TestReportStatistics {
@@ -33,7 +33,7 @@ declare module 'jspdf' {
   }
 }
 
-export function generatePDF(report: TestReport & { statistics: TestReportStatistics; results: TestReportResult[] }) {
+export function generatePDF(report: TestReport & { statistics: TestReportStatistics; results: TestReportResult[] }): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
 

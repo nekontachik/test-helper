@@ -2,7 +2,10 @@ import { useCallback } from 'react';
 import { useErrorHandler } from './useErrorHandler';
 import { normalizeError } from '@/lib/utils/errorUtils';
 
-export function useApiErrorHandler() {
+export function useApiErrorHandler(): {
+  handleApiError: (error: unknown) => void;
+  withApiErrorHandling: <T>(operation: () => Promise<T>) => Promise<T | undefined>;
+} {
   const { handleError } = useErrorHandler();
 
   const handleApiError = useCallback((error: unknown) => {

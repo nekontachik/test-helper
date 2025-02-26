@@ -9,13 +9,13 @@ import {
   Input,
   VStack,
   Text,
+  Checkbox,
 } from '@chakra-ui/react';
-import { Checkbox } from '@chakra-ui/checkbox';
 import { useTestCases } from '@/hooks/useTestCases';
 import { useCreateTestRun } from '@/hooks/useTestRuns';
-import { TestCase, TestRunFormData } from '@/types';
+import type { TestCase, TestRunFormData } from '@/types';
 
-const CreateTestRun: React.FC = () => {
+const CreateTestRun: React.FC = (): React.ReactElement => {
   const params = useParams();
   const router = useRouter();
   const projectId = params?.projectId as string;
@@ -24,20 +24,41 @@ const CreateTestRun: React.FC = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<TestRunFormData>();
-  const { data: testCases, isLoading, error } = useTestCases(projectId);
+  const { testCases, isLoading, error } = useTestCases({ projectId });
   const createTestRun = useCreateTestRun(projectId);
   const [selectedTestCases, setSelectedTestCases] = useState<string[]>([]);
+
+  // Move useMemo outside of conditional rendering to avoid React hooks rules violation
+  const _formattedTestCases = useMemo(
+    () => {
+      if (!testCases) return [];
+      
+      return testCases.map((tc: TestCase) => ({
+        id: tc.id,
+        title: tc.title,
+        description: tc.description || '',
+        status: tc.status,
+        priority: tc.priority,
+        expectedResult: tc.expectedResult || '',
+        projectId: tc.projectId,
+        createdAt: tc.createdAt,
+        updatedAt: tc.updatedAt,
+        version: tc.version,
+      }));
+    },
+    [testCases]
+  );
 
   if (isLoading) return <div>Loading test cases...</div>;
   if (error) return <div>Error loading test cases: {error.message}</div>;
 
-  const onSubmit = async (data: TestRunFormData) => {
+  const onSubmit = async (data: TestRunFormData): Promise<void> => {
     try {
       await createTestRun.mutateAsync({
         name: data.name,
         testCases: selectedTestCases
           .map((id) => {
-            const testCase = testCases?.data.find(
+            const testCase = testCases.find(
               (tc: TestCase) => tc.id === id
             );
             return testCase ? { ...testCase } : null;
@@ -50,30 +71,13 @@ const CreateTestRun: React.FC = () => {
     }
   };
 
-  const handleTestCaseSelection = (testCaseId: string) => {
+  const handleTestCaseSelection = (testCaseId: string): void => {
     setSelectedTestCases((prev) =>
       prev.includes(testCaseId)
         ? prev.filter((id) => id !== testCaseId)
         : [...prev, testCaseId]
     );
   };
-
-  const formattedTestCases = useMemo(
-    () =>
-      testCases.data.map((tc: TestCase) => ({
-        id: tc.id,
-        title: tc.title,
-        description: tc.description || '',
-        status: tc.status,
-        priority: tc.priority,
-        expectedResult: tc.expectedResult || '',
-        projectId: tc.projectId,
-        createdAt: tc.createdAt,
-        updatedAt: tc.updatedAt,
-        version: tc.version,
-      })),
-    [testCases.data]
-  );
 
   return (
     <Box maxWidth="600px" margin="auto" padding={4}>
@@ -90,7 +94,7 @@ const CreateTestRun: React.FC = () => {
 
           <Text fontWeight="bold">Select Test Cases:</Text>
           {testCases &&
-            testCases.data.map((testCase: TestCase) => (
+            testCases.map((testCase: TestCase) => (
               <Checkbox
                 key={testCase.id}
                 isChecked={selectedTestCases.includes(testCase.id)}

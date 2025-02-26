@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { nanoid } from 'nanoid';
 import { Redis } from '@upstash/redis';
+import type { NextApiRequest } from 'next';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -11,14 +12,16 @@ const redis = new Redis({
 const CSRF_TOKEN_HEADER = 'x-csrf-token';
 const CSRF_TOKEN_EXPIRY = 60 * 60; // 1 hour
 
-export async function csrfMiddleware(request: Request) {
+export async function csrfMiddleware(request: Request): Promise<NextResponse> {
   try {
     // Skip CSRF check for GET requests and non-mutation operations
     if (request.method === 'GET') {
       return NextResponse.next();
     }
 
-    const session = await getToken({ req: request as any });
+    // We need to cast the request to a type that next-auth accepts
+    // This is a workaround for type compatibility
+    const session = await getToken({ req: request as unknown as NextApiRequest });
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },

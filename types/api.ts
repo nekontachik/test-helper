@@ -1,4 +1,4 @@
-import { Prisma, Project } from '@prisma/client';
+import type { Prisma, Project } from '@prisma/client';
 
 export type ApiResponse<T> = {
   success: boolean;

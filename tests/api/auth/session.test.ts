@@ -1,6 +1,6 @@
 import { authOptions } from '../[...nextauth]/route';
 import { UserRole } from '@/types/auth';
-import { Session } from 'next-auth';
+import type { Session } from 'next-auth';
 
 describe('NextAuth Session Handling', () => {
   const mockToken = {

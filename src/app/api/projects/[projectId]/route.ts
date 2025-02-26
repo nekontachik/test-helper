@@ -1,5 +1,5 @@
 import { errorHandler } from '@/middleware/errorHandler';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getProject, updateProject, deleteProject } from '@/lib/services/projectService';
 
 export async function GET(

@@ -10,7 +10,7 @@ interface AuthLoadingProps {
 export function AuthLoading({ 
   message = 'Loading...', 
   size = 'xl' 
-}: AuthLoadingProps) {
+}: AuthLoadingProps): JSX.Element {
   return (
     <Center minH="200px">
       <VStack spacing={4}>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { Session } from 'next-auth';
-import { Action, Resource } from '@/types/rbac';
+import type { Session } from 'next-auth';
+import type { Action, Resource } from '@/types/rbac';
 
 export type SecureRouteContext = {
   session: Session | null;

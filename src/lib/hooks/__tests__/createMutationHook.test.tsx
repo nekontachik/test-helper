@@ -7,7 +7,7 @@ jest.mock('react-hot-toast');
 
 describe('createMutation', () => {
   const queryClient = new QueryClient();
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
+  const wrapper = ({ children }: { children: React.ReactNode }): React.ReactElement => (
     <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
@@ -49,9 +49,10 @@ describe('createMutation', () => {
     const { result } = renderHook(
       () => createMutation({
         mutationFn: mockMutationFn,
-        onError: mockOnError,
         errorMessage: 'Error!'
-      })(),
+      })({
+        onError: mockOnError
+      }),
       { wrapper }
     );
 
@@ -61,7 +62,7 @@ describe('createMutation', () => {
       } catch {}
     });
 
-    expect(mockOnError).toHaveBeenCalledWith(error);
+    expect(mockOnError).toHaveBeenCalledWith(error, { name: 'Test' });
     expect(toast.error).toHaveBeenCalledWith('Error!');
   });
 }); 

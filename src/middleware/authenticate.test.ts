@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { middlewareHandler } from './handler';
 import { MIDDLEWARE_CONFIG } from './config';
 import { logger } from '@/lib/utils/logger';
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 jest.mock('next-auth/jwt');
 jest.mock('@/lib/utils/logger');

@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Container, VStack } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthHeader } from './AuthHeader';
 import { AuthFooter } from './AuthFooter';
 
@@ -17,7 +17,7 @@ export function AuthContainer({
   maxWidth = "container.sm",
   showHeader = true,
   showFooter = true,
-}: AuthContainerProps) {
+}: AuthContainerProps): JSX.Element {
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
       {showHeader && <AuthHeader />}

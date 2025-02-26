@@ -38,7 +38,7 @@ export class RateLimitError extends Error {
 export async function checkRateLimit(
   identifier: string,
   limiter: keyof typeof rateLimiters
-) {
+): Promise<Awaited<ReturnType<(typeof rateLimiters)[keyof typeof rateLimiters]['limit']>>> {
   const result = await rateLimiters[limiter].limit(identifier)
   
   if (!result.success) {

@@ -1,5 +1,5 @@
 import { BaseError } from '../BaseError';
-import { ApiErrorOptions } from '../types';
+import type { ApiErrorOptions } from '../types';
 
 export class AuthenticationError extends BaseError {
   constructor(message: string = 'Authentication required', options?: Omit<ApiErrorOptions, 'code' | 'status'>) {

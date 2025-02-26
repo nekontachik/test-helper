@@ -1,26 +1,33 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import logger from '@/lib/logger';
 
+interface AppError {
+  name: string;
+  message: string;
+}
+
 export function errorMiddleware(
-  err: any,
+  err: unknown,
   req: NextApiRequest,
   res: NextApiResponse
-) {
-  if (err.name === 'ValidationError') {
-    logger.error('Validation Error', err.message);
-    return res.status(400).json({ error: err.message });
+): void {
+  const error = err as AppError;
+  
+  if (error.name === 'ValidationError') {
+    logger.error('Validation Error', error.message);
+    return res.status(400).json({ error: error.message });
   }
 
-  if (err.name === 'NotFoundError') {
-    logger.error('Not Found Error', err.message);
+  if (error.name === 'NotFoundError') {
+    logger.error('Not Found Error', error.message);
     return res.status(404).json({ error: 'Resource not found' });
   }
 
-  if (err.name === 'DatabaseError') {
-    logger.error('Database Error', err.message);
+  if (error.name === 'DatabaseError') {
+    logger.error('Database Error', error.message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 
-  logger.error('Application Error', err.message);
+  logger.error('Application Error', error.message);
   return res.status(500).json({ error: 'Internal server error' });
 }

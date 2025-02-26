@@ -12,13 +12,13 @@ import {
 import { AuthCard } from './AuthCard';
 import { AuthMessage } from './AuthMessage';
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const toast = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 

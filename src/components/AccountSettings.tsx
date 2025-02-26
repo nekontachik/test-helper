@@ -22,9 +22,11 @@ import {
 import { AuthCard } from './AuthCard';
 import { PasswordInput } from './PasswordInput';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Action, Resource } from '@/types/rbac';
+import { Action, Resource } from '@/lib/auth/rbac/types';
 import logger from '@/lib/logger';
 import type { AuthUser } from '@/lib/auth/types';
+import type { ChangeEvent } from 'react';
+import type { UseFormRegister } from 'react-hook-form';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -53,29 +55,35 @@ interface AccountSettingsProps {
 }
 
 interface PasswordInputWrapperProps {
-  register: any;
-  name: string;
+  register: UseFormRegister<PasswordFormData>;
+  name: keyof PasswordFormData;
   placeholder: string;
   value: string;
 }
 
-function PasswordInputWrapper({ register, name, placeholder, value }: PasswordInputWrapperProps) {
+function PasswordInputWrapper({ register, name, placeholder, value }: PasswordInputWrapperProps): JSX.Element {
   const { onChange, ...rest } = register(name);
+  
   return (
     <PasswordInput
       {...rest}
-      onChange={(e: any) => onChange(e)}
+      onValueChange={(newValue) => {
+        const syntheticEvent = {
+          target: { value: newValue, name }
+        } as unknown as ChangeEvent<HTMLInputElement>;
+        onChange(syntheticEvent);
+      }}
       value={value}
       placeholder={placeholder}
     />
   );
 }
 
-export function AccountSettings({ user }: AccountSettingsProps) {
+export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
   const [isUpdating, setIsUpdating] = useState(false);
   const toast = useToast();
   const { can } = usePermissions();
-  const { isOpen: isChangingPassword, onOpen: onPasswordChange, onClose: onPasswordClose } = useDisclosure();
+  const { isOpen: _isChangingPassword, onOpen: _onPasswordChange, onClose: onPasswordClose } = useDisclosure();
 
   const {
     register: registerProfile,
@@ -98,7 +106,7 @@ export function AccountSettings({ user }: AccountSettingsProps) {
     resolver: zodResolver(passwordSchema),
   });
 
-  const handleUpdateProfile = async (data: ProfileFormData) => {
+  const handleUpdateProfile = async (data: ProfileFormData): Promise<void> => {
     try {
       setIsUpdating(true);
       const canUpdate = await can(Action.UPDATE, Resource.USER);
@@ -135,7 +143,7 @@ export function AccountSettings({ user }: AccountSettingsProps) {
     }
   };
 
-  const handleChangePassword = async (data: PasswordFormData) => {
+  const handleChangePassword = async (data: PasswordFormData): Promise<void> => {
     try {
       setIsUpdating(true);
       const response = await fetch('/api/auth/change-password', {

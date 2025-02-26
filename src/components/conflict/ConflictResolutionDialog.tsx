@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { TestCaseResult } from '@prisma/client';
+import type { TestCaseResult } from '@prisma/client';
 import { format } from 'date-fns';
 
 interface ConflictResolutionDialogProps {
@@ -20,11 +20,11 @@ export function ConflictResolutionDialog({
   clientVersion,
   serverVersion,
   onResolve
-}: ConflictResolutionDialogProps) {
+}: ConflictResolutionDialogProps): React.ReactElement {
   const [resolution, setResolution] = useState<'client' | 'server' | 'merge'>('client');
   const [isResolving, setIsResolving] = useState(false);
 
-  const handleResolve = async () => {
+  const handleResolve = async (): Promise<void> => {
     setIsResolving(true);
     try {
       await onResolve(resolution);

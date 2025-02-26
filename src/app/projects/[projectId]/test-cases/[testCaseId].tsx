@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic';
 import { Box, Spinner, Heading } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
 import { Layout } from '@/components/Layout';
-import { TestCaseFormData, TestCase } from '@/types';
+import type { TestCaseFormData} from '@/types';
+import { TestCase } from '@/types';
 import { useTestCase } from '@/hooks/useTestCase';
 import { useUpdateTestCase } from '@/hooks/useUpdateTestCase';
 

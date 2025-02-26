@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { BaseError } from '@/lib/errors/BaseError';
+import type { Project, TestCase, TestRun } from '@prisma/client';
 
 interface ProjectData {
   name: string;
@@ -9,10 +10,15 @@ interface ProjectData {
   status?: 'ACTIVE' | 'ARCHIVED' | 'COMPLETED';
 }
 
+interface ProjectWithRelations extends Project {
+  testCases: TestCase[];
+  testRuns: TestRun[];
+}
+
 /**
  * Get a project by ID
  */
-export async function getProject(projectId: string) {
+export async function getProject(projectId: string): Promise<ProjectWithRelations> {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     throw new BaseError('Not authenticated', {
@@ -45,7 +51,7 @@ export async function getProject(projectId: string) {
 /**
  * Update a project
  */
-export async function updateProject(projectId: string, data: ProjectData) {
+export async function updateProject(projectId: string, data: ProjectData): Promise<Project> {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     throw new BaseError('Not authenticated', {
@@ -83,7 +89,7 @@ export async function updateProject(projectId: string, data: ProjectData) {
 /**
  * Delete a project
  */
-export async function deleteProject(projectId: string) {
+export async function deleteProject(projectId: string): Promise<void> {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     throw new BaseError('Not authenticated', {
@@ -130,7 +136,7 @@ export async function deleteProject(projectId: string) {
 /**
  * Create a new project
  */
-export async function createProject(data: ProjectData) {
+export async function createProject(data: ProjectData): Promise<Project> {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     throw new BaseError('Not authenticated', {
@@ -146,7 +152,7 @@ export async function createProject(data: ProjectData) {
 
   if (projectCount >= 50) {
     throw new BaseError('Project limit reached', {
-      code: 'CONFLICT',
+      code: 'VALIDATION_ERROR',
       status: 409,
       details: { limit: 50 }
     });

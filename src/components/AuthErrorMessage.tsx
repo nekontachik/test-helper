@@ -12,7 +12,7 @@ export function AuthErrorMessage({
   title = 'Error', 
   message,
   showIcon = true
-}: AuthErrorMessageProps) {
+}: AuthErrorMessageProps): JSX.Element {
   return (
     <Alert
       status="error"

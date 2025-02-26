@@ -3,7 +3,8 @@ import { Box, VStack, Heading, Text, Button, Flex, Select } from '@chakra-ui/rea
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import  apiClient  from '@/lib/apiClient';
-import { TestRun, TestRunStatus } from '@/types';
+import type { TestRun} from '@/types';
+import { TestRunStatus } from '@/types';
 import { TestRunCard } from '@/components/TestRunCard';
 
 interface TestRunListProps {

@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useToast } from '@chakra-ui/react';
 import { LoadingScreen } from './LoadingScreen';
 import { usePermissions } from "@/hooks/usePermissions";
-import { Action, Resource } from "@/types/rbac";
+import { Action, Resource } from "@/lib/auth/rbac/types";
 import type { UserRole } from "@/types/auth";
 import { isPublicPage, DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/redirects";
 import { AUTH_ERRORS } from '@/lib/utils/error';
@@ -42,12 +42,12 @@ export function AuthGuard({
   requiredRole,
   loadingMessage = "Checking authentication...",
   silent = false
-}: AuthGuardProps) {
+}: AuthGuardProps): React.ReactElement | null {
   // Hooks
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { data: _session, status } = useSession();
   const { can } = usePermissions();
   const toast = useToast();
 

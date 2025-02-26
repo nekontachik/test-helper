@@ -7,7 +7,7 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface AuthFormWrapperProps {
   children: ReactNode;
@@ -15,7 +15,7 @@ interface AuthFormWrapperProps {
   subtitle?: string;
 }
 
-export function AuthFormWrapper({ children, title, subtitle }: AuthFormWrapperProps) {
+export function AuthFormWrapper({ children, title, subtitle }: AuthFormWrapperProps): JSX.Element {
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 

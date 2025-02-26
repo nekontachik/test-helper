@@ -1,15 +1,15 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { TestRun } from '@/models/testRun';
+import type { TestRun } from '@/models/testRun';
 
 interface TestRunDetailsProps {
   testRun: TestRun;
 }
 
-export default function TestRunDetails({ testRun }: TestRunDetailsProps) {
+export default function TestRunDetails({ testRun }: TestRunDetailsProps): JSX.Element {
   const params = useParams();
-  const runId = params?.runId as string;
+  const _runId = params?.runId as string;
 
   if (!testRun) {
     return <div>Loading...</div>;

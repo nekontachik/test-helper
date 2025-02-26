@@ -4,7 +4,8 @@ import React from 'react';
 import { VStack, FormControl, FormLabel, Input, Textarea, Select, Button, Text } from '@chakra-ui/react';
 import { createFormHook } from '@/lib/hooks/createFormHook';
 import { useCreateTestCase, useUpdateTestCase } from '@/hooks/useTestCaseMutations';
-import { TestCase, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase} from '@/types';
+import { TestCaseStatus, TestCasePriority } from '@/types';
 import { testCaseSchema, type TestCaseFormData } from '@/lib/validations/testCase';
 
 interface TestCaseFormProps {
@@ -12,7 +13,7 @@ interface TestCaseFormProps {
   projectId: string;
 }
 
-export function TestCaseForm({ testCase, projectId }: TestCaseFormProps) {
+export function TestCaseForm({ testCase, projectId }: TestCaseFormProps): JSX.Element {
   const createTestCase = useCreateTestCase();
   const updateTestCase = useUpdateTestCase();
 
@@ -26,7 +27,7 @@ export function TestCaseForm({ testCase, projectId }: TestCaseFormProps) {
       priority: TestCasePriority.MEDIUM,
       projectId
     },
-    onSubmit: async (data: TestCaseFormData) => {
+    onSubmit: async (data: TestCaseFormData): Promise<void> => {
       if (testCase) {
         await updateTestCase.mutateAsync({ id: testCase.id, data });
       } else {

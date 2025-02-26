@@ -9,7 +9,7 @@ import {
   VStack,
   FormErrorMessage,
 } from '@chakra-ui/react';
-import { TestRunFormData } from '@/types';
+import type { TestRunFormData } from '@/types';
 
 interface CreateTestRunFormProps {
   onSubmit: (data: TestRunFormData) => void;

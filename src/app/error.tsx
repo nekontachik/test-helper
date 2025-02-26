@@ -10,7 +10,7 @@ export default function Error({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): JSX.Element {
   useEffect(() => {
     logger.error('Error boundary caught error:', error);
   }, [error]);

@@ -1,7 +1,8 @@
 'use client';
 
-import { VStack, StackProps } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import type { StackProps } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
+import type { ReactNode } from 'react';
 
 interface AuthFormProps extends StackProps {
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -14,8 +15,8 @@ export function AuthForm({
   children, 
   width = "100%",
   ...props 
-}: AuthFormProps) {
-  const handleSubmit = async (e: React.FormEvent) => {
+}: AuthFormProps): JSX.Element {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     await onSubmit(e);
   };

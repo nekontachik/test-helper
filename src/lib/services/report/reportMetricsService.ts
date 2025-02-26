@@ -2,7 +2,8 @@ import type { Prisma, TestCaseResult, TestCase } from '@prisma/client';
 import type { ReportInput, ReportMetrics, MetricsResult, TestCasePriority } from './types';
 import { calculateMetrics } from '@/lib/utils/testMetrics';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
-import { TEST_RESULT_STATUS, TestResultStatus } from './constants';
+import type { TestResultStatus } from './constants';
+import { TEST_RESULT_STATUS } from './constants';
 
 interface TestRunCaseWithRelations {
   testCase: TestCase;

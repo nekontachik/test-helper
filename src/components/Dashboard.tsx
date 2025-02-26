@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useProjects } from '@/hooks/useProjects';
-import { Project } from '@/types';
+import type { Project } from '@/types';
 
 const Dashboard: React.FC = () => {
   const { data: projects, isLoading, error } = useProjects();

@@ -5,7 +5,7 @@ import GitHubProvider from 'next-auth/providers/github';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { compare } from 'bcryptjs';
-import { UserRole, AccountStatus, Permission, AuthUser } from '@/types/auth';
+import type { UserRole, AccountStatus, Permission, AuthUser } from '@/types/auth';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';

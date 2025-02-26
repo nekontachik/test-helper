@@ -24,7 +24,7 @@ const resend = new Resend(RESEND_API_KEY);
 // Store validated EMAIL_FROM
 const validatedEmailFrom = EMAIL_FROM;
 
-export async function sendVerificationEmail(email: string, name: string) {
+export async function sendVerificationEmail(email: string, name: string): Promise<void> {
   try {
     const token = await generateEmailToken(email);
     const verificationUrl = `${APP_URL}/auth/verify?token=${token}`;
@@ -47,7 +47,7 @@ export async function sendVerificationEmail(email: string, name: string) {
   }
 }
 
-export async function sendPasswordResetEmail(email: string, name: string, token: string) {
+export async function sendPasswordResetEmail(email: string, name: string, token: string): Promise<void> {
   try {
     const resetUrl = `${APP_URL}/auth/reset-password?token=${token}`;
 
@@ -69,7 +69,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
   }
 }
 
-export async function sendRecoveryEmail(email: string, name: string, token: string) {
+export async function sendRecoveryEmail(email: string, name: string, token: string): Promise<void> {
   try {
     const recoveryUrl = `${APP_URL}/auth/recover?token=${token}`;
 

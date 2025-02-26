@@ -13,7 +13,7 @@ interface AuthRedirectProps {
 export function AuthRedirect({ 
   redirectTo, 
   redirectIfFound = false 
-}: AuthRedirectProps) {
+}: AuthRedirectProps): JSX.Element {
   const { data: session, status } = useSession();
   const router = useRouter();
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createSecureRoute, SecureRouteContext } from '@/lib/api/createSecureRoute';
+import type { SecureRouteContext } from '@/lib/api/createSecureRoute';
+import { createSecureRoute } from '@/lib/api/createSecureRoute';
 import { Action, Resource } from '@/types/rbac';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';

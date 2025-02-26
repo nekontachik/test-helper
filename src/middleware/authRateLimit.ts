@@ -6,7 +6,7 @@ import { RateLimitError } from '@/lib/errors';
 export async function authRateLimitMiddleware(
   request: NextRequest,
   type: 'login' | 'password' = 'login'
-) {
+): Promise<NextResponse> {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'anonymous';
   
   try {

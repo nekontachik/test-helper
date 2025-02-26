@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, ButtonProps } from '@chakra-ui/react';
+import type { ButtonProps } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
 
 export interface AuthButtonProps extends ButtonProps {
   isLoading?: boolean;
@@ -10,7 +11,7 @@ export function AuthButton({
   children, 
   isLoading, 
   ...props 
-}: AuthButtonProps) {
+}: AuthButtonProps): JSX.Element {
   return (
     <Button
       width="full"

@@ -4,7 +4,7 @@ interface TestRunHeaderProps {
   progress: number;
 }
 
-export function TestRunHeader({ currentIndex, totalCases, progress }: TestRunHeaderProps) {
+export function TestRunHeader({ currentIndex, totalCases, progress }: TestRunHeaderProps): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">

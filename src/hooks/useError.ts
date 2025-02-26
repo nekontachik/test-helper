@@ -2,10 +2,12 @@ import { useToast } from '@chakra-ui/react';
 import { getErrorMessage } from '@/lib/errors/errorMessages';
 import { logger } from '@/lib/utils/logger';
 
-export function useError() {
+export function useError(): {
+  handleError: (error: Error, context?: string) => void;
+} {
   const toast = useToast();
 
-  const handleError = (error: Error, context?: string) => {
+  const handleError = (error: Error, context?: string): void => {
     const errorDetails = getErrorMessage(error);
 
     // Log the error

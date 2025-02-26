@@ -256,3 +256,9 @@ export interface TestCase {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface TestCaseFilters {
+  title?: string;
+  status?: string;
+  priority?: string;
+}

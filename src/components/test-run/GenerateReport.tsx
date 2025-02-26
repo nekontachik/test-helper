@@ -26,14 +26,14 @@ interface GenerateReportProps {
   onClose: () => void;
 }
 
-function GenerateReportModal({ projectId, runId, isOpen, onClose }: GenerateReportProps) {
+function GenerateReportModal({ projectId, runId, isOpen, onClose }: GenerateReportProps): JSX.Element {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -119,6 +119,6 @@ function GenerateReportModal({ projectId, runId, isOpen, onClose }: GenerateRepo
   );
 }
 
-export function GenerateReport(props: GenerateReportProps) {
+export function GenerateReport(props: GenerateReportProps): JSX.Element {
   return <GenerateReportModal {...props} />;
 } 

@@ -1,6 +1,5 @@
 import type { ServiceResponse } from '../utils/serviceResponse';
 import { ErrorHandler } from '../errors/ErrorHandler';
-import type { AppError } from '../errors/types';
 
 interface ServiceErrorOptions {
   context?: string;
@@ -30,7 +29,7 @@ export class ServiceErrorHandler {
     }
   }
 
-  static handleError(error: unknown, context = 'Service'): ServiceResponse<never> {
+  static handleError(error: unknown, _context = 'Service'): ServiceResponse<never> {
     const appError = ErrorHandler.createErrorResponse(error);
     return {
       success: false,

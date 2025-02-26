@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Toast,
   ToastClose,
@@ -16,7 +17,7 @@ interface ToastProps {
   className?: string;
 }
 
-export function Toaster() {
+export function Toaster(): React.ReactElement {
   const { toasts } = useToast();
 
   return (

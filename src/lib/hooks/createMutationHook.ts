@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@chakra-ui/react';
 
-interface MutationResult<TData> {
-  mutate: (variables: any) => void;
-  mutateAsync: (variables: any) => Promise<TData>;
+interface MutationResult<TData, TVariables> {
+  mutate: (variables: TVariables) => void;
+  mutateAsync: (variables: TVariables) => Promise<TData>;
   isLoading: boolean;
   error: Error | null;
   data: TData | undefined;
@@ -27,7 +27,7 @@ export function createMutation<TData, TVariables>(
 ) {
   return function useTypedMutation(
     mutationOptions?: Partial<MutationOptions<TData, TVariables>>
-  ): MutationResult<TData> {
+  ): MutationResult<TData, TVariables> {
     const toast = useToast();
 
     const mutation = useMutation({

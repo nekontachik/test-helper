@@ -1,7 +1,7 @@
-import { NextApiResponse } from 'next';
+import type { NextApiResponse } from 'next';
 import { AuthorizationError } from '@/lib/errors';
-import { AuthenticatedRequest } from './authenticate';
-import { UserRole } from '@/types/auth';
+import type { AuthenticatedRequest } from './authenticate';
+import type { UserRole } from '@/types/auth';
 
 interface AuthenticatedUser {
   id: string;

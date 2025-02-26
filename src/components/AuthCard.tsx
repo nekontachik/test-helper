@@ -1,12 +1,13 @@
 'use client';
 
+import type {
+  BoxProps} from '@chakra-ui/react';
 import {
   Box,
   VStack,
   Heading,
   Text,
-  useColorModeValue,
-  BoxProps,
+  useColorModeValue
 } from '@chakra-ui/react';
 
 interface AuthCardProps extends BoxProps {
@@ -22,7 +23,7 @@ export function AuthCard({
   children, 
   maxWidth = "md",
   ...props 
-}: AuthCardProps) {
+}: AuthCardProps): JSX.Element {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 

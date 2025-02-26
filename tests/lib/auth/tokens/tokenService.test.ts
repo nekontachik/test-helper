@@ -1,5 +1,6 @@
 import { TokenService } from '../tokenService';
-import { TokenType, TokenPayload } from '@/types/token';
+import type { TokenPayload } from '@/types/token';
+import { TokenType } from '@/types/token';
 
 describe('TokenService', () => {
   it('should create and verify tokens', async () => {
