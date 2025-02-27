@@ -52,27 +52,21 @@ const apiClient = {
   },
 
   async getProjects(page = 1, limit = 10): Promise<PaginatedResponse<Project>> {
-    const response = await fetch(`/api/projects?page=${page}&limit=${limit}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch projects');
+    try {
+      const response = await api.get<PaginatedResponse<Project>>(`/projects`, { params: { page, limit } });
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
     }
-    return response.json();
   },
 
   async createProject(data: ProjectFormData): Promise<Project> {
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create project');
+    try {
+      const response = await api.post<Project>('/projects', data);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
     }
-
-    return response.json();
   },
 
   async getTestCases(

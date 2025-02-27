@@ -11,18 +11,22 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { twoFactorEnabled: true } });
+      select: { twoFactorEnabled: true }
+    });
 
     if (!user?.twoFactorEnabled) {
-      return createErrorResponse('2FA must be enabled to generate backup codes', 'ERROR_CODE', 400); }
+      return createErrorResponse('2FA must be enabled to generate backup codes', 'ERROR_CODE', 400);
+    }
 
     // First, delete existing backup codes
     await prisma.backupCode.deleteMany({
-      where: { userId: session.user.id } });
+      where: { userId: session.user.id }
+    });
 
     // Generate and store new backup codes
     const codes = await SecurityService.generateBackupCodes();
@@ -33,13 +37,18 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       data: hashedCodes.map((hashedCode: string) => ({
         userId: session.user.id,
         code: hashedCode,
-        used: false })) });
+        used: false
+      }))
+    });
 
     logger.info('Generated new backup codes', { 
       userId: session.user.id,
-      count: codes.length });
+      count: codes.length
+    });
 
-    return createSuccessResponse({ codes }; } catch (error) {
+    return createSuccessResponse({ codes });
+  } catch (error) {
     logger.error('Backup codes generation error:', error);
-    return createErrorResponse('Failed to generate backup codes', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to generate backup codes', 'ERROR_CODE', 500);
+  }
 }

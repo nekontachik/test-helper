@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Action, Resource } from '@/types/rbac';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 import logger from '@/lib/logger';
 
 interface PermissionCheck {
@@ -86,7 +86,7 @@ export class RBACService {
     context: RBACContext
   ): boolean {
     // Admin has full access
-    if (role === UserRole.ADMIN) {
+    if (role === 'ADMIN') {
       return true;
     }
 
@@ -103,15 +103,15 @@ export class RBACService {
     // Team members have access based on their role and the action
     if (context.teamMembers.includes(context.userId)) {
       switch (role) {
-        case UserRole.MANAGER:
-          // Managers can perform all actions
+        case 'PROJECT_MANAGER':
+          // Project managers can perform all actions
           return true;
 
-        case UserRole.EDITOR:
-          // Editors can create, read, update but not delete
+        case 'TESTER':
+          // Testers can create, read, update but not delete
           return action !== Action.DELETE;
 
-        case UserRole.VIEWER:
+        case 'VIEWER':
           // Viewers can only read
           return action === Action.READ;
 

@@ -9,7 +9,7 @@ import apiClient from '@/lib/apiClient';
 import type { TestCaseFormData } from '@/types';
 import { useToast } from '@/hooks/useToast';
 
-export default function NewTestCasePage() {
+export default function NewTestCasePage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const projectId = params?.projectId as string;
@@ -29,7 +29,7 @@ export default function NewTestCasePage() {
     },
   });
 
-  const handleCreateTestCase = async (data: TestCaseFormData) => {
+  const handleCreateTestCase = async (data: TestCaseFormData): Promise<void> => {
     createTestCase.mutate(data);
   };
 

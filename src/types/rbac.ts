@@ -1,6 +1,4 @@
-import { UserRole } from './auth';
-
-export { UserRole };
+import type { UserRole } from './auth';
 
 export enum Action {
   CREATE = 'create',

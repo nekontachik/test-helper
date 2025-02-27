@@ -11,9 +11,11 @@ import { testCaseSchema, type TestCaseFormData } from '@/lib/validations/testCas
 interface TestCaseFormProps {
   testCase?: TestCase;
   projectId: string;
+  onSubmit?: (data: TestCaseFormData) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export function TestCaseForm({ testCase, projectId }: TestCaseFormProps): JSX.Element {
+export function TestCaseForm({ testCase, projectId, onSubmit, isLoading }: TestCaseFormProps): JSX.Element {
   const createTestCase = useCreateTestCase();
   const updateTestCase = useUpdateTestCase();
 
@@ -28,7 +30,9 @@ export function TestCaseForm({ testCase, projectId }: TestCaseFormProps): JSX.El
       projectId
     },
     onSubmit: async (data: TestCaseFormData): Promise<void> => {
-      if (testCase) {
+      if (onSubmit) {
+        await onSubmit(data);
+      } else if (testCase) {
         await updateTestCase.mutateAsync({ id: testCase.id, data });
       } else {
         await createTestCase.mutateAsync(data);
@@ -112,7 +116,7 @@ export function TestCaseForm({ testCase, projectId }: TestCaseFormProps): JSX.El
         <Button 
           type="submit" 
           colorScheme="blue"
-          isLoading={isSubmitting}
+          isLoading={isLoading !== undefined ? isLoading : isSubmitting}
         >
           {testCase ? 'Update Test Case' : 'Create Test Case'}
         </Button>

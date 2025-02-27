@@ -56,6 +56,7 @@ export interface AuthResult {
   token: string;
   refreshToken: string;
   expiresAt: number;
+  sessionId: string;
 }
 
 export interface ExtendedSession extends Session {

@@ -1,12 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Box, Heading, VStack } from '@chakra-ui/react';
+import { Box, Heading, VStack, Spinner } from '@chakra-ui/react';
 import { useTestCase } from '@/hooks/useTestCase';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { TestCaseForm } from '@/components/TestCaseForm';
 import { ErrorMessage } from '@/components/ErrorMessage';
-import { useParams } from 'next/navigation';
+import { TestCaseForm } from '@/components/TestCaseForm';
 import type { TestCaseFormData } from '@/types';
 
 interface TestCasePageProps {
@@ -16,12 +14,12 @@ interface TestCasePageProps {
   };
 }
 
-export default function TestCasePage({ params }: TestCasePageProps) {
+export default function TestCasePage({ params }: TestCasePageProps): React.ReactNode {
   const { projectId, testCaseId } = params;
   const { data: testCase, isLoading, isError } = useTestCase(projectId, testCaseId);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <Spinner />;
   }
 
   if (isError) {
@@ -32,7 +30,7 @@ export default function TestCasePage({ params }: TestCasePageProps) {
     return <ErrorMessage message="Test case not found" />;
   }
 
-  const handleSubmit = async (data: TestCaseFormData) => {
+  const handleSubmit = async (data: TestCaseFormData): Promise<void> => {
     // Handle form submission here
     console.log('Form submitted:', data);
   };
@@ -45,7 +43,6 @@ export default function TestCasePage({ params }: TestCasePageProps) {
           testCase={testCase} 
           projectId={projectId}
           onSubmit={handleSubmit}
-          isLoading={false}
         />
       </VStack>
     </Box>

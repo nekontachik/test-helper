@@ -21,6 +21,11 @@ export default function Navbar({ hasProjects }: NavbarProps): JSX.Element {
           </Button>
         </NextLink>
         <Flex>
+          <NextLink href="/dashboard" passHref legacyBehavior>
+            <Button as="a" variant="ghost" mr={2}>
+              Dashboard
+            </Button>
+          </NextLink>
           {hasProjects && (
             <>
               <NextLink href="/projects" passHref legacyBehavior>

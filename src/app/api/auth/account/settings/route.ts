@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
         createdAt: true,
         updatedAt: true, } });
 
-    return NextResponse.json(settings); } catch (error) {
+    return createSuccessResponse(settings); } catch (error) {
     console.error('Settings fetch error:', error);
     return createErrorResponse('Failed to fetch settings', 'ERROR_CODE', 500); }
 }
@@ -54,7 +54,7 @@ export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
         twoFactorEnabled: true,
         updatedAt: true, } });
 
-    return NextResponse.json(updatedUser); } catch (error) {
+    return createSuccessResponse(updatedUser); } catch (error) {
     console.error('Settings update error:', error);
     return createErrorResponse('Failed to update settings', 'ERROR_CODE', 500); }
 }

@@ -2,7 +2,7 @@ import { withRoleCheck } from '@/components/auth/withRoleCheck';
 import { Action, Resource } from '@/lib/auth/rbac/types';
 import { TestCaseList } from '@/components/TestCaseList';
 
-function TestCasesPage({ params }: { params: { projectId: string } }) {
+function TestCasesPage({ params }: { params: { projectId: string } }): React.ReactNode {
   return (
     <div>
       <TestCaseList projectId={params.projectId} />

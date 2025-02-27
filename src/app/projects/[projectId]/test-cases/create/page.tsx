@@ -7,13 +7,13 @@ import { TestCaseForm } from '@/components/TestCaseForm';
 import { useCreateTestCase } from '@/hooks/useTestCase';
 import type { TestCaseFormData } from '@/types';
 
-export default function CreateTestCasePage() {
+export default function CreateTestCasePage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const projectId = params?.projectId as string;
   const { mutateAsync: createTestCase, isLoading } = useCreateTestCase(projectId);
 
-  const handleSubmit = async (data: TestCaseFormData) => {
+  const handleSubmit = async (data: TestCaseFormData): Promise<void> => {
     try {
       await createTestCase(data);
       router.push(`/projects/${projectId}/test-cases`);

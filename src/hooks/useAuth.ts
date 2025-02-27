@@ -31,13 +31,65 @@ export function useAuth(): AuthHook {
   
   const router = useRouter();
   
+  // Token refresh function
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!refreshToken) {
+        return false;
+      }
+      
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Token refresh failed');
+      }
+      
+      // The refresh endpoint returns accessToken, not data.accessToken
+      const newToken = data.accessToken;
+      
+      if (newToken) {
+        localStorage.setItem('authToken', newToken);
+        
+        // We don't need to fetch user data again since we already have it in localStorage
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        
+        setAuthState({
+          user: userData,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return false;
+    }
+  }, []);
+  
   // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async (): Promise<void> => {
       try {
         const token = localStorage.getItem('authToken');
+        const sessionId = localStorage.getItem('sessionId');
         
-        if (!token) {
+        if (!token || !sessionId) {
           setAuthState({
             user: null,
             isAuthenticated: false,
@@ -47,21 +99,28 @@ export function useAuth(): AuthHook {
           return;
         }
         
-        // Verify token and get user info
-        const response = await fetch('/api/auth/me', {
+        // Verify token and session
+        const response = await fetch('/api/auth/session/validate', {
+          method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'x-session-id': sessionId
           }
         });
         
-        if (!response.ok) {
-          throw new Error('Session expired');
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Session validation failed');
         }
         
-        const data = await response.json();
+        // Since the validate endpoint doesn't return user data,
+        // we need to use the user data from localStorage or the session
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
         
         setAuthState({
-          user: data.user,
+          user: userData,
           isAuthenticated: true,
           isLoading: false,
           error: null
@@ -84,7 +143,7 @@ export function useAuth(): AuthHook {
     };
     
     checkAuth();
-  }, []);
+  }, [refreshToken]);
   
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -99,19 +158,43 @@ export function useAuth(): AuthHook {
       
       const result = await response.json();
       
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Login failed');
+      // Check if the response indicates a failed login
+      if (!response.ok || result.success === false) {
+        const errorMessage = result.error?.message || 'Login failed';
+        console.error('Login failed:', errorMessage);
+        throw new Error(errorMessage);
       }
       
-      // Store tokens
-      localStorage.setItem('authToken', result.token);
-      if (result.refreshToken) {
-        localStorage.setItem('refreshToken', result.refreshToken);
+      // Check if result.data exists before accessing its properties
+      if (!result.data) {
+        console.error('Login response missing data:', result);
+        throw new Error('Invalid server response: missing data');
+      }
+      
+      // Check if token exists
+      if (!result.data.token) {
+        console.error('Login response missing token:', result.data);
+        throw new Error('Invalid server response: missing token');
+      }
+      
+      // Store tokens and session info
+      localStorage.setItem('authToken', result.data.token);
+      localStorage.setItem('userData', JSON.stringify(result.data.user));
+      
+      if (result.data.refreshToken) {
+        localStorage.setItem('refreshToken', result.data.refreshToken);
+      }
+      
+      if (result.data.sessionId) {
+        localStorage.setItem('sessionId', result.data.sessionId);
+      } else if (result.data.session?.id) {
+        // Fallback for different response format
+        localStorage.setItem('sessionId', result.data.session.id);
       }
       
       // Update auth state
       setAuthState({
-        user: result.user,
+        user: result.data.user,
         isAuthenticated: true,
         isLoading: false,
         error: null
@@ -119,6 +202,7 @@ export function useAuth(): AuthHook {
       
       return true;
     } catch (error) {
+      console.error('Login error:', error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -132,19 +216,27 @@ export function useAuth(): AuthHook {
   // Logout function
   const logout = useCallback(async () => {
     try {
-      // Call logout API if needed
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
+      const token = localStorage.getItem('authToken');
+      const sessionId = localStorage.getItem('sessionId');
+      
+      if (token && sessionId) {
+        // Call logout API if needed
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-session-id': sessionId
+          }
+        });
+      }
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
       // Clear local storage
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('userData');
       
       // Update state
       setAuthState({
@@ -158,58 +250,6 @@ export function useAuth(): AuthHook {
       router.push('/auth/signin');
     }
   }, [router]);
-  
-  // Token refresh function
-  const refreshToken = useCallback(async (): Promise<boolean> => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      
-      if (!refreshToken) {
-        return false;
-      }
-      
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to refresh token');
-      }
-      
-      const data = await response.json();
-      
-      if (data.accessToken) {
-        localStorage.setItem('authToken', data.accessToken);
-        
-        // Fetch user data with new token
-        const userResponse = await fetch('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${data.accessToken}`
-          }
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          
-          setAuthState({
-            user: userData.user,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null
-          });
-        }
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      return false;
-    }
-  }, []);
   
   return {
     ...authState,

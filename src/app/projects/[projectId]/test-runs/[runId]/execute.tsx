@@ -27,7 +27,7 @@ export const getServerSideProps: GetServerSideProps<
 
 export default function ExecuteTestRunPage({
   testRun,
-}: ExecuteTestRunPageProps) {
+}: ExecuteTestRunPageProps): React.ReactNode {
   const router = useRouter();
   const { projectId } = router.query;
   const [results, setResults] = useState<TestCaseResult[]>(
@@ -44,7 +44,7 @@ export default function ExecuteTestRunPage({
     return <ErrorMessage message="Failed to load test run" />;
   }
 
-  const handleStatusChange = (testCaseId: string, newStatus: string) => {
+  const handleStatusChange = (testCaseId: string, newStatus: string): void => {
     setResults((prevResults) =>
       prevResults.map((result) =>
         result.testCaseId === testCaseId
@@ -54,7 +54,7 @@ export default function ExecuteTestRunPage({
     );
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (typeof projectId !== 'string') return;
     try {
       await updateTestRun(projectId, testRun.id, {

@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma';
 import { sign, verify, JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { SecurityError } from '@/lib/errors';
 import logger from '@/lib/logger';
@@ -16,6 +15,9 @@ export interface TokenPayload {
 export class TokenService {
   private static readonly SECRET = process.env.JWT_SECRET || 'default-secret-key';
   private static readonly EXPIRES_IN = '24h';
+  
+  // In-memory blacklist for development purposes
+  private static readonly tokenBlacklist = new Set<string>();
 
   static async generateToken(
     userId: string, 
@@ -40,6 +42,11 @@ export class TokenService {
 
   static verifyToken(token: string): TokenPayload {
     try {
+      // Check if token is blacklisted
+      if (this.tokenBlacklist.has(token)) {
+        throw new SecurityError('Token has been revoked');
+      }
+      
       return verify(token, this.SECRET) as TokenPayload;
     } catch (error) {
       if (error instanceof TokenExpiredError) {
@@ -54,13 +61,9 @@ export class TokenService {
 
   static async invalidateToken(token: string, userId: string): Promise<void> {
     try {
-      await prisma.tokenBlacklist.create({
-        data: {
-          token,
-          userId,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-        }
-      });
+      // Add to in-memory blacklist
+      this.tokenBlacklist.add(token);
+      logger.info('Token invalidated', { userId });
     } catch (error) {
       logger.error('Token invalidation failed', { error, userId });
       throw new SecurityError('Failed to invalidate token');
@@ -68,55 +71,7 @@ export class TokenService {
   }
 
   static async isTokenBlacklisted(token: string): Promise<boolean> {
-    try {
-      const blacklistedToken = await prisma.tokenBlacklist.findUnique({
-        where: { token }
-      });
-      return !!blacklistedToken;
-    } catch (error) {
-      logger.error('Token blacklist check failed', { error });
-      return true; // Fail safe - treat as blacklisted if check fails
-    }
-  }
-
-  static async revokeToken(token: string, type: TokenType): Promise<void> {
-    try {
-      await prisma.token.update({
-        where: { token },
-        data: { 
-          revoked: true,
-          updatedAt: new Date()
-        }
-      });
-
-      logger.info('Token revoked successfully', { type });
-    } catch (error) {
-      logger.error('Failed to revoke token:', error);
-      throw new SecurityError('Failed to revoke token');
-    }
-  }
-
-  static async invalidateAllUserTokens(userId: string, type?: TokenType): Promise<void> {
-    try {
-      const where: Record<string, unknown> = {
-        userId,
-        revoked: false,
-        ...(type && { type })
-      };
-
-      await prisma.token.updateMany({
-        where,
-        data: { 
-          revoked: true,
-          updatedAt: new Date()
-        }
-      });
-
-      logger.info('All user tokens invalidated', { userId, type });
-    } catch (error) {
-      logger.error('Failed to invalidate user tokens:', error);
-      throw new SecurityError('Failed to invalidate tokens');
-    }
+    return this.tokenBlacklist.has(token);
   }
 }
 

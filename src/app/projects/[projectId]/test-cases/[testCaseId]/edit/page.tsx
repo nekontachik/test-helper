@@ -8,7 +8,7 @@ import { EditTestCaseForm } from '@/components/EditTestCaseForm';
 import { useTestCase, useUpdateTestCase } from '@/hooks/useTestCase';
 import type { TestCaseFormData } from '@/types';
 
-export default function EditTestCasePage() {
+export default function EditTestCasePage(): React.ReactNode {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
@@ -22,7 +22,7 @@ export default function EditTestCasePage() {
   if (error) return <div>Error: {error.message}</div>;
   if (!testCase) return <div>Test case not found</div>;
 
-  const handleSubmit = async (data: TestCaseFormData) => {
+  const handleSubmit = async (data: TestCaseFormData): Promise<void> => {
     try {
       await updateTestCaseMutation.mutateAsync(data);
       toast({

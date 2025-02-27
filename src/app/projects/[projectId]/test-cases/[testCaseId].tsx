@@ -5,7 +5,6 @@ import { Box, Spinner, Heading } from '@chakra-ui/react';
 import { useToast } from '@chakra-ui/toast';
 import { Layout } from '@/components/Layout';
 import type { TestCaseFormData} from '@/types';
-import { TestCase } from '@/types';
 import { useTestCase } from '@/hooks/useTestCase';
 import { useUpdateTestCase } from '@/hooks/useUpdateTestCase';
 
@@ -74,10 +73,9 @@ const TestCasePage: React.FC = () => {
       </Heading>
       <Suspense fallback={<Spinner />}>
         <DynamicTestCaseForm
-          onSubmit={handleSubmit}
           testCase={testCase}
           projectId={projectId}
-          isLoading={updateTestCase.isLoading}
+          onSubmit={handleSubmit}
         />
       </Suspense>
     </Layout>

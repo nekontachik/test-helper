@@ -63,9 +63,13 @@ export function SignInForm(): JSX.Element {
         });
         
         router.push('/dashboard');
+      } else {
+        console.error('Login failed without throwing an error');
+        setFormError('Authentication failed. Please check your credentials and try again.');
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Login failed');
+      console.error('Login error in form submission:', error);
+      setFormError(error instanceof Error ? error.message : 'Authentication failed');
     } finally {
       setIsSubmitting(false);
     }

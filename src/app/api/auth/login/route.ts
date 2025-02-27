@@ -17,24 +17,39 @@ const loginSchema = z.object({
 async function ensureTestUserExists(): Promise<void> {
   try {
     const testEmail = 'admin@example.com';
+    const testPassword = 'Admin123!';
+    
     const existingUser = await prisma.user.findUnique({
       where: { email: testEmail }
     });
 
     if (!existingUser) {
       logger.info('Creating test user for development');
-      const hashedPassword = await hash('Admin123!', 10);
+      const hashedPassword = await hash(testPassword, 10);
       await prisma.user.create({
         data: {
           email: testEmail,
           name: 'Admin User',
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           role: 'ADMIN',
           status: 'ACTIVE',
           failedLoginAttempts: 0
         }
       });
       logger.info('Test user created successfully');
+    } else {
+      // Update the existing test user's password to ensure it's correct
+      logger.info('Updating test user password');
+      const hashedPassword = await hash(testPassword, 10);
+      await prisma.user.update({
+        where: { email: testEmail },
+        data: {
+          password: hashedPassword,
+          failedLoginAttempts: 0,
+          status: 'ACTIVE'
+        }
+      });
+      logger.info('Test user password updated successfully');
     }
   } catch (error) {
     logger.error('Error ensuring test user exists:', { error });
@@ -71,12 +86,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     
     // Return success response with token and user info
-    // Note: Assuming AuthResult type has been updated to include refreshToken
     return NextResponse.json({
       success: true,
       data: {
         token: result.token,
         refreshToken: result.refreshToken,
+        sessionId: result.sessionId,
         user: {
           id: result.user.id,
           email: result.user.email,

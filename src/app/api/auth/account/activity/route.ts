@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
         createdAt: true,
         details: true, } });
 
-    return NextResponse.json(activities); } catch (error) {
+    return createSuccessResponse(activities); } catch (error) {
     console.error('Activity log error:', error);
     return createErrorResponse('Failed to fetch activity log', 'ERROR_CODE', 500); }
 }
@@ -56,7 +56,7 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
         ipAddress: _req.headers.get('x-forwarded-for') || 'unknown',
         userAgent: _req.headers.get('user-agent') || 'unknown', } });
 
-    return NextResponse.json(activity); } catch (error) {
+    return createSuccessResponse(activity); } catch (error) {
     console.error('Activity logging error:', error);
     return createErrorResponse('Failed to log activity', 'ERROR_CODE', 500); }
 }

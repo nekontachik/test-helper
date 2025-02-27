@@ -8,7 +8,8 @@ import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { z } from 'zod';
 
 const verifySchema = z.object({
-  token: z.string().length(6) });
+  token: z.string().length(6)
+});
 
 export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
@@ -17,11 +18,13 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     const rateLimitResult = await checkRateLimit(`2fa_verify_${ip}`);
 
     if (!rateLimitResult.success) {
-      return createSuccessResponse({ error: 'Too many attempts. Please try again later.' }, { status: 429 }; }
+      return createErrorResponse('Too many attempts. Please try again later.', 'RATE_LIMIT_EXCEEDED', 429);
+    }
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return createSuccessResponse({ error: 'Unauthorized' }, { status: 401 }; }
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
+    }
 
     const body = await _req.json();
     const { token } = verifySchema.parse(body);
@@ -32,12 +35,14 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     );
 
     if (!isValid) {
-      return createSuccessResponse({ error: 'Invalid verification code' }, { status: 400 }; }
+      return createErrorResponse('Invalid verification code', 'INVALID_CODE', 400);
+    }
 
     // Get session ID from headers
     const sessionId = _req.headers.get('x-session-id');
     if (!sessionId) {
-      return createSuccessResponse({ error: 'Session ID required' }, { status: 400 }; }
+      return createErrorResponse('Session ID required', 'MISSING_SESSION_ID', 400);
+    }
 
     // Mark session as 2FA verified
     await TwoFactorService.markSessionVerified(
@@ -52,15 +57,20 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       sessionId,
       userId: session.user.id,
       ip: _req.headers.get('x-forwarded-for') || undefined,
-      userAgent: _req.headers.get('user-agent') || undefined });
+      userAgent: _req.headers.get('user-agent') || undefined
+    });
 
     return createSuccessResponse({
       success: true,
-      message: 'Two-factor authentication verified' }; } catch (error) {
+      message: 'Two-factor authentication verified'
+    });
+  } catch (error) {
     console.error('2FA verification error:', error);
     
     if (error instanceof z.ZodError) {
-      return createSuccessResponse({ error: 'Invalid code format' }, { status: 400 }; }
+      return createErrorResponse('Invalid code format', 'VALIDATION_ERROR', 400);
+    }
     
-    return createSuccessResponse({ error: 'Verification failed' }, { status: 500 }; }
+    return createErrorResponse('Verification failed', 'SERVER_ERROR', 500);
+  }
 }

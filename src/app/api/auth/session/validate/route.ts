@@ -1,38 +1,48 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { SessionService } from '@/lib/auth/sessionService';
+import { type NextRequest, NextResponse } from 'next/server';
+import { ServerSessionManager } from '@/lib/auth/session/serverSessionManager';
+import logger from '@/lib/logger';
 
-export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
-    }
-
-    const sessionId = _req.headers.get('x-session-id');
+    const sessionId = req.headers.get('x-session-id');
 
     if (!sessionId) {
-      return createErrorResponse('Session ID not provided', 'ERROR_CODE', 400);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Session ID not provided' 
+        }, 
+        { status: 400 }
+      );
     }
 
-    const isValid = await SessionService.validateSession(sessionId);
+    const isValid = await ServerSessionManager.validateSession(sessionId);
 
     if (!isValid) {
-      return createErrorResponse('Invalid or expired session', 'ERROR_CODE', 401);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Invalid or expired session' 
+        }, 
+        { status: 401 }
+      );
     }
 
-    // Update session activity
-    await SessionService.updateSessionActivity(sessionId);
-
-    return createSuccessResponse({
-      valid: true,
-      message: 'Session is valid'
+    return NextResponse.json({
+      success: true,
+      data: {
+        valid: true,
+        message: 'Session is valid'
+      }
     });
   } catch (error) {
-    console.error('Session validation error:', error);
-    return createErrorResponse('Failed to validate session', 'ERROR_CODE', 500);
+    logger.error('Session validation error:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Failed to validate session' 
+      }, 
+      { status: 500 }
+    );
   }
 }

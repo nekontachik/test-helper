@@ -1,20 +1,19 @@
 import { prisma } from '@/lib/prisma';
 import { compare } from 'bcryptjs';
-import { SessionManager } from './session/sessionManager';
+import { ServerSessionManager } from './session/serverSessionManager';
 import { AuthenticationError } from '@/lib/errors';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
-import type { UserRole } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
 import type { AccountStatus } from './types';
 import logger from '@/lib/logger';
 import type { AuthResult } from './types';
-import type { PrismaClient } from '@prisma/client';
 // Define User type locally instead of importing from @prisma/client
 type User = {
   id: string;
   email: string;
   name?: string | null;
-  passwordHash: string;
+  password: string;
   role: string;
   status: string;
   failedLoginAttempts: number;
@@ -27,6 +26,7 @@ import { TokenType } from '@/types/token';
 import { TokenService } from '@/lib/auth/tokens/tokenService';
 import { SecurityService } from '@/lib/security/securityService';
 import { RefreshTokenService } from '@/lib/auth/tokens/refreshTokenService';
+import { v4 as uuidv4 } from 'uuid';
 
 interface LoginCredentials {
   email: string;
@@ -76,7 +76,7 @@ export class AuthService {
 
     // Verify password
     logger.debug('Verifying password');
-    const isPasswordValid = await compare(password, user.passwordHash);
+    const isPasswordValid = await compare(password, user.password);
     logger.debug('Password verification result', { valid: isPasswordValid });
 
     if (!isPasswordValid) {
@@ -87,8 +87,8 @@ export class AuthService {
 
     // Reset failed attempts on successful login
     if (user.failedLoginAttempts > 0) {
-      await prisma.$transaction(async (prismaClient: PrismaClient) => {
-        await prismaClient.user.update({
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
           where: { id: user.id },
           data: { failedLoginAttempts: 0 }
         });
@@ -98,7 +98,7 @@ export class AuthService {
           userId: user.id,
           action: AuditAction.RESET_FAILED_ATTEMPTS,
           type: AuditLogType.AUTH,
-          details: { ip },
+          metadata: { ip },
           status: 'SUCCESS'
         });
       });
@@ -110,8 +110,8 @@ export class AuthService {
 
     let sessionId: string;
     try {
-      const sessionToken = crypto.randomUUID();
-      sessionId = await SessionManager.createSession({
+      const sessionToken = uuidv4();
+      sessionId = await ServerSessionManager.createSession({
         userId: user.id,
         userAgent,
         ip,
@@ -143,7 +143,7 @@ export class AuthService {
     } catch (error) {
       // Attempt to clean up the session if token generation fails
       try {
-        await SessionManager.invalidateSession(sessionId); // Use invalidateSession instead of deleteSession
+        await ServerSessionManager.invalidateSession(sessionId); // Use invalidateSession instead of deleteSession
       } catch (cleanupError) {
         logger.error('Failed to clean up session after token generation failure', { 
           sessionId, 
@@ -160,7 +160,8 @@ export class AuthService {
       userId: user.id,
       action: AuditAction.LOGIN,
       type: AuditLogType.AUTH,
-      details: { ip, userAgent, sessionId },
+      context: { ip, userAgent },
+      metadata: { sessionId },
       status: 'SUCCESS'
     });
 
@@ -184,7 +185,8 @@ export class AuthService {
       token,
       refreshToken,
       user: authUser,
-      expiresAt: expiresAt.getTime()
+      expiresAt: expiresAt.getTime(),
+      sessionId
     };
   }
 
@@ -205,7 +207,8 @@ export class AuthService {
       userId: user.id,
       action: AuditAction.LOGIN,
       type: AuditLogType.AUTH,
-      details: { ip, failedAttempt: true },
+      context: { ip },
+      metadata: { failedAttempt: true },
       status: 'FAILED'
     });
 
@@ -225,7 +228,7 @@ export class AuthService {
         userId: user.id,
         action: AuditAction.ACCOUNT_LOCKOUT,
         type: AuditLogType.AUTH,
-        details: { reason: 'Too many failed login attempts' },
+        metadata: { reason: 'Too many failed login attempts' },
         status: 'SUCCESS'
       });
     }
@@ -238,18 +241,18 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
-        passwordHash: true,
+        password: true,
         role: true,
         twoFactorEnabled: true,
         emailVerified: true,
       },
     });
 
-    if (!user || !await compare(password, user.passwordHash)) {
+    if (!user || !await compare(password, user.password)) {
       return null;
     }
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
