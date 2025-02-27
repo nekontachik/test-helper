@@ -16,7 +16,9 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
 
     const result = await PasswordPolicyService.validatePassword(password, context);
 
-    return NextResponse.json(result); } catch (error) {
+    return createSuccessResponse(result);
+  } catch (error) {
     console.error('Password validation error:', error);
-    return createSuccessResponse({ error: 'Failed to validate password' }, { status: 500 }; }
+    return createErrorResponse('Failed to validate password', 'ERROR_CODE', 500);
+  }
 }

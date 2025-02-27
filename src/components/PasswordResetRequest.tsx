@@ -6,13 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -22,7 +16,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function PasswordResetRequest() {
+export function PasswordResetRequest(): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -59,18 +53,20 @@ export function PasswordResetRequest() {
           </Alert>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="Enter your email" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            <div>
+              <FormLabel htmlFor="email">Email</FormLabel>
+              <Input 
+                id="email"
+                type="email" 
+                placeholder="Enter your email" 
+                {...form.register('email')}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {form.formState.errors.email.message}
+                </p>
               )}
-            />
+            </div>
             <Button 
               type="submit" 
               className="w-full" 

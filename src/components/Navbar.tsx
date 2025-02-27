@@ -6,7 +6,7 @@ interface NavbarProps {
   hasProjects: boolean;
 }
 
-export default function Navbar({ hasProjects }: NavbarProps) {
+export default function Navbar({ hasProjects }: NavbarProps): JSX.Element {
   return (
     <Box as="nav" bg="gray.100" py={4}>
       <Flex

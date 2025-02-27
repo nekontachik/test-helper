@@ -10,11 +10,15 @@ interface RouteParams {
   params: {
     sessionId: string; }; }
 
-export async function DELETE(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function DELETE(
+  _req: NextRequest,
+  { params }: RouteParams
+): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return createSuccessResponse({ error: 'Unauthorized' }, { status: 401 }; }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
+    }
 
     // Get current session from database
     const currentSession = await prisma.session.findFirst({
@@ -29,7 +33,8 @@ export async function DELETE(_req: NextRequest): Promise<ApiResponse<unknown>> {
 
     // Don't allow terminating current session
     if (params.sessionId === currentSession?.id) {
-      return createSuccessResponse({ error: 'Cannot terminate current session' }, { status: 400 }; }
+      return createErrorResponse('Cannot terminate current session', 'ERROR_CODE', 400);
+    }
 
     await SessionService.terminateSession(params.sessionId, session.user.id);
 
@@ -38,7 +43,10 @@ export async function DELETE(_req: NextRequest): Promise<ApiResponse<unknown>> {
       userId: session.user.id });
 
     return createSuccessResponse({
-      message: 'Session terminated' }; } catch (error) {
+      message: 'Session terminated'
+    });
+  } catch (error) {
     logger.error('Session termination error:', error);
-    return createSuccessResponse({ error: 'Failed to terminate session' }, { status: 500 }; }
+    return createErrorResponse('Failed to terminate session', 'ERROR_CODE', 500);
+  }
 }

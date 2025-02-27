@@ -14,7 +14,7 @@ interface ActivityLog {
   metadata?: Record<string, unknown>;
 }
 
-export function SecurityActivity() {
+export function SecurityActivity(): JSX.Element {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,7 +22,7 @@ export function SecurityActivity() {
     fetchActivities();
   }, []);
 
-  const fetchActivities = async () => {
+  const fetchActivities = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/activity');
       if (!response.ok) throw new Error('Failed to fetch activities');
@@ -35,7 +35,7 @@ export function SecurityActivity() {
     }
   };
 
-  const getActivityIcon = (type: ActivityType) => {
+  const getActivityIcon = (type: ActivityType): JSX.Element => {
     switch (type) {
       case ActivityType.LOGIN_FAILED:
       case ActivityType.ACCOUNT_LOCKED:
@@ -48,7 +48,7 @@ export function SecurityActivity() {
     }
   };
 
-  const getActivityMessage = (activity: ActivityLog) => {
+  const getActivityMessage = (activity: ActivityLog): string => {
     switch (activity.type) {
       case ActivityType.LOGIN_SUCCESS:
         return 'Successful login';

@@ -3,7 +3,6 @@ import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { SecurityService } from '@/lib/auth/securityService';
 import { z } from 'zod';
 
 const securitySettingsSchema = z.object({
@@ -36,9 +35,12 @@ export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
 
     return createSuccessResponse({
       ...settings,
-      activeSessions: settings?.sessions.length ?? 0 }; } catch (error) {
+      activeSessions: settings?.sessions.length ?? 0
+    });
+  } catch (error) {
     console.error('Security settings fetch error:', error);
-    return createErrorResponse('Failed to fetch security settings', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to fetch security settings', 'ERROR_CODE', 500);
+  }
 }
 
 export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
@@ -58,7 +60,9 @@ export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
         twoFactorEnabled: true,
         updatedAt: true, } });
 
-    return NextResponse.json(updatedUser); } catch (error) {
+    return createSuccessResponse(updatedUser);
+  } catch (error) {
     console.error('Security settings update error:', error);
-    return createErrorResponse('Failed to update security settings', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to update security settings', 'ERROR_CODE', 500);
+  }
 }

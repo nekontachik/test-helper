@@ -14,9 +14,12 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     // Clean up expired sessions
     const result = await SessionService.cleanupExpiredSessions();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: `Cleaned up ${result.count} expired sessions`,
-      count: result.count }); } catch (error) {
+      count: result.count
+    });
+  } catch (error) {
     console.error('Session cleanup error:', error);
-    return createErrorResponse('Failed to cleanup sessions', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to cleanup sessions', 'ERROR_CODE', 500);
+  }
 }

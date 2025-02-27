@@ -1,5 +1,4 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PasswordResetService } from '@/lib/auth/passwordReset';
 import { withRateLimit } from '@/middleware/rateLimit';
@@ -18,42 +17,51 @@ const resetSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character') });
 
 // Initiate password reset
-async function handleRequest(request: Request) {
+async function handleRequest(request: Request): Promise<Response> {
   try {
-    const body = await _req.json();
+    const body = await request.json();
     const { email } = requestSchema.parse(body);
 
     await PasswordResetService.initiateReset(email);
 
     // Always return success to prevent email enumeration
-    return createSuccessResponse({
-      message: 'If an account exists with this email, a password reset link has been sent.' }; } catch (error) {
+    return NextResponse.json({
+      message: 'If an account exists with this email, a password reset link has been sent.'
+    });
+  } catch (error) {
     logger.error('Password reset request error:', error);
-    return createSuccessResponse({ error: 'Failed to process reset request' }, { status: 500 }; }
+    return NextResponse.json({ error: 'Failed to process reset request' }, { status: 500 });
+  }
 }
 
 // Complete password reset
-async function handleReset(request: Request) {
+async function handleReset(request: Request): Promise<Response> {
   try {
-    const body = await _req.json();
+    const body = await request.json();
     const { token, password } = resetSchema.parse(body);
 
     await PasswordResetService.resetPassword(token, password);
 
-    return createSuccessResponse({
-      message: 'Password reset successful' }; } catch (error) {
+    return NextResponse.json({
+      message: 'Password reset successful'
+    });
+  } catch (error) {
     logger.error('Password reset error:', error);
 
     if (error instanceof Error) {
-      return createSuccessResponse({ error: error.message }, { status: 400 }; }
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
-    return createSuccessResponse({ error: 'Failed to reset password' }, { status: 500 }; }
+    return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
+  }
 }
 
 export const POST = withRateLimit(handleRequest, 'password-reset-request', {
-  points: 5,
-  duration: 300 // 5 minutes });
+  maxRequests: 5,
+  windowMs: 300000 // 5 minutes
+});
 
 export const PUT = withRateLimit(handleReset, 'password-reset', {
-  points: 3,
-  duration: 300 // 5 minutes }); 
+  maxRequests: 3,
+  windowMs: 300000 // 5 minutes
+}); 

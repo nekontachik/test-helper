@@ -7,7 +7,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = React.memo(({ project }) => {
-  const getStatusColor = (status: Project['status']) => {
+  const getStatusColor = (status: Project['status']): string => {
     switch (status) {
       case 'ACTIVE':
         return 'green';

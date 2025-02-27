@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children }: ProtectedRouteProps): JSX.Element | null {
   const { data: session, status } = useSession();
   const router = useRouter();
 

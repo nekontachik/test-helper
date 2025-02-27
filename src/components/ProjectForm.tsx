@@ -19,7 +19,7 @@ interface ProjectFormProps {
   onSubmit: (data: ProjectFormData) => Promise<void>;
 }
 
-export function ProjectForm(props: ProjectFormProps) {
+export function ProjectForm(props: ProjectFormProps): JSX.Element {
   const {
     register,
     handleSubmit,
@@ -27,7 +27,7 @@ export function ProjectForm(props: ProjectFormProps) {
   } = useForm<ProjectFormData>();
   const showErrorToast = useErrorToast();
 
-  const onSubmitForm = async (data: ProjectFormData) => {
+  const onSubmitForm = async (data: ProjectFormData): Promise<void> => {
     try {
       await props.onSubmit(data);
     } catch (error) {

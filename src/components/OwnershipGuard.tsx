@@ -3,6 +3,7 @@
 import { useResourceOwnership } from '@/hooks/useResourceOwnership';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import React from 'react';
 
 interface OwnershipGuardProps {
   resourceType: 'project' | 'testCase' | 'testRun';
@@ -20,7 +21,7 @@ export function OwnershipGuard({
   allowTeamMembers = false,
   children,
   fallback,
-}: OwnershipGuardProps) {
+}: OwnershipGuardProps): React.ReactElement {
   const { isOwner, isTeamMember } = useResourceOwnership({
     resourceType,
     resourceId,
@@ -33,15 +34,17 @@ export function OwnershipGuard({
   const hasAccess = isOwner || (allowTeamMembers && isTeamMember);
 
   if (!hasAccess) {
-    return fallback || (
-      <Alert variant="destructive">
-        <AlertDescription>
-          {requireOwnership
-            ? "You don't have permission to access this resource."
-            : "You must be a team member to access this resource."}
-        </AlertDescription>
-      </Alert>
-    );
+    return fallback ? 
+      React.createElement(React.Fragment, null, fallback) : 
+      (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {requireOwnership
+              ? "You don't have permission to access this resource."
+              : "You must be a team member to access this resource."}
+          </AlertDescription>
+        </Alert>
+      );
   }
 
   return <>{children}</>;

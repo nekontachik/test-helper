@@ -25,7 +25,10 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     await sendVerificationEmail(user.email, user.name || 'User');
 
     return createSuccessResponse({
-      message: 'Verification email sent successfully' }; } catch (error) {
+      message: 'Verification email sent successfully'
+    });
+  } catch (error) {
     console.error('Resend verification error:', error);
-    return createErrorResponse('Failed to send verification email', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to send verification email', 'ERROR_CODE', 500);
+  }
 }

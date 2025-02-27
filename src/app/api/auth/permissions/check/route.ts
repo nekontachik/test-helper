@@ -16,7 +16,8 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return createSuccessResponse({ hasPermission: false }, { status: 401 }; }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
+    }
 
     const body = await _req.json();
     const { action, resource, resourceId } = checkSchema.parse(body);
@@ -37,7 +38,9 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       resourceId,
       hasPermission });
 
-    return createSuccessResponse({ hasPermission }; } catch (error) {
+    return createSuccessResponse({ hasPermission });
+  } catch (error) {
     logger.error('Permission check error:', error);
-    return createSuccessResponse({ error: 'Failed to check permissions' }, { status: 500 }; }
+    return createErrorResponse('Failed to check permissions', 'ERROR_CODE', 500);
+  }
 }

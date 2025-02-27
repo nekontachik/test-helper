@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Workbox } from 'workbox-window';
 
-export function PWAInit() {
+export function PWAInit(): JSX.Element | null {
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&

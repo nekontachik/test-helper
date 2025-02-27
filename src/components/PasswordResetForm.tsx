@@ -6,13 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
@@ -36,7 +30,7 @@ interface PasswordResetFormProps {
   token: string;
 }
 
-export function PasswordResetForm({ token }: PasswordResetFormProps) {
+export function PasswordResetForm({ token }: PasswordResetFormProps): JSX.Element {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const router = useRouter();
   const form = useForm<FormData>({
@@ -47,7 +41,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData): Promise<void> => {
     try {
       const response = await fetch('/api/auth/password', {
         method: 'PUT',
@@ -83,30 +77,32 @@ export function PasswordResetForm({ token }: PasswordResetFormProps) {
           </Alert>
         ) : (
           <div className="space-y-4">
-            <FormField
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            <div>
+              <FormLabel htmlFor="password">New Password</FormLabel>
+              <Input 
+                id="password"
+                type="password" 
+                {...form.register('password')}
+              />
+              {form.formState.errors.password && (
+                <p className="text-sm text-red-500 mt-1">
+                  {form.formState.errors.password.message}
+                </p>
               )}
-            />
-            <FormField
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            </div>
+            <div>
+              <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+              <Input 
+                id="confirmPassword"
+                type="password" 
+                {...form.register('confirmPassword')}
+              />
+              {form.formState.errors.confirmPassword && (
+                <p className="text-sm text-red-500 mt-1">
+                  {form.formState.errors.confirmPassword.message}
+                </p>
               )}
-            />
+            </div>
             <Button
               type="submit"
               className="w-full"

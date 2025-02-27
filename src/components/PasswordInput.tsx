@@ -28,10 +28,10 @@ export function PasswordInput({
   error,
   showStrengthMeter = true,
   onValueChange,
-}: PasswordInputProps) {
+}: PasswordInputProps): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onValueChange?.(e.target.value);
   };
 

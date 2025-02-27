@@ -14,7 +14,7 @@ export function RoleGuard({
   children, 
   allowedRoles, 
   fallback = null 
-}: RoleGuardProps) {
+}: RoleGuardProps): ReactNode {
   const { data: session } = useSession();
   
   if (!session?.user?.role || !allowedRoles.includes(session.user.role)) {

@@ -15,13 +15,13 @@ interface GenerateTestReportProps {
 export default function GenerateTestReport({
   testRun,
   onComplete,
-}: GenerateTestReportProps) {
+}: GenerateTestReportProps): JSX.Element {
   const [description, setDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (): Promise<void> => {
     setIsGenerating(true);
     setError(null);
     try {

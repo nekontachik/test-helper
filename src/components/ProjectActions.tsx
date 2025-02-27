@@ -4,7 +4,7 @@ import { Button, Flex } from '@chakra-ui/react';
 import { RoleGuard } from './RoleGuard';
 import { useRole } from '@/hooks/useRole';
 import { useCallback } from 'react';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 
 interface ProjectActionsProps {
   projectId: string;
@@ -12,28 +12,28 @@ interface ProjectActionsProps {
   onDeleteId?: string;
 }
 
-export function ProjectActions({ projectId, onEditId, onDeleteId }: ProjectActionsProps) {
+export function ProjectActions({ projectId, onEditId, onDeleteId }: ProjectActionsProps): JSX.Element {
   const { hasRole } = useRole();
 
-  const handleEdit = useCallback(() => {
+  const handleEdit = useCallback((): void => {
     if (onEditId) {
       console.log('Edit project:', onEditId);
     }
   }, [onEditId]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback((): void => {
     if (onDeleteId) {
       console.log('Delete project:', onDeleteId);
     }
   }, [onDeleteId]);
 
-  const handleCreateTestCase = useCallback(() => {
+  const handleCreateTestCase = useCallback((): void => {
     console.log('Create test case for project:', projectId);
   }, [projectId]);
 
-  const editRoles: UserRole[] = [UserRole.ADMIN, UserRole.MANAGER];
-  const deleteRoles: UserRole[] = [UserRole.ADMIN];
-  const createTestCaseRoles: UserRole[] = [UserRole.EDITOR, UserRole.MANAGER];
+  const editRoles: UserRole[] = ['ADMIN', 'PROJECT_MANAGER'];
+  const deleteRoles: UserRole[] = ['ADMIN'];
+  const createTestCaseRoles: UserRole[] = ['TESTER', 'PROJECT_MANAGER'];
 
   return (
     <Flex gap={4}>

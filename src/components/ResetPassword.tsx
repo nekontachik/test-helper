@@ -24,13 +24,13 @@ interface ResetPasswordProps {
   token: string;
 }
 
-export function ResetPassword({ token }: ResetPasswordProps) {
+export function ResetPassword({ token }: ResetPasswordProps): JSX.Element {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
 

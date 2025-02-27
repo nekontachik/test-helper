@@ -10,6 +10,8 @@ const pinoLogger = pino({
     target: 'pino-pretty',
     options: {
       colorize: true,
+      // Disable worker threads to avoid the error
+      worker: { enabled: false }
     }
   } : undefined,
 });

@@ -28,14 +28,18 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       userId: session.user.id,
       email: session.user.email!,
       type: TokenType.ACCESS,
-      expiresIn: '15m' // 15 minutes });
+      expiresIn: '15m'
+    });
 
     // Update session activity
     await SessionService.updateSessionActivity(sessionId);
 
     return createSuccessResponse({
       accessToken,
-      message: 'Token refreshed successfully' }; } catch (error) {
+      message: 'Token refreshed successfully'
+    });
+  } catch (error) {
     console.error('Token refresh error:', error);
-    return createErrorResponse('Failed to refresh token', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to refresh token', 'ERROR_CODE', 500);
+  }
 }

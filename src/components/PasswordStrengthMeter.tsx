@@ -5,7 +5,7 @@ interface PasswordStrengthMeterProps {
   className?: string;
 }
 
-export function PasswordStrengthMeter({ password, className }: PasswordStrengthMeterProps) {
+export function PasswordStrengthMeter({ password, className }: PasswordStrengthMeterProps): JSX.Element {
   const { strength, errors } = validatePassword(password);
   const strengthColor = getPasswordStrengthColor(strength);
 
