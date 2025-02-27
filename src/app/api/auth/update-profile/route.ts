@@ -1,19 +1,24 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { type NextRequest, NextResponse } from 'next/server';
+import { createErrorResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
-  name: z.string().min(2).max(50).optional() });
+  name: z.string().min(2).max(50).optional()
+});
 
-export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function PUT(_req: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
+      return NextResponse.json(
+        createErrorResponse('Unauthorized', 'ERROR_CODE', 401),
+        { status: 401 }
+      );
+    }
 
     const body = await _req.json();
     const { name } = updateProfileSchema.parse(body);
@@ -25,9 +30,16 @@ export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
         id: true,
         name: true,
         email: true,
-        role: true, } });
+        role: true
+      }
+    });
 
-    return NextResponse.json(user); } catch (error) {
+    return NextResponse.json(user);
+  } catch (error) {
     console.error('Update profile error:', error);
-    return createErrorResponse('Failed to update profile', 'ERROR_CODE', 500); }
+    return NextResponse.json(
+      createErrorResponse('Failed to update profile', 'ERROR_CODE', 500),
+      { status: 500 }
+    );
+  }
 }

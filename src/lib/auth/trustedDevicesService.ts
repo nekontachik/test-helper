@@ -68,7 +68,7 @@ export class TrustedDevicesService {
     });
   }
 
-  static async removeTrustedDevice(userId: string, deviceId: string) {
+  static async removeTrustedDevice(userId: string, deviceId: string): Promise<void> {
     await prisma.trustedDevice.deleteMany({
       where: {
         id: deviceId,
@@ -77,7 +77,7 @@ export class TrustedDevicesService {
     });
   }
 
-  static async cleanupExpiredDevices() {
+  static async cleanupExpiredDevices(): Promise<void> {
     await prisma.trustedDevice.deleteMany({
       where: {
         expiresAt: { lt: new Date() },

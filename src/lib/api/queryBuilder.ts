@@ -1,5 +1,3 @@
-import type { Prisma } from '@prisma/client';
-
 type SortOrder = 'asc' | 'desc';
 
 interface QueryOptions {
@@ -7,12 +5,22 @@ interface QueryOptions {
   limit?: number;
   sortBy?: string;
   sortOrder?: SortOrder;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
-export function buildQuery<T extends Record<string, any>>(
+// Define a more specific type for Prisma query arguments
+interface FindManyArgs<_TRecord> {
+  where?: Record<string, unknown>;
+  orderBy?: Record<string, string>;
+  skip?: number;
+  take?: number;
+  include?: Record<string, boolean | Record<string, unknown>>;
+  select?: Record<string, boolean | Record<string, unknown>>;
+}
+
+export function buildQuery<T extends Record<string, unknown>>(
   options: QueryOptions = {}
-): Prisma.FindManyArgs<T> {
+): FindManyArgs<T> {
   const {
     page = 1,
     limit = 10,
@@ -21,7 +29,7 @@ export function buildQuery<T extends Record<string, any>>(
     filters = {}
   } = options;
 
-  const query: Prisma.FindManyArgs<T> = {
+  const query: FindManyArgs<T> = {
     where: filters,
     orderBy: { [sortBy]: sortOrder },
     skip: (page - 1) * limit,
@@ -31,11 +39,22 @@ export function buildQuery<T extends Record<string, any>>(
   return query;
 }
 
+interface PaginationResponse<T> {
+  data: T[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    perPage: number;
+    hasMore: boolean;
+  };
+}
+
 export function buildPaginationResponse<T>(
   data: T[],
   total: number,
   options: QueryOptions
-) {
+): PaginationResponse<T> {
   const { page = 1, limit = 10 } = options;
   
   return {

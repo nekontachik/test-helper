@@ -5,6 +5,23 @@ module.exports = {
     'prettier'
   ],
   plugins: ['@typescript-eslint'],
+  ignorePatterns: [
+    'node_modules',
+    '.next',
+    'out',
+    '**/*.test.ts',
+    '**/*.test.tsx',
+    '**/*.spec.ts',
+    '**/*.spec.tsx',
+    '**/tests/**',
+    '**/test/**',
+    '**/__tests__/**',
+    '**/mocks/**',
+    '**/fixtures/**',
+    '**/cypress/**',
+    'jest.config.js',
+    'jest.setup.js'
+  ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { 
       argsIgnorePattern: '^_',

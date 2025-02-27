@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
-import { prisma } from '@/lib/prisma';
+import { prisma as _prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { TwoFactorService } from '@/lib/auth/twoFactorService';
@@ -25,7 +25,10 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       return createErrorResponse('Invalid code', 'ERROR_CODE', 400); }
 
     return createSuccessResponse({
-      message: 'Code validated successfully' }; } catch (error) {
+      message: 'Code validated successfully' 
+    }); 
+  } catch (error) {
     console.error('2FA validation error:', error);
-    return createErrorResponse('Failed to validate code', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to validate code', 'ERROR_CODE', 500); 
+  }
 }

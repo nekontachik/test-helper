@@ -39,7 +39,7 @@ export class BackupCodesService {
     ]);
 
     // Create new backup codes
-    const createdCodes = await Promise.all(
+    const _createdCodes = await Promise.all(
       backupCodes.map(({ hashedCode }) =>
         prisma.$executeRaw`INSERT INTO BackupCode (id, code, userId, createdAt, used) VALUES (${crypto.randomUUID()}, ${hashedCode}, ${userId}, ${new Date().toISOString()}, false)`
       )

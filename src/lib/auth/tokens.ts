@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { nanoid } from 'nanoid';
 import { prisma } from '@/lib/prisma';
 import logger from '@/lib/logger';
@@ -49,7 +49,7 @@ export async function generatePasswordResetToken(email: string): Promise<string>
   }
 }
 
-export async function verifyEmailToken(token: string) {
+export async function verifyEmailToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
     return payload;
@@ -58,7 +58,7 @@ export async function verifyEmailToken(token: string) {
   }
 }
 
-export async function verifyPasswordResetToken(token: string) {
+export async function verifyPasswordResetToken(token: string): Promise<{ id: string; email: string } | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
     

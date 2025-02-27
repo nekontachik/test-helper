@@ -1,14 +1,13 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { type NextRequest, NextResponse } from 'next/server';
 import { authRateLimitMiddleware } from '@/middleware/authRateLimit';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
 import { AUTH_ERRORS } from '@/lib/utils/error';
 
-export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function POST(_req: NextRequest): Promise<Response> {
   // Apply rate limiting
-  const rateLimit = await authRateLimitMiddleware(request);
+  const rateLimit = await authRateLimitMiddleware(_req);
   if (rateLimit instanceof Response) return rateLimit;
 
   try {
@@ -24,8 +23,15 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
         userAgent,
         metadata: { 
           reason: 'breached_password',
-          email } });
-      return createSuccessResponse({ error: 'This password has been compromised in a data breach' }, { status: 400 }; }
+          email 
+        }
+      });
+      
+      return NextResponse.json(
+        { error: 'This password has been compromised in a data breach' },
+        { status: 400 }
+      );
+    }
 
     // Log the failed attempt
     await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
@@ -33,9 +39,16 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       userAgent,
       metadata: { 
         reason: 'invalid_credentials',
-        email } });
+        email 
+      }
+    });
     
-    return createSuccessResponse({ success: true }; } catch (error) {
+    return NextResponse.json({ success: true });
+  } catch (error) {
     console.error('Sign in error:', error);
-    return createSuccessResponse({ error: AUTH_ERRORS.UNKNOWN }, { status: 500 }; }
+    return NextResponse.json(
+      { error: AUTH_ERRORS.UNKNOWN },
+      { status: 500 }
+    );
+  }
 }

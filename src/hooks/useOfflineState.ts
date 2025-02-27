@@ -33,7 +33,17 @@ type OperationData = UploadData | TestResultData;
 const OFFLINE_STORAGE_KEY = 'offlineOperations';
 const MAX_RETRIES = 3;
 
-export function useOfflineState(projectId: string, testRunId: string) {
+interface OfflineStateResult {
+  isOnline: boolean;
+  hasPendingOperations: boolean;
+  pendingOperations: QueuedOperation[];
+  addPendingOperation: (type: 'upload' | 'testResult', data: OperationData, priority?: 'high' | 'medium' | 'low') => void;
+  removePendingOperation: (id: string) => void;
+  updatePendingOperation: (id: string, updates: Partial<QueuedOperation>) => void;
+  clearPendingOperations: () => void;
+}
+
+export function useOfflineState(projectId: string, testRunId: string): OfflineStateResult {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingOperations, setPendingOperations] = useState<QueuedOperation[]>(() => {
     try {
@@ -46,8 +56,8 @@ export function useOfflineState(projectId: string, testRunId: string) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = (): void => setIsOnline(true);
+    const handleOffline = (): void => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);

@@ -1,12 +1,12 @@
 import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ReportService } from '@/lib/services/reportService';
 import { dbLogger } from '@/lib/logger';
 import { AppError } from '@/lib/errors';
 
-export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function POST(_req: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -35,5 +35,9 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
         { error: error.message },
         { status: error.statusCode }
       ); }
-    return createSuccessResponse({ error: 'Internal server error' }, { status: 500 }; }
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

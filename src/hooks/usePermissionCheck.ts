@@ -8,13 +8,18 @@ interface UsePermissionCheckOptions {
   resourceId?: string;
 }
 
-export function usePermissionCheck({ action, resource, resourceId }: UsePermissionCheckOptions) {
+interface PermissionCheckResult {
+  hasPermission: boolean | null;
+  isLoading: boolean;
+}
+
+export function usePermissionCheck({ action, resource, resourceId }: UsePermissionCheckOptions): PermissionCheckResult {
   const { data: session } = useSession();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkPermission = async () => {
+    const checkPermission = async (): Promise<void> => {
       if (!session?.user) {
         setHasPermission(false);
         setIsLoading(false);

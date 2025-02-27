@@ -1,7 +1,6 @@
 import type { SessionStrategy } from "next-auth"
 import { prisma } from '@/lib/prisma';
 import type { AuthUser } from './types';
-import { Session } from './types'
 import { AuthError } from '@/lib/errors/AuthError'
 
 export const SESSION_DURATIONS = {
@@ -22,7 +21,7 @@ export const COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === "production",
 }
 
-interface SessionData {
+interface _SessionData {
   userId: string;
   userAgent?: string | undefined;
   ipAddress?: string | undefined;
@@ -44,7 +43,7 @@ export class SessionManager {
   private static readonly MAX_SESSIONS = 5;
   private static readonly SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-  static async cleanup() {
+  static async cleanup(): Promise<void> {
     const now = new Date();
     await prisma.session.deleteMany({
       where: {
@@ -56,7 +55,7 @@ export class SessionManager {
     });
   }
 
-  static async invalidateUserSessions(userId: string) {
+  static async invalidateUserSessions(userId: string): Promise<void> {
     await prisma.session.deleteMany({
       where: { userId },
     });

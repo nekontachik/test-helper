@@ -15,23 +15,6 @@ export class ApiError extends Error {
   }
 }
 
-type ApiResponseData<T> = {
-  success: true;
-  data: T;
-  meta?: {
-    page?: number;
-    limit?: number;
-    total?: number;
-  };
-} | {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-};
-
 function createErrorData(
   message: string,
   code: string = 'INTERNAL_ERROR',
@@ -40,10 +23,11 @@ function createErrorData(
   return {
     success: false,
     error: {
-      message,
       code,
       details,
     },
+    message,
+    status: 500
   };
 }
 
@@ -55,6 +39,7 @@ function createSuccessData<T>(
     success: true,
     data,
     meta,
+    status: 200
   };
 }
 

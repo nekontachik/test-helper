@@ -7,6 +7,17 @@ interface DeviceInfo {
   device: string;
 }
 
+interface Session {
+  id: string;
+  userId: string;
+  sessionToken: string;
+  expiresAt: Date;
+  lastActive: Date;
+  userAgent: string | null;
+  ipAddress: string | null;
+  deviceInfo: string | null;
+}
+
 export class SessionService {
   private static parseDeviceInfo(userAgent?: string): DeviceInfo | null {
     if (!userAgent) return null;
@@ -26,7 +37,7 @@ export class SessionService {
     sessionToken: string;
     userAgent?: string;
     ipAddress?: string;
-  }) {
+  }): Promise<Session> {
     const deviceInfo = this.parseDeviceInfo(data.userAgent);
 
     return prisma.session.create({
@@ -42,7 +53,7 @@ export class SessionService {
     });
   }
 
-  static async getUserSessions(userId: string) {
+  static async getUserSessions(userId: string): Promise<Session[]> {
     return prisma.session.findMany({
       where: {
         userId,
@@ -54,7 +65,7 @@ export class SessionService {
     });
   }
 
-  static async terminateSession(sessionId: string, userId: string) {
+  static async terminateSession(sessionId: string, userId: string): Promise<{ count: number }> {
     return prisma.session.deleteMany({
       where: {
         id: sessionId,
@@ -63,7 +74,7 @@ export class SessionService {
     });
   }
 
-  static async terminateAllSessions(userId: string, currentSessionId?: string) {
+  static async terminateAllSessions(userId: string, currentSessionId?: string): Promise<{ count: number }> {
     return prisma.session.deleteMany({
       where: {
         userId,
@@ -74,7 +85,7 @@ export class SessionService {
     });
   }
 
-  static async updateSessionActivity(sessionId: string) {
+  static async updateSessionActivity(sessionId: string): Promise<Session> {
     return prisma.session.update({
       where: { id: sessionId },
       data: { lastActive: new Date() },

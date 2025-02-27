@@ -30,7 +30,7 @@ export function AuthLayout({
   alternateLink,
   onSubmit,
   children,
-}: AuthLayoutProps) {
+}: AuthLayoutProps): JSX.Element {
   return (
     <VStack spacing={6} align="stretch">
       <Box textAlign="center">

@@ -1,16 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectFormData } from '@/types';
-import { Project } from '@/types';
 import apiClient from '@/lib/apiClient';
 
-export function useProjects() {
+export function useProjects(): ReturnType<typeof useQuery> {
   return useQuery({
     queryKey: ['projects'],
     queryFn: () => apiClient.getProjects()
   });
 }
 
-export function useCreateProject() {
+export function useCreateProject(): ReturnType<typeof useMutation> {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -21,7 +20,7 @@ export function useCreateProject() {
   });
 }
 
-export function useProject(projectId: string) {
+export function useProject(projectId: string): ReturnType<typeof useQuery> {
   return useQuery({
     queryKey: ['projects', projectId],
     queryFn: () => apiClient.getProject(projectId)

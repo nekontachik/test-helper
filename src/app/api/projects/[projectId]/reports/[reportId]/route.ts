@@ -1,25 +1,48 @@
 import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { AppError } from '@/lib/errors';
 import { dbLogger } from '@/lib/logger';
 import type { TestCaseResultStatus, TestCasePriority, TestCaseStatus } from '@/types';
-import { TestCase } from '@/types';
-import type { Prisma } from '@prisma/client';
 
-type TestReportWithRelations = Prisma.TestReportGetPayload<{
-  include: {
-    project: true;
-    testRun: {
-      include: {
-        testRunCases: {
-          include: {
-            testCase: true; }; }; }; };
-    createdBy: true; }; }>;
+// Define a more specific type instead of using Prisma.TestReportGetPayload
+interface TestReportWithRelations {
+  id: string;
+  name: string;
+  description: string | null;
+  projectId: string;
+  runId: string;
+  statistics: unknown;
+  results: unknown;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
+  project: Record<string, unknown>;
+  testRun: {
+    testRunCases: Array<{
+      testCase: {
+        id: string;
+        title: string;
+        description: string | null;
+        steps: string;
+        expectedResult: string;
+        priority: string;
+        status: string;
+        projectId: string;
+        createdAt: Date;
+        updatedAt: Date;
+      };
+    }>;
+  };
+  createdBy: Record<string, unknown>;
+}
 
-export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { projectId: string; reportId: string } }
+): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -76,9 +99,12 @@ export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
           createdAt: testCase.createdAt.toISOString(),
           updatedAt: testCase.updatedAt.toISOString() })) } };
 
-    return NextResponse.json(transformedReport); } catch (error) {
+    return NextResponse.json(transformedReport); 
+  } catch (error) {
     dbLogger.error('Error fetching test report:', error);
     if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode }); }
-    return createSuccessResponse({ error: 'Internal server error' }, { status: 500 }; }
+      return NextResponse.json({ error: error.message }, { status: error.statusCode }); 
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

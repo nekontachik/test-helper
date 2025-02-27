@@ -1,10 +1,18 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
 import { TestRunStatus } from '@/types';
-import type { TestRun, TestCase, TestCaseResult, Prisma } from '@prisma/client';
+import type { NextRequest } from 'next/server';
+import type { Session } from 'next-auth';
+import type { UserRole } from '@/types/auth';
+
+// Define the USER_ROLES constant to replace UserRole type references
+const USER_ROLES: Record<string, UserRole> = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'PROJECT_MANAGER',
+  EDITOR: 'TESTER',
+  VIEWER: 'VIEWER'
+};
 
 // Define the exact shape of the data we're getting from Prisma
 interface TestRunWithRelations {
@@ -37,10 +45,13 @@ interface TestRunWithRelations {
       id: string;
       title: string; }; }>; }
 
-async function handler(req: Request, { params }: { params: { projectId: string; runId: string } }) {
-  const { projectId, runId } = params;
+async function handler(req: NextRequest, _session: Session): Promise<Response> {
+  // Extract projectId from the URL
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const projectId = pathParts[pathParts.indexOf('projects') + 1];
 
-  if (_req.method === 'GET') {
+  if (req.method === 'GET') {
     const testRuns = await prisma.testRun.findMany({
       where: { 
         projectId,
@@ -82,7 +93,11 @@ async function handler(req: Request, { params }: { params: { projectId: string; 
 
     return NextResponse.json(reports); }
 
-  return createErrorResponse('Method not allowed', 'ERROR_CODE', 405); }
+  return NextResponse.json(
+    { error: 'Method not allowed' },
+    { status: 405 }
+  );
+}
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR] });
+  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.EDITOR] });

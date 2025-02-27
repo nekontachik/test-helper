@@ -1,12 +1,24 @@
 import { prisma } from '@/lib/prisma';
 import { AuthenticationError } from '@/lib/errors';
 import type { 
-  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialCreationOptionsJSON as _PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
   AuthenticatorTransport,
   AuthenticatorDevice
 } from '@/types/webauthn';
-import type { WebAuthnCredential } from '@prisma/client';
+
+// Define WebAuthnCredential type since it's not exported from @prisma/client
+interface WebAuthnCredential {
+  id: string;
+  userId: string;
+  credentialID: string;
+  credentialPublicKey: string;
+  counter: number;
+  transportsData: string;
+  lastUsed: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface WebAuthnOptions {
   rpName: string;
@@ -66,7 +78,7 @@ export class WebAuthnService {
       const options: PublicKeyCredentialRequestOptionsJSON = {
         ...this.DEFAULT_OPTIONS,
         challenge,
-        allowCredentials: user.webAuthnCredentials.map(cred => ({
+        allowCredentials: user.webAuthnCredentials.map((cred: { credentialID: string; transportsData: string }) => ({
           id: cred.credentialID,
           type: 'public-key',
           transports: JSON.parse(cred.transportsData) as AuthenticatorTransport[]
@@ -127,7 +139,7 @@ export class WebAuthnService {
         data: { currentChallenge: null }
       });
 
-      return webAuthnCredential;
+      return webAuthnCredential as WebAuthnCredential;
     } catch (error) {
       console.error('Failed to verify authentication:', error);
       throw new AuthenticationError('Failed to verify authentication');

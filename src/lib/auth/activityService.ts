@@ -42,7 +42,7 @@ export class ActivityService {
     }
   }
 
-  static async getRecentActivity(userId: string, limit = 10) {
+  static async getRecentActivity(userId: string, limit = 10): Promise<unknown[]> {
     return prisma.activityLog.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },

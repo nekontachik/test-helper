@@ -110,7 +110,7 @@ export const swaggerConfig: OpenAPIV3.Document = {
   }
 };
 
-export const getApiDocs = () => {
+export const getApiDocs = (): ReturnType<typeof createSwaggerSpec> => {
   const spec = createSwaggerSpec({
     apiFolder: 'src/app/api',
     definition: {

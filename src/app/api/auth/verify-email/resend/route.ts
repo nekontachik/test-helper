@@ -24,11 +24,14 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       return createErrorResponse('Email already verified', 'ERROR_CODE', 400); }
 
     // Generate new verification token
-    const token = await TokenService.generateEmailVerificationToken(user.email);
+    await TokenService.generateEmailVerificationToken(user.email);
     await sendVerificationEmail(user.email, user.name || 'User');
 
     return createSuccessResponse({
-      message: 'Verification email sent successfully' }; } catch (error) {
+      message: 'Verification email sent successfully'
+    });
+  } catch (error) {
     console.error('Email verification resend error:', error);
-    return createErrorResponse('Failed to resend verification email', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to resend verification email', 'ERROR_CODE', 500);
+  }
 }

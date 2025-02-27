@@ -1,4 +1,3 @@
-import { Permission } from '@/types/auth';
 import { MOCK_USER } from './simpleAuth';
 
 export function hasPermission(permission: string): boolean {

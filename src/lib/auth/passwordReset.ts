@@ -12,7 +12,7 @@ export enum PasswordResetAction {
   COMPLETE = 'PASSWORD_RESET_COMPLETE',
 }
 
-interface PasswordResetPayload extends TokenPayload {
+interface _PasswordResetPayload extends TokenPayload {
   email: string;
 }
 

@@ -13,10 +13,18 @@ const AUTH_RATE_LIMIT: RateLimitConfig = {
   duration: 300, // 5 minutes
 };
 
+interface LoginResult {
+  id: string;
+  email: string;
+  role: string;
+  twoFactorEnabled: boolean;
+  emailVerified: boolean;
+}
+
 export class LoginService {
   private static rateLimiter = new RateLimiter();
 
-  static async attemptLogin(email: string, password: string, ip: string) {
+  static async attemptLogin(email: string, password: string, ip: string): Promise<LoginResult> {
     // Check rate limit first
     await this.rateLimiter.checkLimit(ip, AUTH_RATE_LIMIT);
 

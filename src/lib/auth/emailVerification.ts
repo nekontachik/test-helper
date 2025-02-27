@@ -2,7 +2,6 @@ import { TokenService } from '@/services/token';
 import { AuditLogger } from '@/services/audit';
 import { AuditLogType } from '@/types/audit';
 import type { EmailVerificationToken } from '@/types/auth';
-import type { AuditLogData } from '@/types/audit';
 
 export async function createVerificationToken(userId: string, email: string): Promise<EmailVerificationToken> {
   try {

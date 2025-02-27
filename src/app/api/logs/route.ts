@@ -15,9 +15,13 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
         userId: session?.user?.id || 'SYSTEM',
         metadata: JSON.stringify(body),
         ipAddress: _req.headers.get('x-forwarded-for') || _req.headers.get('x-real-ip'),
-        userAgent: _req.headers.get('user-agent') } });
+        userAgent: _req.headers.get('user-agent') 
+      } 
+    });
 
-    return createSuccessResponse({ success: true, log }; } catch (error) {
+    return createSuccessResponse({ success: true, log });
+  } catch (error) {
     console.error('Failed to log error:', error);
-    return createSuccessResponse({ error: 'Failed to log error' }, { status: 500 }; }
+    return createErrorResponse('Failed to log error', 'LOG_ERROR', 500);
+  }
 }

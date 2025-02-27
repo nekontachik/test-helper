@@ -63,11 +63,14 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
           lastActivity: new Date().toISOString() }) } });
 
     return createSuccessResponse({
-      message: 'Code validated successfully' }; } catch (error) {
+      message: 'Code validated successfully' 
+    }); 
+  } catch (error) {
     console.error('2FA validation error:', error);
     
     if (error instanceof z.ZodError) {
       return createErrorResponse('Invalid code format', 'ERROR_CODE', 400); }
 
-    return createErrorResponse('Failed to validate code', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to validate code', 'ERROR_CODE', 500); 
+  }
 }

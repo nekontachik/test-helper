@@ -21,7 +21,14 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
     await AuthService.verifyEmail(token);
 
     return createSuccessResponse({
-      message: 'Email verified successfully' }; } catch (error) {
+      message: 'Email verified successfully'
+    });
+  } catch (error) {
     console.error('Email verification error:', error);
-    return createSuccessResponse({ error: error instanceof Error ? error.message : 'Verification failed' }, { status: 400 }; }
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Verification failed',
+      'VERIFICATION_ERROR',
+      400
+    );
+  }
 }

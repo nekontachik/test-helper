@@ -24,7 +24,10 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
       select: { twoFactorEnabled: true } });
 
     return createSuccessResponse({
-      twoFactorEnabled: updatedUser.twoFactorEnabled }; } catch (error) {
+      twoFactorEnabled: updatedUser.twoFactorEnabled 
+    }); 
+  } catch (error) {
     console.error('2FA toggle error:', error);
-    return createErrorResponse('Failed to toggle 2FA', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to toggle 2FA', 'ERROR_CODE', 500); 
+  }
 }

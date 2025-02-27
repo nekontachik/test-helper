@@ -11,7 +11,7 @@ interface AuthUser {
   role: keyof typeof USER_ROLES;
 }
 
-export async function authMiddleware(request: NextRequest) {
+export async function authMiddleware(request: NextRequest): Promise<NextResponse> {
   try {
     const token = await getToken({ req: request });
     const path = request.nextUrl.pathname;
@@ -32,8 +32,10 @@ export async function authMiddleware(request: NextRequest) {
       role: (token.role as keyof typeof USER_ROLES) || USER_ROLES.USER
     };
 
-    if (!hasPermission(user, path)) {
-      logger.warn('Permission denied', { path, userRole: user.role });
+    // Check if user has permission to access this path
+    const requiredPermission = `access:${path}`;
+    if (!hasPermission(requiredPermission)) {
+      logger.warn('Permission denied', { path, userRole: user.role, requiredPermission });
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 

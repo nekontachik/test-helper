@@ -18,7 +18,7 @@ interface CacheEntry {
   timestamp: number;
 }
 
-interface ProjectMember {
+interface _ProjectMember {
   userId: string;
 }
 

@@ -10,7 +10,7 @@ const LOCKOUT_THRESHOLD = 5; // Failed attempts before lockout
 const LOCKOUT_DURATION = 15 * 60; // 15 minutes in seconds
 
 export class LockoutService {
-  static async recordFailedAttempt(userId: string) {
+  static async recordFailedAttempt(userId: string): Promise<number> {
     const key = `lockout:${userId}`;
     const attempts = await redis.incr(key);
     
@@ -25,7 +25,7 @@ export class LockoutService {
     return attempts;
   }
 
-  static async lockAccount(userId: string) {
+  static async lockAccount(userId: string): Promise<void> {
     const lockExpiry = new Date(Date.now() + LOCKOUT_DURATION * 1000);
 
     await prisma.user.update({
@@ -52,7 +52,7 @@ export class LockoutService {
     return user.lockedUntil > new Date();
   }
 
-  static async resetAttempts(userId: string) {
+  static async resetAttempts(userId: string): Promise<void> {
     await redis.del(`lockout:${userId}`);
     
     await prisma.user.update({

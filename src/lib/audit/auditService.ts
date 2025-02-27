@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { AuditLogType} from '@/types/audit';
-import { AuditAction, type AuditLogData } from '@/types/audit';
+import type { AuditLogData } from '@/types/audit';
 import logger from '@/lib/logger';
 
 export class AuditService {
@@ -26,7 +26,7 @@ export class AuditService {
     }
   }
 
-  static async getAuditLogs(userId: string, type?: AuditLogType) {
+  static async getAuditLogs(userId: string, type?: AuditLogType): Promise<unknown[]> {
     return prisma.activityLog.findMany({
       where: {
         userId,

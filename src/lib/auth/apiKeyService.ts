@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import { ActivityService } from './activityService';
 import { ActivityEventType } from '@/types/activity';
-import type { Prisma } from '@prisma/client';
 
 interface ApiKeyMetadata {
   name: string;

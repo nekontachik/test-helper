@@ -10,7 +10,7 @@ export class RequestSigning {
   private static readonly MAX_REQUEST_AGE = 5 * 60 * 1000; // 5 minutes
   private static readonly SIGNATURE_ALGORITHM = 'sha256';
 
-  static signRequest(payload: any, apiKey: string): SignedRequest {
+  static signRequest(payload: Record<string, unknown>, apiKey: string): SignedRequest {
     const timestamp = Date.now();
     const body = JSON.stringify(payload);
     const signature = this.generateSignature(body, timestamp, apiKey);

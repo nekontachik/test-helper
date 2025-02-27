@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { AuthUser, Permission } from '@/types/auth';
-import { UserRole, AccountStatus } from '@/types/auth';
+import type { AuthUser, Permission, UserRole, AccountStatus } from '@/types/auth';
 
 // Define mock permissions
 const MOCK_PERMISSIONS: Permission[] = [
@@ -17,9 +16,9 @@ export const MOCK_USER: AuthUser = {
   id: '1',
   email: 'admin@test.com',
   name: 'Admin User',
-  role: UserRole.ADMIN,
+  role: 'ADMIN' as UserRole,
   permissions: MOCK_PERMISSIONS,
-  status: AccountStatus.ACTIVE,
+  status: 'ACTIVE' as AccountStatus,
   emailNotificationsEnabled: true,
   twoFactorEnabled: false,
   twoFactorAuthenticated: false,
@@ -36,7 +35,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: true,
 });
 
-export function SimpleAuthProvider({ children }: { children: React.ReactNode }) {
+export function SimpleAuthProvider({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <AuthContext.Provider value={{ user: MOCK_USER, isAuthenticated: true }}>
       {children}
@@ -44,7 +43,7 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
   );
 }
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within a SimpleAuthProvider');

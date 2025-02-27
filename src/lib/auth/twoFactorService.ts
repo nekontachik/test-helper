@@ -1,8 +1,8 @@
+// TODO: Install otplib package with: npm install otplib
 import { authenticator } from 'otplib';
 import { prisma } from '@/lib/prisma';
 import { AuditService } from '../audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
-import type { Prisma } from '@prisma/client';
 
 export class TwoFactorService {
   static async verifyTOTP(userId: string, token: string): Promise<boolean> {

@@ -1,9 +1,15 @@
 import useSWR from 'swr';
-import type { Project } from '@prisma/client';
+import type { Project } from '@/types';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+interface ProjectsResponse {
+  data: Project[] | undefined;
+  isLoading: boolean;
+  error: Error | undefined;
+}
 
-export function useProjects() {
+const fetcher = (url: string): Promise<Project[]> => fetch(url).then((res) => res.json());
+
+export function useProjects(): ProjectsResponse {
   const { data, error, isLoading } = useSWR<Project[]>('/api/projects', fetcher);
 
   return {

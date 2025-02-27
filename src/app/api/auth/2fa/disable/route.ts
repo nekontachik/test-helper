@@ -36,7 +36,10 @@ export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
         twoFactorSecret: null, } });
 
     return createSuccessResponse({
-      message: '2FA disabled successfully' }; } catch (error) {
+      message: '2FA disabled successfully' 
+    }); 
+  } catch (error) {
     console.error('2FA disable error:', error);
-    return createErrorResponse('Failed to disable 2FA', 'ERROR_CODE', 500); }
+    return createErrorResponse('Failed to disable 2FA', 'ERROR_CODE', 500); 
+  }
 }

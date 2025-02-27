@@ -8,7 +8,7 @@ type Middleware = (
 
 export function applyMiddleware(middleware: Middleware[]) {
   return (req: NextApiRequest, res: NextApiResponse, next: () => void): void => {
-    const runMiddleware = (i: number) => {
+    const runMiddleware = (i: number): void => {
       if (i < middleware.length) {
         middleware[i](req, res, () => runMiddleware(i + 1));
       } else {

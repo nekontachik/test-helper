@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
-import { AppError, NotFoundError } from '@/lib/errors';
+import { NotFoundError } from '@/lib/errors';
 
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string; testCaseId: string } }
-) {
+): Promise<Response> {
   try {
     const testCase = await prisma.testCase.findUnique({
       where: {

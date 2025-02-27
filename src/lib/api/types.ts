@@ -6,7 +6,7 @@ export interface RouteParams {
   searchParams?: Record<string, string>;
 }
 
-export type ProtectedRouteHandler<T = any> = (
+export type ProtectedRouteHandler<T = unknown> = (
   req: Request, 
   session: Session, 
   params: RouteParams, 

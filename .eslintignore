@@ -1,3 +1,16 @@
 node_modules
 .next
 out
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/**/*
+**/tests/**/*
+**/test/**/*
+**/mocks/**/*
+**/fixtures/**/*
+**/cypress/**/*
+jest.config.js
+jest.setup.js

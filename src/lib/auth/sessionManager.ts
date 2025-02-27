@@ -2,12 +2,23 @@ import { prisma } from '@/lib/prisma';
 import { UAParser } from 'ua-parser-js';
 import crypto from 'crypto';
 
+interface SessionData {
+  id: string;
+  userId: string;
+  sessionToken: string;
+  expiresAt: Date;
+  userAgent: string | null;
+  ipAddress: string | null;
+  deviceInfo: string;
+  lastActive?: Date;
+}
+
 export class SessionManager {
   static async createSession(data: {
     userId: string;
     userAgent?: string;
     ipAddress?: string;
-  }) {
+  }): Promise<SessionData> {
     const parser = new UAParser(data.userAgent);
     const device = parser.getResult();
     

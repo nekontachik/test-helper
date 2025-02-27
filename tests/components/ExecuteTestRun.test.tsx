@@ -1,10 +1,19 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ExecuteTestRun } from '../ExecuteTestRun';
+import { ExecuteTestRun } from '@/components/test-run/ExecuteTestRun';
 import type { TestCase} from '@/types';
 import { TestRun, TestCaseStatus, TestCasePriority, TestCaseResultStatus } from '@/types';
 import { useUpdateTestRun } from '@/hooks/useTestRuns';
 import { ChakraProvider } from '@chakra-ui/react';
+
+// Mock the next/navigation module
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    refresh: jest.fn(),
+  }),
+}));
 
 jest.mock('@/hooks/useTestRuns');
 
@@ -40,7 +49,6 @@ const mockTestRun = {
 };
 
 describe('ExecuteTestRun', () => {
-  const mockOnComplete = jest.fn();
   const mockUpdateTestRun = jest.fn();
 
   beforeEach(() => {
@@ -52,7 +60,15 @@ describe('ExecuteTestRun', () => {
   });
 
   it('renders correctly', () => {
-    render(<ExecuteTestRun testRun={mockTestRun} onComplete={mockOnComplete} />);
+    render(
+      <ChakraProvider>
+        <ExecuteTestRun 
+          testRun={mockTestRun} 
+          projectId="project1" 
+          runId="1" 
+        />
+      </ChakraProvider>
+    );
     
     expect(screen.getByText('Execute Test Run: Test Run 1')).toBeInTheDocument();
     expect(screen.getByText('Test Case 1')).toBeInTheDocument();
@@ -60,14 +76,30 @@ describe('ExecuteTestRun', () => {
   });
 
   it('renders test cases correctly', () => {
-    render(<ExecuteTestRun testRun={mockTestRun} onComplete={mockOnComplete} />);
+    render(
+      <ChakraProvider>
+        <ExecuteTestRun 
+          testRun={mockTestRun} 
+          projectId="project1" 
+          runId="1" 
+        />
+      </ChakraProvider>
+    );
     expect(screen.getByText('Execute Test Run: Test Run 1')).toBeInTheDocument();
     expect(screen.getByText('Test Case 1')).toBeInTheDocument();
     expect(screen.getByText('Test Case 2')).toBeInTheDocument();
   });
 
   it('allows selecting result for each test case', async () => {
-    render(<ExecuteTestRun testRun={mockTestRun} onComplete={mockOnComplete} />);
+    render(
+      <ChakraProvider>
+        <ExecuteTestRun 
+          testRun={mockTestRun} 
+          projectId="project1" 
+          runId="1" 
+        />
+      </ChakraProvider>
+    );
     
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[0], { target: { value: TestCaseResultStatus.PASSED } });
@@ -91,23 +123,27 @@ describe('ExecuteTestRun', () => {
         },
       });
     });
-
-    expect(mockOnComplete).toHaveBeenCalled();
   });
 
   it('handles errors when updating test run', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockUpdateTestRun.mockRejectedValueOnce(new Error('Update failed'));
 
-    render(<ExecuteTestRun testRun={mockTestRun} onComplete={mockOnComplete} />);
+    render(
+      <ChakraProvider>
+        <ExecuteTestRun 
+          testRun={mockTestRun} 
+          projectId="project1" 
+          runId="1" 
+        />
+      </ChakraProvider>
+    );
     
     fireEvent.click(screen.getByText('Complete Test Run'));
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error updating test run:', expect.any(Error));
     });
-
-    expect(mockOnComplete).not.toHaveBeenCalled();
 
     consoleErrorSpy.mockRestore();
   });

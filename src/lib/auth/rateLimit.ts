@@ -15,7 +15,18 @@ export const ratelimit = redis
     })
   : null;
 
-export async function checkRateLimit(identifier: string) {
+interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  reset: number;
+  remaining: number;
+}
+
+export async function checkRateLimit(identifier: string): Promise<RateLimitResult> {
+  if (!ratelimit) {
+    return { success: true, limit: 0, reset: 0, remaining: 0 };
+  }
+  
   const { success, limit, reset, remaining } = await ratelimit.limit(identifier);
 
   return {
@@ -26,6 +37,10 @@ export async function checkRateLimit(identifier: string) {
   };
 }
 
-export async function getRateLimitInfo(identifier: string) {
+export async function getRateLimitInfo(identifier: string): Promise<RateLimitResult> {
+  if (!ratelimit) {
+    return { success: true, limit: 0, reset: 0, remaining: 0 };
+  }
+  
   return ratelimit.limit(identifier);
 }

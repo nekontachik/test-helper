@@ -13,7 +13,7 @@ export interface PasswordStrengthResult {
   failedPolicies: string[];
 }
 
-interface PasswordHistory {
+interface _PasswordHistory {
   id: string;
   hash: string;
 }

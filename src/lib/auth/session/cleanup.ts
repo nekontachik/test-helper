@@ -2,7 +2,7 @@ import { SessionManager } from './sessionManager';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
 
-export async function cleanupSessions() {
+export async function cleanupSessions(): Promise<void> {
   try {
     const startTime = Date.now();
     await SessionManager.cleanupExpiredSessions();

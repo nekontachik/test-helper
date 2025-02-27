@@ -12,17 +12,20 @@ interface TokenPayload {
 }
 
 export class TokenService {
-  private static readonly SECRET = process.env.JWT_SECRET!;
+  private static readonly SECRET = process.env.JWT_SECRET || 'default-secret-key';
 
-  static async generateToken(payload: TokenPayload): Promise<string> {
-    return jwt.sign(payload, this.SECRET, {
-      expiresIn: payload.expiresIn || '1h'
-    });
+  static generateToken(payload: TokenPayload): string {
+    const { expiresIn, ...tokenData } = payload;
+    return jwt.sign(
+      tokenData, 
+      Buffer.from(this.SECRET, 'utf-8'), 
+      { expiresIn: expiresIn || '1h' }
+    );
   }
 
-  static async verify(token: string): Promise<TokenPayload | null> {
+  static verify(token: string): TokenPayload | null {
     try {
-      return jwt.verify(token, this.SECRET) as TokenPayload;
+      return jwt.verify(token, Buffer.from(this.SECRET, 'utf-8')) as TokenPayload;
     } catch {
       return null;
     }
@@ -52,7 +55,7 @@ export class TokenService {
     return token;
   }
 
-  static async validateEmailVerificationToken(token: string) {
+  static async validateEmailVerificationToken(token: string): Promise<{ id: string; email: string } | null> {
     const user = await prisma.user.findFirst({
       where: {
         emailVerificationToken: token,
@@ -93,7 +96,7 @@ export class TokenService {
     return token;
   }
 
-  static async validatePasswordResetToken(token: string) {
+  static async validatePasswordResetToken(token: string): Promise<{ id: string; email: string } | null> {
     const user = await prisma.user.findFirst({
       where: {
         resetToken: token,
