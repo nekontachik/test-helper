@@ -20,7 +20,7 @@ interface AuthFormValues {
 interface AuthFieldProps {
   _form: UseFormReturn<AuthFormValues>;
   isLoading: boolean;
-  type: 'signin' | 'signup';
+  type: 'signin' | 'signup' | 'reset';
 }
 
 export const AuthFormFields = memo(function AuthFormFields({ 
@@ -28,6 +28,12 @@ export const AuthFormFields = memo(function AuthFormFields({
   isLoading,
   type
 }: AuthFieldProps) {
+  // Set appropriate autocomplete attribute based on form type
+  const getPasswordAutocomplete = (): string => {
+    if (type === 'signin') return 'current-password';
+    return 'new-password';
+  };
+
   return (
     <>
       {type === 'signup' && (
@@ -38,7 +44,7 @@ export const AuthFormFields = memo(function AuthFormFields({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} />
+                <Input {...field} disabled={isLoading} autoComplete="name" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -53,7 +59,7 @@ export const AuthFormFields = memo(function AuthFormFields({
           <FormItem>
             <FormLabel>Email</FormLabel>
             <FormControl>
-              <Input type="email" {...field} disabled={isLoading} />
+              <Input type="email" {...field} disabled={isLoading} autoComplete="username" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -67,7 +73,12 @@ export const AuthFormFields = memo(function AuthFormFields({
           <FormItem>
             <FormLabel>Password</FormLabel>
             <FormControl>
-              <Input type="password" {...field} disabled={isLoading} />
+              <Input 
+                type="password" 
+                {...field} 
+                autoComplete={getPasswordAutocomplete()} 
+                disabled={isLoading} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

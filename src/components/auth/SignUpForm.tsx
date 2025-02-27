@@ -97,6 +97,7 @@ export function SignUpForm(): JSX.Element {
           )}
 
           <FormField
+            control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
@@ -110,6 +111,7 @@ export function SignUpForm(): JSX.Element {
           />
 
           <FormField
+            control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -123,12 +125,13 @@ export function SignUpForm(): JSX.Element {
           />
 
           <FormField
+            control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} disabled={isLoading} />
+                  <Input type="password" {...field} autoComplete="new-password" disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

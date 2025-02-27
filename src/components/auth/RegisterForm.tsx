@@ -125,7 +125,7 @@ export function RegisterForm(): JSX.Element {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="Create a password" />
+                    <Input {...field} type="password" autoComplete="new-password" placeholder="Create a password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +139,7 @@ export function RegisterForm(): JSX.Element {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="Confirm your password" />
+                    <Input {...field} type="password" autoComplete="new-password" placeholder="Confirm your password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

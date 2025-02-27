@@ -82,6 +82,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps): JSX.Elemen
               <Input 
                 id="password"
                 type="password" 
+                autoComplete="new-password"
                 {...form.register('password')}
               />
               {form.formState.errors.password && (
@@ -95,6 +96,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps): JSX.Elemen
               <Input 
                 id="confirmPassword"
                 type="password" 
+                autoComplete="new-password"
                 {...form.register('confirmPassword')}
               />
               {form.formState.errors.confirmPassword && (

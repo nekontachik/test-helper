@@ -14,12 +14,18 @@ export enum AuditAction {
   USER_LOGIN = 'user_login',
   USER_LOGOUT = 'user_logout',
   USER_LOGIN_FAILED = 'user_login_failed',
+  EMAIL_VERIFICATION_REQUESTED = 'EMAIL_VERIFICATION_REQUESTED',
+  EMAIL_VERIFIED = 'EMAIL_VERIFIED',
+  EMAIL_VERIFICATION_FAILED = 'EMAIL_VERIFICATION_FAILED',
+  LOGIN = 'LOGIN',
+  RESET_FAILED_ATTEMPTS = 'RESET_FAILED_ATTEMPTS',
 }
 
 export enum AuditLogType {
   SECURITY = 'SECURITY',
   USER = 'USER',
   SYSTEM = 'SYSTEM',
+  AUTH = 'AUTH',
 }
 
 export interface AuditContext {
@@ -33,4 +39,6 @@ export interface AuditLogData {
   action: string;
   metadata?: Record<string, unknown>;
   context?: AuditContext;
+  details?: Record<string, unknown>;
+  status: 'SUCCESS' | 'FAILED';
 } 

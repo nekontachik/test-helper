@@ -1,20 +1,5 @@
-import pino from 'pino';
-
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isServer = typeof window === 'undefined';
-
-// Create Pino logger for server-side with minimal config
-const pinoLogger = pino({
-  level: isDevelopment ? 'debug' : 'info',
-  transport: isDevelopment ? {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      // Disable worker threads to avoid the error
-      worker: { enabled: false }
-    }
-  } : undefined,
-});
+// Simple logger implementation that works in both browser and server environments
+// without causing worker thread issues
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -27,7 +12,6 @@ interface LogEntry {
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  private logger = isServer ? pinoLogger : console;
 
   private formatMessage(level: LogLevel, message: string, data?: unknown): LogEntry {
     return {

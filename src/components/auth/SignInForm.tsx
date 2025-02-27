@@ -1,161 +1,141 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
+  Box,
+  Button,
   FormControl,
-  FormField,
-  FormItem,
   FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Spinner } from '@/components/ui/spinner';
-import Link from 'next/link';
-import { Box, Text, VStack, Flex } from '@chakra-ui/react';
-import { logger } from '@/lib/utils/logger';
-import { memo } from 'react';
+  Input,
+  FormErrorMessage,
+  VStack,
+  Heading,
+  useToast,
+  Link,
+  Flex
+} from '@chakra-ui/react';
+import NextLink from 'next/link';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { useAuth } from '@/hooks/useAuth';
 
-const signInSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+// Validation schema
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
 });
 
-export type SignInFormData = z.infer<typeof signInSchema>;
-
-const FormFields = memo(function FormFields({ isLoading }: { isLoading: boolean }) {
-  return (
-    <>
-      <FormField
-        name="email"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input type="email" {...field} disabled={isLoading} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        name="password"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <Input type="password" {...field} disabled={isLoading} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
-  );
-});
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export function SignInForm(): JSX.Element {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading: authLoading, error: authError } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
   const router = useRouter();
-
-  const form = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const toast = useToast();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async (data: SignInFormData): Promise<void> => {
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
+    setIsSubmitting(true);
+    setFormError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);
-
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        throw new Error(result.error);
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        toast({
+          title: 'Login successful',
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        });
+        
+        router.push('/dashboard');
       }
-
-      router.refresh();
-      router.push('/dashboard');
     } catch (error) {
-      logger.error('SignInForm - Error:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setFormError(error instanceof Error ? error.message : 'Login failed');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-
+  
+  if (authLoading) {
+    return <LoadingState text="Checking authentication..." />;
+  }
+  
   return (
-    <Box 
-      as="main"
-      maxW="md"
-      mx="auto"
-      mt={8}
-      p={6}
-      borderRadius="lg"
-      boxShadow="sm"
-      bg="white"
-    >
+    <Box maxW="md" mx="auto" p={6} borderWidth="1px" borderRadius="lg" boxShadow="lg">
       <VStack spacing={6} align="stretch">
-        <Box textAlign="center" mb={6}>
-          <Text fontSize="2xl" fontWeight="bold" mb={2}>
-            Welcome Back
-          </Text>
-          <Text color="gray.600">
-            Sign in to continue to your account
-          </Text>
-        </Box>
+        <Heading as="h2" size="lg" textAlign="center">
+          Sign In
+        </Heading>
+        
+        {(formError || authError) && (
+          <ErrorMessage
+            title="Login Failed"
+            message={formError || authError || 'An error occurred during login'}
+            onClose={() => setFormError(null)}
+          />
+        )}
+        
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={4}>
+            <FormControl isInvalid={!!errors.email}>
+              <FormLabel htmlFor="email">Email</FormLabel>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                autoComplete="email"
+                {...register('email')}
+              />
+              <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
+            </FormControl>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+            <FormControl isInvalid={!!errors.password}>
+              <FormLabel htmlFor="password">Password</FormLabel>
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
+                autoComplete="current-password"
+                {...register('password')}
+              />
+              <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
+            </FormControl>
 
-          <FormFields isLoading={isLoading} />
-
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isLoading}
-            size="lg"
-          >
-            {isLoading ? <Spinner className="mr-2" /> : null}
-            Sign In
-          </Button>
+            <Button
+              type="submit"
+              colorScheme="blue"
+              width="full"
+              mt={4}
+              isLoading={isSubmitting}
+              loadingText="Signing in..."
+            >
+              Sign In
+            </Button>
+          </VStack>
         </form>
 
-        <Flex 
-          justify="center" 
-          mt={4} 
-          pt={4} 
-          borderTop="1px" 
-          borderColor="gray.200"
-        >
-          <Text color="gray.600">
-            Don&apos;t have an account?{' '}
-            <Link 
-              href="/auth/signup" 
-              className="text-blue-600 hover:underline font-medium"
-            >
-              Sign up here
-            </Link>
-          </Text>
+        <Flex justifyContent="space-between" fontSize="sm">
+          <Link as={NextLink} href="/auth/reset-password/request" color="blue.500">
+            Forgot password?
+          </Link>
+          <Link as={NextLink} href="/auth/register" color="blue.500">
+            Create an account
+          </Link>
         </Flex>
       </VStack>
     </Box>

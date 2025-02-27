@@ -54,6 +54,7 @@ export interface AuthUser {
 export interface AuthResult {
   user: AuthUser;
   token: string;
+  refreshToken: string;
   expiresAt: number;
 }
 
