@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma }from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { validateTestSuite } from '@/lib/validationSchemas';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
-) {
+): Promise<void> {
   const { method } = req;
   const projectId = req.query.projectId as string;
 
@@ -16,7 +16,8 @@ export default async function handler(
           where: { projectId },
         });
         res.status(200).json(testSuites);
-      } catch (error) {
+      } catch (error: unknown) {
+        console.error('Failed to fetch test suites:', error);
         res.status(500).json({ error: 'Failed to fetch test suites' });
       }
       break;
@@ -35,7 +36,8 @@ export default async function handler(
           },
         });
         res.status(201).json(testSuite);
-      } catch (error) {
+      } catch (error: unknown) {
+        console.error('Failed to create test suite:', error);
         res.status(500).json({ error: 'Failed to create test suite' });
       }
       break;

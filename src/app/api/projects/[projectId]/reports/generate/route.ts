@@ -1,22 +1,18 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ReportService } from '@/lib/services/reportService';
 import { dbLogger } from '@/lib/logger';
 import { AppError } from '@/lib/errors';
 
-export async function POST(
-  request: NextRequest,
-  { params: _params }: { params: { projectId: string } }
-): Promise<NextResponse> {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+      throw new AppError('Unauthorized', 401); }
 
-    const { runId, format = 'PDF' } = await request.json();
+    const { runId, format = 'PDF' } = await _req.json();
     const reportService = new ReportService();
     const report = await reportService.generateTestRunReport(runId);
 
@@ -27,25 +23,17 @@ export async function POST(
         return new NextResponse(result, {
           headers: {
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="test-run-${runId}.pdf"`
-          }
-        });
+            'Content-Disposition': `attachment; filename="test-run-${runId}.pdf"` } });
       case 'JSON':
         return NextResponse.json(report);
       default:
-        throw new AppError('Unsupported format', 400);
-    }
+        throw new AppError('Unsupported format', 400); }
   } catch (error) {
     dbLogger.error('Error generating report:', error);
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message },
         { status: error.statusCode }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-} 
+      ); }
+    return createSuccessResponse({ error: 'Internal server error' }, { status: 500 }; }
+}

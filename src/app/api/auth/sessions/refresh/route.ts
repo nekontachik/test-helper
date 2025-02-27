@@ -1,49 +1,32 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
-    const sessionId = request.headers.get('x-session-id');
+    const sessionId = _req.headers.get('x-session-id');
 
     if (!sessionId) {
-      return NextResponse.json(
-        { message: 'Session ID not provided' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('Session ID not provided', 'ERROR_CODE', 400); }
 
     const isValid = await SessionService.validateSession(sessionId);
 
     if (!isValid) {
-      return NextResponse.json(
-        { message: 'Invalid or expired session' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Invalid or expired session', 'ERROR_CODE', 401); }
 
     // Update session activity and extend expiry
     await SessionService.updateSessionActivity(sessionId);
 
-    return NextResponse.json({
-      message: 'Session refreshed successfully',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'Session refreshed successfully' }; } catch (error) {
     console.error('Session refresh error:', error);
-    return NextResponse.json(
-      { message: 'Failed to refresh session' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to refresh session', 'ERROR_CODE', 500); }
 }

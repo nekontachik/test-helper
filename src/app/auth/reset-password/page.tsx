@@ -7,7 +7,7 @@ interface PageProps {
   searchParams: { token?: string };
 }
 
-export default function ResetPasswordPage({ searchParams }: PageProps) {
+export default function ResetPasswordPage({ searchParams }: PageProps): JSX.Element {
   if (!searchParams.token) {
     redirect('/auth/reset-password/request');
   }

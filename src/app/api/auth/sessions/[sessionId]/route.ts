@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
@@ -7,19 +8,13 @@ import logger from '@/lib/logger';
 
 interface RouteParams {
   params: {
-    sessionId: string;
-  };
-}
+    sessionId: string; }; }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createSuccessResponse({ error: 'Unauthorized' }, { status: 401 }; }
 
     // Get current session from database
     const currentSession = await prisma.session.findFirst({
@@ -28,38 +23,22 @@ export async function DELETE(request: Request, { params }: RouteParams) {
         // Use AND to ensure we get the active session
         AND: {
           expiresAt: {
-            gt: new Date()
-          }
-        }
-      },
+            gt: new Date() } } },
       orderBy: {
-        lastActive: 'desc'
-      }
-    });
+        lastActive: 'desc' } });
 
     // Don't allow terminating current session
     if (params.sessionId === currentSession?.id) {
-      return NextResponse.json(
-        { error: 'Cannot terminate current session' },
-        { status: 400 }
-      );
-    }
+      return createSuccessResponse({ error: 'Cannot terminate current session' }, { status: 400 }; }
 
     await SessionService.terminateSession(params.sessionId, session.user.id);
 
     logger.info('Session terminated', { 
       sessionId: params.sessionId, 
-      userId: session.user.id 
-    });
+      userId: session.user.id });
 
-    return NextResponse.json({
-      message: 'Session terminated',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'Session terminated' }; } catch (error) {
     logger.error('Session termination error:', error);
-    return NextResponse.json(
-      { error: 'Failed to terminate session' },
-      { status: 500 }
-    );
-  }
+    return createSuccessResponse({ error: 'Failed to terminate session' }, { status: 500 }; }
 }

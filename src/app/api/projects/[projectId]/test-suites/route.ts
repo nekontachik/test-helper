@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
 import { testSuiteSchema } from '@/lib/validation';
+import type { Session } from 'next-auth';
 
-async function handler(req: Request, { params }: { params: { projectId: string } }) {
-  const { projectId } = params;
+async function handler(req: Request, context: { params: { projectId: string }, session: Session }): Promise<Response> {
+  const { projectId } = context.params;
 
   if (req.method === 'GET') {
     const url = new URL(req.url);
@@ -24,13 +24,13 @@ async function handler(req: Request, { params }: { params: { projectId: string }
           testCases: {
             select: {
               id: true,
-              title: true,
+              title: true
             }
-          },
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take: limit
       }),
       prisma.testSuite.count({
         where: { projectId }
@@ -62,33 +62,44 @@ async function handler(req: Request, { params }: { params: { projectId: string }
           ...validated,
           projectId,
           testCases: {
-            connect: validated.testCaseIds?.map(id => ({ id })) || [],
-          },
+            connect: validated.testCaseIds?.map(id => ({ id })) || []
+          }
         },
         include: {
-          testCases: true,
-        },
+          testCases: true
+        }
       });
 
       return NextResponse.json(testSuite, { status: 201 });
-    } catch (error) {
+    } catch {
+      // Using NextResponse to ensure we return a proper Response
       return NextResponse.json(
-        { message: 'Invalid test suite data' },
+        { message: 'Invalid test suite data', code: 'ERROR_CODE', status: 400 },
         { status: 400 }
       );
     }
   }
 
+  // Using NextResponse to ensure we return a proper Response
   return NextResponse.json(
-    { message: 'Method not allowed' },
+    { message: 'Method not allowed', code: 'ERROR_CODE', status: 405 },
     { status: 405 }
   );
 }
 
-export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
+// Modify the handler to match the expected signature
+const apiHandler = (req: Request, session: Session): Promise<Response> => {
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const projectId = pathParts[pathParts.indexOf('projects') + 1];
+  
+  return handler(req, { params: { projectId }, session });
+};
+
+export const GET = withAuth(apiHandler, {
+  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER']
 });
 
-export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER]
+export const POST = withAuth(apiHandler, {
+  allowedRoles: ['ADMIN', 'PROJECT_MANAGER']
 });

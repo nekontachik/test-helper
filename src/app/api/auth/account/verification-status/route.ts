@@ -16,13 +16,13 @@ const VerificationStatusResponse = z.object({
     id: z.string(),
     lastActive: z.date(),
     userAgent: z.string().nullable(),
-    ipAddress: z.string().nullable(),
+    ipAddress: z.string().nullable() 
   }))
 });
 
 type VerificationStatus = z.infer<typeof VerificationStatusResponse>;
 
-async function handler(request: Request, context: SecureRouteContext) {
+async function handler(request: Request, context: SecureRouteContext): Promise<NextResponse> {
   if (!context.session) {
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -44,7 +44,7 @@ async function handler(request: Request, context: SecureRouteContext) {
             id: true,
             lastActive: true,
             userAgent: true,
-            ipAddress: true,
+            ipAddress: true
           },
           orderBy: {
             lastActive: 'desc'

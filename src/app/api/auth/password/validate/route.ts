@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { PasswordPolicyService } from '@/lib/auth/passwordPolicy';
 import { z } from 'zod';
 
@@ -6,23 +7,16 @@ const validateSchema = z.object({
   password: z.string(),
   context: z.object({
     email: z.string().email().optional(),
-    name: z.string().optional(),
-  }).optional(),
-});
+    name: z.string().optional() }).optional() });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
-    const body = await request.json();
+    const body = await _req.json();
     const { password, context } = validateSchema.parse(body);
 
     const result = await PasswordPolicyService.validatePassword(password, context);
 
-    return NextResponse.json(result);
-  } catch (error) {
+    return NextResponse.json(result); } catch (error) {
     console.error('Password validation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to validate password' },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: 'Failed to validate password' }, { status: 500 }; }
+}

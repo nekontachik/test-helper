@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/types/auth';
@@ -23,9 +24,7 @@ interface TestRunWithRelations {
     updatedAt: Date;
     testCase: {
       id: string;
-      title: string;
-    };
-  }>;
+      title: string; }; }>;
   results: Array<{
     id: string;
     status: string;
@@ -36,43 +35,29 @@ interface TestRunWithRelations {
     updatedAt: Date;
     testCase: {
       id: string;
-      title: string;
-    };
-  }>;
-}
+      title: string; }; }>; }
 
 async function handler(req: Request, { params }: { params: { projectId: string; runId: string } }) {
   const { projectId, runId } = params;
 
-  if (req.method === 'GET') {
+  if (_req.method === 'GET') {
     const testRuns = await prisma.testRun.findMany({
       where: { 
         projectId,
-        status: TestRunStatus.COMPLETED,
-      },
+        status: TestRunStatus.COMPLETED, },
       include: {
         testRunCases: {
           include: {
             testCase: {
               select: {
                 id: true,
-                title: true,
-              }
-            }
-          }
-        },
+                title: true, } } } },
         results: {
           include: {
             testCase: {
               select: {
                 id: true,
-                title: true,
-              }
-            }
-          }
-        }
-      }
-    }) as TestRunWithRelations[];
+                title: true, } } } } } }) as TestRunWithRelations[];
 
     // Performance optimization: Use Map for O(1) lookups
     const reports = testRuns.map((run) => {
@@ -80,8 +65,7 @@ async function handler(req: Request, { params }: { params: { projectId: string; 
       
       run.results.forEach(result => {
         const currentCount = resultStatusMap.get(result.status) || 0;
-        resultStatusMap.set(result.status, currentCount + 1);
-      });
+        resultStatusMap.set(result.status, currentCount + 1); });
 
       return {
         id: run.id,
@@ -94,20 +78,11 @@ async function handler(req: Request, { params }: { params: { projectId: string; 
         results: run.results.map(result => ({
           testCase: result.testCase,
           status: result.status,
-          notes: result.notes,
-        })),
-      };
-    });
+          notes: result.notes })) }; });
 
-    return NextResponse.json(reports);
-  }
+    return NextResponse.json(reports); }
 
-  return NextResponse.json(
-    { message: 'Method not allowed' },
-    { status: 405 }
-  );
-}
+  return createErrorResponse('Method not allowed', 'ERROR_CODE', 405); }
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
-});
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR] });

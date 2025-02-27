@@ -1,7 +1,5 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { validateRequest } from '@/middleware/validate';
 import { apiResponse, errorResponse } from '@/lib/api/response';
 import { paginationSchema } from '@/lib/validation/schema';
 import { prisma } from '@/lib/prisma';
@@ -11,21 +9,12 @@ const createUserSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8).max(100),
-  role: z.enum(['USER', 'ADMIN']),
+  role: z.enum(['USER', 'ADMIN'])
 });
 
-export async function POST(request: NextRequest) {
-  // Validate request
-  const validationResult = await validateRequest(request, {
-    body: createUserSchema,
-  });
-
-  if (validationResult instanceof Response) {
-    return validationResult;
-  }
-
+export async function POST(_req: NextRequest): Promise<Response> {
   try {
-    const body = await request.json();
+    const body = await _req.json();
     const data = createUserSchema.parse(body);
 
     // Hash the password before storing
@@ -37,39 +26,30 @@ export async function POST(request: NextRequest) {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: data.role,
+        role: data.role
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
-        createdAt: true,
+        createdAt: true
         // Don't return the password
       }
     });
 
     return apiResponse(user);
-  } catch (error) {
+  } catch (error: unknown) {
     return errorResponse(error);
   }
 }
 
-export async function GET(request: NextRequest) {
-  // Validate query parameters
-  const validationResult = await validateRequest(request, {
-    query: paginationSchema,
-  });
-
-  if (validationResult instanceof Response) {
-    return validationResult;
-  }
-
+export async function GET(_req: NextRequest): Promise<Response> {
   try {
-    const { searchParams } = request.nextUrl;
+    const { searchParams } = _req.nextUrl;
     const { page, limit } = paginationSchema.parse({
       page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
+      limit: searchParams.get('limit')
     });
 
     const [users, total] = await Promise.all([
@@ -81,19 +61,19 @@ export async function GET(request: NextRequest) {
           name: true,
           email: true,
           role: true,
-          createdAt: true,
+          createdAt: true
           // Don't return passwords
         }
       }),
-      prisma.user.count(),
+      prisma.user.count()
     ]);
 
     return apiResponse(users, {
       page,
       limit,
-      total,
+      total
     });
-  } catch (error) {
+  } catch (error: unknown) {
     return errorResponse(error);
   }
-} 
+}

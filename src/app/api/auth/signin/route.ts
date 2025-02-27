@@ -1,20 +1,20 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { authRateLimitMiddleware } from '@/middleware/authRateLimit';
 import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
 import { AUTH_ERRORS } from '@/lib/utils/error';
 
-export async function POST(request: NextRequest) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   // Apply rate limiting
   const rateLimit = await authRateLimitMiddleware(request);
   if (rateLimit instanceof Response) return rateLimit;
 
   try {
-    const { email, password } = await request.json();
-    const ip = request.headers.get('x-forwarded-for') || undefined;
-    const userAgent = request.headers.get('user-agent') || undefined;
+    const { email, password } = await _req.json();
+    const ip = _req.headers.get('x-forwarded-for') || undefined;
+    const userAgent = _req.headers.get('user-agent') || undefined;
 
     // Check for breached password
     const isBreached = await SecurityService.checkPasswordBreached(password);
@@ -24,14 +24,8 @@ export async function POST(request: NextRequest) {
         userAgent,
         metadata: { 
           reason: 'breached_password',
-          email 
-        },
-      });
-      return NextResponse.json(
-        { error: 'This password has been compromised in a data breach' },
-        { status: 400 }
-      );
-    }
+          email } });
+      return createSuccessResponse({ error: 'This password has been compromised in a data breach' }, { status: 400 }; }
 
     // Log the failed attempt
     await ActivityService.log('UNKNOWN', ActivityEventType.LOGIN_FAILED, {
@@ -39,16 +33,9 @@ export async function POST(request: NextRequest) {
       userAgent,
       metadata: { 
         reason: 'invalid_credentials',
-        email 
-      },
-    });
+        email } });
     
-    return NextResponse.json({ success: true });
-  } catch (error) {
+    return createSuccessResponse({ success: true }; } catch (error) {
     console.error('Sign in error:', error);
-    return NextResponse.json(
-      { error: AUTH_ERRORS.UNKNOWN },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: AUTH_ERRORS.UNKNOWN }, { status: 500 }; }
+}

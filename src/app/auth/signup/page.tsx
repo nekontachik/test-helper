@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { Box } from '@chakra-ui/react';
 import { logger } from '@/lib/utils/logger';
 
-export default async function SignUpPage() {
+export default async function SignUpPage(): Promise<JSX.Element> {
   try {
     logger.debug('SignUpPage - Component rendering');
     

@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
@@ -9,20 +10,15 @@ import logger from '@/lib/logger';
 const checkSchema = z.object({
   action: z.nativeEnum(Action),
   resource: z.nativeEnum(Resource),
-  resourceId: z.string().optional(),
-});
+  resourceId: z.string().optional() });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json(
-        { hasPermission: false },
-        { status: 401 }
-      );
-    }
+      return createSuccessResponse({ hasPermission: false }, { status: 401 }; }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { action, resource, resourceId } = checkSchema.parse(body);
 
     const hasPermission = await RBACService.checkPermission(
@@ -31,8 +27,7 @@ export async function POST(request: Request) {
       {
         action,
         resource,
-        resourceId
-      }
+        resourceId }
     );
 
     logger.info('Permission check completed', {
@@ -40,15 +35,9 @@ export async function POST(request: Request) {
       action,
       resource,
       resourceId,
-      hasPermission
-    });
+      hasPermission });
 
-    return NextResponse.json({ hasPermission });
-  } catch (error) {
+    return createSuccessResponse({ hasPermission }; } catch (error) {
     logger.error('Permission check error:', error);
-    return NextResponse.json(
-      { error: 'Failed to check permissions' },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: 'Failed to check permissions' }, { status: 500 }; }
+}

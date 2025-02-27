@@ -4,7 +4,7 @@ interface LoadingScreenProps {
   message?: string
 }
 
-export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
+const LoadingScreen = ({ message = 'Loading...' }: LoadingScreenProps): JSX.Element => {
   return (
     <Box display="flex" justifyContent="center" alignItems="center" h="100vh">
       <VStack spacing={4}>
@@ -19,4 +19,6 @@ export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
       </VStack>
     </Box>
   )
-} 
+}
+
+export default LoadingScreen 

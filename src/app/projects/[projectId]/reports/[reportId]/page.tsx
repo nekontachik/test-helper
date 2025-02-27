@@ -8,7 +8,6 @@ import {
   VStack,
   HStack,
   Text,
-  Progress,
   Table,
   Thead,
   Tbody,
@@ -61,7 +60,7 @@ interface ReportWithDetails extends Omit<TestReport, 'description'> {
   results: TestReportResult[];
 }
 
-export default function ReportPage() {
+export default function ReportPage(): JSX.Element {
   const params = useParams();
   const projectId = params?.projectId as string;
   const reportId = params?.reportId as string;
@@ -72,7 +71,7 @@ export default function ReportPage() {
   if (error) return <ErrorAlert error={error} />;
   if (!report) return <ErrorAlert message="Report not found" />;
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (): void => {
     const pdfReport: PDFReport = {
       ...report as ReportWithDetails,
       description: (report as ReportWithDetails).description || ''
@@ -147,7 +146,7 @@ export default function ReportPage() {
   );
 }
 
-function getStatusColor(status: TestCaseResultStatus) {
+function getStatusColor(status: TestCaseResultStatus): string {
   switch (status) {
     case TestCaseResultStatus.PASSED:
       return 'green';

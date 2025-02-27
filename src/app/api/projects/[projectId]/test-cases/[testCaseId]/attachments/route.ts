@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { withAuth } from '@/middleware/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/types/auth';
@@ -18,8 +19,7 @@ interface TestCaseAttachment {
   url: string;
   uploadedBy: string;
   createdAt: Date;
-  updatedAt: Date;
-}
+  updatedAt: Date; }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
@@ -34,26 +34,22 @@ interface TestCaseAttachmentWithUser extends TestCaseAttachment {
   user: {
     id: string;
     name: string;
-    email: string;
-  };
-}
+    email: string; }; }
 
 async function handler(
   req: Request,
-  { params }: { params: { projectId: string; testCaseId: string } }
+  { params }: { params: { projectId: string; testCaseId: string }
+}
+
 ) {
   const { projectId, testCaseId } = params;
   const session = await getServerSession();
 
   if (!session?.user) {
-    return NextResponse.json(
-      { message: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
+    return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
   try {
-    if (req.method === 'GET') {
+    if (_req.method === 'GET') {
       const query = SQLQueryBuilder.buildSelectQuery('TestCaseAttachment', 
         { testCaseId },
         { column: 'createdAt', direction: 'DESC' }
@@ -66,33 +62,20 @@ async function handler(
         WHERE a.testCaseId = ${testCaseId}
         ORDER BY a.createdAt DESC
       `;
-      return NextResponse.json(attachments);
-    }
+      return NextResponse.json(attachments); }
 
-    if (req.method === 'POST') {
-      const formData = await req.formData();
+    if (_req.method === 'POST') {
+      const formData = await _req.formData();
       const file = formData.get('file') as File;
 
       if (!file) {
-        return NextResponse.json(
-          { message: 'No file provided' },
-          { status: 400 }
-        );
-      }
+        return createErrorResponse('No file provided', 'ERROR_CODE', 400); }
 
       if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        return NextResponse.json(
-          { message: 'Invalid file type' },
-          { status: 400 }
-        );
-      }
+        return createErrorResponse('Invalid file type', 'ERROR_CODE', 400); }
 
       if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { message: 'File size exceeds limit' },
-          { status: 400 }
-        );
-      }
+        return createErrorResponse('File size exceeds limit', 'ERROR_CODE', 400); }
 
       const insertData = {
         id: randomUUID(),
@@ -103,8 +86,7 @@ async function handler(
         url: `https://storage.example.com/${testCaseId}/${file.name}`,
         uploadedBy: session.user.id,
         createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        updatedAt: new Date() };
 
       const query = SQLQueryBuilder.buildInsertQuery('TestCaseAttachment', insertData);
       const [createdAttachment] = await prisma.$queryRaw<[TestCaseAttachmentWithUser]>`
@@ -114,37 +96,27 @@ async function handler(
         WHERE a.id = ${insertData.id}
       `;
 
-      return NextResponse.json(createdAttachment, { status: 201 });
-    }
+      return NextResponse.json(createdAttachment, { status: 201 }); }
 
-    if (req.method === 'DELETE') {
-      const { id } = await req.json();
+    if (_req.method === 'DELETE') {
+      const { id } = await _req.json();
       await prisma.$executeRaw`
         DELETE FROM TestCaseAttachment
         WHERE id = ${id} AND testCaseId = ${testCaseId}
       `;
 
-      return NextResponse.json({ message: 'Attachment deleted successfully' });
-    }
+      return createErrorResponse('Attachment deleted successfully'); }
 
-    return NextResponse.json(
-      { message: 'Method not allowed' },
-      { status: 405 }
-    );
-  } catch (error) {
+    return createErrorResponse('Method not allowed', 'ERROR_CODE', 405); } catch (error) {
     const { message, status } = PrismaErrorHandler.handle(error);
-    return NextResponse.json({ message }, { status });
-  }
+    return NextResponse.json({ message }, { status }); }
 }
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.USER]
-});
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.USER] });
 
 export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
-});
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR] });
 
 export const DELETE = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER]
-});
+  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER] });

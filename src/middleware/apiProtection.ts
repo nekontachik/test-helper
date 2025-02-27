@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { RateLimitError, AppError } from '@/lib/errors';
-import { UserRole } from '@/types/rbac';
+import type { UserRole } from '@/types/rbac';
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
+import type { NextRequest } from 'next/server';
 
 // Cache for route configs
 const routeConfigCache = new Map<string, APIConfig>();
@@ -42,21 +43,21 @@ const API_ROUTES: APIRouteConfig = {
 
   '/api/projects/(.*)': {
     requireAuth: true,
-    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
+    roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER'],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 }, // 100 requests per minute
   },
 
   '/api/test-cases/(.*)': {
     requireAuth: true,
-    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
+    roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER'],
     requireVerified: true,
     rateLimit: { points: 100, duration: 60 },
   },
 
   '/api/admin/(.*)': {
     requireAuth: true,
-    roles: [UserRole.ADMIN],
+    roles: ['ADMIN'],
     requireVerified: true,
     require2FA: true,
     rateLimit: { points: 50, duration: 60 },
@@ -90,13 +91,14 @@ function getRouteConfig(pathname: string): APIConfig | undefined {
  */
 function isValidUserRole(role: string | undefined): role is UserRole {
   if (!role) return false;
-  return Object.values(UserRole).includes(role as UserRole);
+  const validRoles: UserRole[] = ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER', 'USER'];
+  return validRoles.includes(role as UserRole);
 }
 
 /**
  * API protection middleware
  */
-export async function apiProtection(request: Request): Promise<Response | undefined> {
+export async function apiProtection(request: NextRequest | Request): Promise<Response | undefined> {
   try {
     const { pathname } = new URL(request.url);
     const routeConfig = getRouteConfig(pathname);
@@ -107,7 +109,11 @@ export async function apiProtection(request: Request): Promise<Response | undefi
 
     // Check authentication
     if (routeConfig.requireAuth) {
-      const token = await getToken({ req: request as any }) as AuthToken | null;
+      // Using a more specific type for NextAuth
+      const token = await getToken({ 
+        req: request as unknown as Parameters<typeof getToken>[0]['req'] 
+      }) as AuthToken | null;
+      
       if (!token?.sub) {
         return NextResponse.json(
           { error: 'Unauthorized' },

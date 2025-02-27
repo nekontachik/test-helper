@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -8,18 +9,15 @@ import logger from '@/lib/logger';
 const securitySettingsSchema = z.object({
   twoFactorEnabled: z.boolean().optional(),
   sessionTimeout: z.number().min(5).max(60).optional(),
-  allowMultipleSessions: z.boolean().optional(),
+  allowMultipleSessions: z.boolean().optional()
 });
 
-export async function GET(request: Request) {
+export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
     }
 
     const settings = await prisma.user.findUnique({
@@ -30,32 +28,26 @@ export async function GET(request: Request) {
         lockedUntil: true,
         emailVerified: true,
         status: true,
-      },
+      }
     });
 
     logger.info('Security settings fetched', { userId: session.user.id });
-    return NextResponse.json(settings);
+    return createSuccessResponse(settings);
   } catch (error) {
     logger.error('Security settings fetch error:', error);
-    return NextResponse.json(
-      { message: 'Failed to fetch security settings' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch security settings', 'ERROR_CODE', 500);
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const settings = securitySettingsSchema.parse(body);
 
     const updatedUser = await prisma.user.update({
@@ -64,20 +56,17 @@ export async function PUT(request: Request) {
       select: {
         twoFactorEnabled: true,
         updatedAt: true,
-      },
+      }
     });
 
     logger.info('Security settings updated', { 
       userId: session.user.id,
-      settings 
+      settings
     });
 
-    return NextResponse.json(updatedUser);
+    return createSuccessResponse(updatedUser);
   } catch (error) {
     logger.error('Security settings update error:', error);
-    return NextResponse.json(
-      { message: 'Failed to update security settings' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update security settings', 'ERROR_CODE', 500);
   }
 }

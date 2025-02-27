@@ -45,8 +45,15 @@ export async function rateLimit(
   return null;
 }
 
-export function withRateLimit(handler: Function, key: string, options: RateLimitConfig = defaultConfig) {
-  return async function rateLimitHandler(request: Request, ...args: any[]) {
+// Define a more specific type for the handler function
+type RequestHandler<T extends unknown[] = []> = (request: Request, ...args: T) => Promise<Response> | Response;
+
+export function withRateLimit<T extends unknown[] = []>(
+  handler: RequestHandler<T>, 
+  key: string, 
+  options: RateLimitConfig = defaultConfig
+) {
+  return async function rateLimitHandler(request: Request, ...args: T) {
     const ip = request.headers.get('x-forwarded-for') || 'anonymous';
     const identifier = `${key}:${ip}`;
     

@@ -31,7 +31,7 @@ export function authenticateMiddleware(
     };
     req.user = decoded;
     next();
-  } catch (_error) {
+  } catch {
     throw new AuthenticationError('Invalid token');
   }
 }

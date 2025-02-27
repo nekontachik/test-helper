@@ -4,6 +4,7 @@ import type { UserRole } from '@/types/auth';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth';
+import type { Session } from 'next-auth';
 
 export interface AuthOptions {
   allowedRoles: UserRole[];
@@ -30,7 +31,7 @@ class _ForbiddenError extends BaseAuthError {
 }
 
 export async function withAuth(
-  handler: (req: NextRequest, session: any) => Promise<Response>,
+  handler: (req: NextRequest, session: Session) => Promise<Response>,
   options: AuthOptions
 ) {
   return async function (req: NextRequest) {

@@ -9,7 +9,7 @@ interface ProjectPageProps {
   params: { projectId: string };
 }
 
-export default function ProjectPage({ params }: ProjectPageProps) {
+export default function ProjectPage({ params }: ProjectPageProps): JSX.Element {
   const { projectId } = params;
 
   return (

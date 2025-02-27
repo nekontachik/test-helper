@@ -3,7 +3,38 @@ import { useOfflineState } from './useOfflineState';
 
 const SYNC_INTERVAL = 30000; // 30 seconds
 
-export function useBackgroundSync(projectId: string, testRunId: string) {
+interface UploadData {
+  file: File;
+  testCaseId: string;
+  testRunId: string;
+  index: number;
+}
+
+interface TestResultData {
+  testRunId?: string;
+  testCaseId?: string;
+  status?: string;
+  notes?: string;
+  evidenceUrls?: string[];
+  timestamp?: number;
+}
+
+interface SyncOperation {
+  id: string;
+  type: 'upload' | 'testResult';
+  data: UploadData | TestResultData;
+  priority: 'high' | 'medium' | 'low';
+  timestamp: number;
+  retryCount: number;
+}
+
+interface BackgroundSyncResult {
+  isSyncing: boolean;
+  lastSyncAttempt: Date | null;
+  syncNow: () => Promise<void>;
+}
+
+export function useBackgroundSync(projectId: string, testRunId: string): BackgroundSyncResult {
   const { 
     isOnline, 
     pendingOperations, 
@@ -12,12 +43,19 @@ export function useBackgroundSync(projectId: string, testRunId: string) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncAttempt, setLastSyncAttempt] = useState<Date | null>(null);
 
-  const syncOperation = useCallback(async (operation: any) => {
+  const syncOperation = useCallback(async (operation: SyncOperation): Promise<boolean> => {
     try {
       if (operation.type === 'upload') {
+        const uploadData = operation.data as UploadData;
+        const formData = new FormData();
+        formData.append('file', uploadData.file);
+        formData.append('testCaseId', uploadData.testCaseId);
+        formData.append('testRunId', uploadData.testRunId);
+        formData.append('index', uploadData.index.toString());
+        
         const response = await fetch(`/api/projects/${projectId}/uploads`, {
           method: 'POST',
-          body: operation.data,
+          body: formData,
         });
         if (!response.ok) throw new Error('Upload failed');
       } else if (operation.type === 'testResult') {

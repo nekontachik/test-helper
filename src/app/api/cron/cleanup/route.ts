@@ -1,18 +1,12 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
 
-export async function GET() {
+export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     await SessionTrackingService.cleanupExpiredSessions();
     
-    return NextResponse.json({
-      message: 'Session cleanup completed successfully'
-    });
-  } catch (error) {
+    return createErrorResponse('Session cleanup completed successfully'); } catch (error) {
     console.error('Session cleanup error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cleanup sessions' },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: 'Failed to cleanup sessions' }, { status: 500 }; }
+}

@@ -4,25 +4,23 @@ import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/withAuth';
 import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
 import { TestRunService } from '@/lib/services/report/testRunService';
-import { TEST_RESULT_STATUS } from '@/lib/services/report/constants';
 import { ApiErrorHandler } from '@/lib/utils/apiErrorHandler';
+import type { PrismaClient } from '@prisma/client';
 
 // Validation schemas
 const createTestRunSchema = z.object({
   projectId: z.string(),
   testCaseIds: z.array(z.string()).min(1),
-  title: z.string().optional()
-});
+  title: z.string().optional() });
 
 export const POST = withAuth(async (req: AuthenticatedRequest) => {
   try {
     const body = await createTestRunSchema.parseAsync(await req.json());
     
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: PrismaClient['$transaction']) => {
       return TestRunService.createTestRun(tx, {
         ...body,
-        userId: req.user.id
-      });
+        userId: req.user.id });
     });
 
     if (!result.success) {

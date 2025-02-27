@@ -5,7 +5,7 @@ import { Box, Heading, Text } from '@chakra-ui/react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-export default function AdminPage() {
+export default function AdminPage(): JSX.Element | null {
   const { data: session, status } = useSession();
   const router = useRouter();
 

@@ -40,7 +40,7 @@ const getUserData = cache(async (userId: string) => {
     if (!user) return null;
 
     // Transform permissions to match Permission type
-    const permissions: Permission[] = user.userPermissions.map(up => ({
+    const permissions: Permission[] = user.userPermissions.map((up: { permission: { id: string; name: string; description: string | null } }) => ({
       id: up.permission.id,
       name: up.permission.name,
       description: up.permission.description || '' // Convert null to empty string
@@ -59,7 +59,7 @@ const getUserData = cache(async (userId: string) => {
 /**
  * Profile page component
  */
-export default async function ProfilePage() {
+export default async function ProfilePage(): Promise<JSX.Element> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -76,7 +76,6 @@ export default async function ProfilePage() {
       id: user.id,
       email: user.email,
       name: user.name,
-      image: null,
       role: user.role as UserRole,
       status: user.status as AccountStatus,
       emailVerified: user.emailVerified,

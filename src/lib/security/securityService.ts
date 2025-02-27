@@ -26,7 +26,7 @@ export class SecurityService {
     return !!isValid;
   }
 
-  static getSecurityHeaders() {
+  static getSecurityHeaders(): Record<string, string> {
     return {
       'Content-Security-Policy': [
         "default-src 'self'",

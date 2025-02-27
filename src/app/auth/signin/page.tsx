@@ -21,7 +21,7 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-export default function SignInPage() {
+export default function SignInPage(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
@@ -30,7 +30,7 @@ export default function SignInPage() {
     resolver: zodResolver(signInSchema),
   });
 
-  const onSubmit = async (data: SignInFormData) => {
+  const onSubmit = async (data: SignInFormData): Promise<void> => {
     try {
       setIsLoading(true);
       
@@ -44,7 +44,7 @@ export default function SignInPage() {
         throw new Error(result.error);
       }
 
-      router.replace('/dashboard' as any);
+      router.replace('/dashboard');
     } catch (error) {
       logger.error('Sign in error:', error);
       toast({
@@ -63,6 +63,7 @@ export default function SignInPage() {
       <Form form={form} onSubmit={onSubmit}>
         <VStack spacing={4}>
           <FormField
+            control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -76,6 +77,7 @@ export default function SignInPage() {
           />
 
           <FormField
+            control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
@@ -97,7 +99,7 @@ export default function SignInPage() {
           </Button>
           
           <Text fontSize="sm">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link 
               href="/auth/signup" 
               className="text-blue-500 hover:text-blue-600 underline"

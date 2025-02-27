@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/auth/rateLimit';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { provider: string } }
-) {
+): Promise<Response> {
   try {
     // Check rate limit
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
@@ -14,7 +14,7 @@ export async function GET(
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { message: 'Too many requests' },
+        { error: 'Too many requests', code: 'ERROR_CODE' },
         { status: 429 }
       );
     }

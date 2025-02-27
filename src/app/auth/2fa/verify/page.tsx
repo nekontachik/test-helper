@@ -1,11 +1,9 @@
-'use client';
-
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { TwoFactorVerify } from '@/components/TwoFactorVerify';
 
-export default async function TwoFactorVerifyPage() {
+export default async function TwoFactorVerifyPage(): Promise<JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -20,11 +18,12 @@ export default async function TwoFactorVerifyPage() {
     redirect('/dashboard');
   }
 
+  // Pass the email to the client component
   return (
     <div className="container max-w-lg py-8">
       <TwoFactorVerify
         email={session.user.email}
-        onVerifyComplete={() => redirect('/dashboard')}
+        onVerifyComplete={() => {}}
       />
     </div>
   );

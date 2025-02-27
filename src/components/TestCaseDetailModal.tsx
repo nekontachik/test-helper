@@ -1,4 +1,3 @@
-import { Box } from '@chakra-ui/react';
 import {
   Modal,
   ModalOverlay,
@@ -6,7 +5,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
-} from '@chakra-ui/modal';
+} from '@chakra-ui/react';
 import { TestCaseDetail } from './TestCaseDetail';
 
 interface TestCaseDetailModalProps {
@@ -21,7 +20,7 @@ export function TestCaseDetailModal({
   onClose,
   projectId,
   testCaseId,
-}: TestCaseDetailModalProps) {
+}: TestCaseDetailModalProps): JSX.Element {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />

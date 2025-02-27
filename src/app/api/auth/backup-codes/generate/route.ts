@@ -1,37 +1,28 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SecurityService } from '@/lib/auth/securityService';
 import logger from '@/lib/logger';
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { twoFactorEnabled: true },
-    });
+      select: { twoFactorEnabled: true } });
 
     if (!user?.twoFactorEnabled) {
-      return NextResponse.json(
-        { message: '2FA must be enabled to generate backup codes' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('2FA must be enabled to generate backup codes', 'ERROR_CODE', 400); }
 
     // First, delete existing backup codes
     await prisma.backupCode.deleteMany({
-      where: { userId: session.user.id }
-    });
+      where: { userId: session.user.id } });
 
     // Generate and store new backup codes
     const codes = await SecurityService.generateBackupCodes();
@@ -42,21 +33,13 @@ export async function POST(request: Request) {
       data: hashedCodes.map((hashedCode: string) => ({
         userId: session.user.id,
         code: hashedCode,
-        used: false
-      }))
-    });
+        used: false })) });
 
     logger.info('Generated new backup codes', { 
       userId: session.user.id,
-      count: codes.length 
-    });
+      count: codes.length });
 
-    return NextResponse.json({ codes });
-  } catch (error) {
+    return createSuccessResponse({ codes }; } catch (error) {
     logger.error('Backup codes generation error:', error);
-    return NextResponse.json(
-      { message: 'Failed to generate backup codes' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to generate backup codes', 'ERROR_CODE', 500); }
 }

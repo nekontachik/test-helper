@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
@@ -10,20 +11,16 @@ const updateSchema = z.object({
   description: z.string().optional(),
   steps: z.string().optional(),
   expectedResult: z.string().optional(),
-  priority: z.string().optional(),
-});
+  priority: z.string().optional() });
 
 export async function PUT(
-  request: Request,
+  _req: NextRequest,
   { params }: { params: { testCaseId: string } }
-) {
+): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const isOwner = await OwnershipService.isTestCaseOwner(
@@ -32,26 +29,19 @@ export async function PUT(
     );
 
     if (!isOwner) {
-      return NextResponse.json(
-        { error: 'You do not have permission to update this test case' },
-        { status: 403 }
-      );
+      return createErrorResponse('You do not have permission to update this test case', 'FORBIDDEN', 403);
     }
 
-    const body = await request.json();
+    const body = await _req.json();
     const data = updateSchema.parse(body);
 
     const updatedTestCase = await prisma.testCase.update({
       where: { id: params.testCaseId },
-      data,
-    });
+      data });
 
-    return NextResponse.json(updatedTestCase);
+    return createSuccessResponse(updatedTestCase);
   } catch (error) {
     console.error('Test case update error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update test case' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update test case', 'INTERNAL_ERROR', 500);
   }
-} 
+}

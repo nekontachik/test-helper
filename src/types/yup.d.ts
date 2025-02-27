@@ -1,5 +1,5 @@
 import type { AnyObject } from 'yup';
-import { ObjectSchema as _ObjectSchema } from 'yup';
+import type { ObjectSchema as _ObjectSchema } from 'yup';
 
 declare module 'yup' {
   // Using type alias instead of empty interface

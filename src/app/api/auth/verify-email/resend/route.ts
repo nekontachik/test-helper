@@ -1,52 +1,34 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/emailService';
 import { TokenService } from '@/lib/auth/tokenService';
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { emailVerified: true, email: true, name: true },
-    });
+      select: { emailVerified: true, email: true, name: true } });
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
-    }
+      return createErrorResponse('User not found', 'ERROR_CODE', 404); }
 
     if (user.emailVerified) {
-      return NextResponse.json(
-        { message: 'Email already verified' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('Email already verified', 'ERROR_CODE', 400); }
 
     // Generate new verification token
     const token = await TokenService.generateEmailVerificationToken(user.email);
     await sendVerificationEmail(user.email, user.name || 'User');
 
-    return NextResponse.json({
-      message: 'Verification email sent successfully',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'Verification email sent successfully' }; } catch (error) {
     console.error('Email verification resend error:', error);
-    return NextResponse.json(
-      { message: 'Failed to resend verification email' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to resend verification email', 'ERROR_CODE', 500); }
 }

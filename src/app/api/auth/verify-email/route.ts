@@ -1,37 +1,27 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { AuthService } from '@/lib/auth/authService';
 import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { z } from 'zod';
 
 const verifySchema = z.object({
-  token: z.string(),
-});
+  token: z.string() });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = _req.headers.get('x-forwarded-for') || 'unknown';
     const rateLimitResult = await checkRateLimit(`verify_email_${ip}`);
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { message: 'Too many requests' },
-        { status: 429 }
-      );
-    }
+      return createErrorResponse('Too many requests', 'ERROR_CODE', 429); }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { token } = verifySchema.parse(body);
 
     await AuthService.verifyEmail(token);
 
-    return NextResponse.json({
-      message: 'Email verified successfully',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'Email verified successfully' }; } catch (error) {
     console.error('Email verification error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Verification failed' },
-      { status: 400 }
-    );
-  }
+    return createSuccessResponse({ error: error instanceof Error ? error.message : 'Verification failed' }, { status: 400 }; }
 }

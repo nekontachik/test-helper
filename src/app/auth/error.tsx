@@ -10,7 +10,7 @@ export default function AuthError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): JSX.Element {
   useEffect(() => {
     console.error('Auth error:', error);
   }, [error]);

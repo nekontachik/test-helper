@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -6,44 +7,29 @@ import { BackupCodesService } from '@/lib/auth/backupCodesService';
 import { z } from 'zod';
 
 const recoverySchema = z.object({
-  code: z.string().length(8),
-});
+  code: z.string().length(8) });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { code } = recoverySchema.parse(body);
 
     const isValid = await BackupCodesService.verifyCode(session.user.id, code);
 
     if (!isValid) {
-      return NextResponse.json(
-        { message: 'Invalid recovery code' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('Invalid recovery code', 'ERROR_CODE', 400); }
 
     // Generate new backup codes after successful recovery
     const newBackupCodes = await BackupCodesService.generateCodes(session.user.id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Recovery successful',
-      backupCodes: newBackupCodes,
-    });
-  } catch (error) {
+      backupCodes: newBackupCodes }; } catch (error) {
     console.error('2FA recovery error:', error);
-    return NextResponse.json(
-      { message: 'Failed to process recovery' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to process recovery', 'ERROR_CODE', 500); }
 }

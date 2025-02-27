@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth/authService';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
@@ -12,14 +12,12 @@ const loginSchema = z.object({
   password: z.string().min(8),
   metadata: z.object({
     ip: z.string().optional(),
-    userAgent: z.string().optional(),
-  }).optional(),
-});
+    userAgent: z.string().optional() }).optional() });
 
-export async function POST(req: Request) {
+export async function POST(_req: NextRequest): Promise<Response> {
   try {
     // Validate request body
-    const body = await req.json();
+    const body = await _req.json();
     const { email, password, metadata } = loginSchema.parse(body);
 
     // Authenticate user
@@ -27,8 +25,7 @@ export async function POST(req: Request) {
       email,
       password,
       ip: metadata?.ip,
-      userAgent: metadata?.userAgent,
-    });
+      userAgent: metadata?.userAgent });
 
     // Log successful login
     await AuditService.log({
@@ -38,18 +35,15 @@ export async function POST(req: Request) {
       metadata: {
         email,
         ipAddress: metadata?.ip,
-        userAgent: metadata?.userAgent
-      }
-    });
+        userAgent: metadata?.userAgent } });
 
     logger.info('User logged in successfully', {
       userId: result.user.id,
-      ip: metadata?.ip
-    });
+      ip: metadata?.ip });
 
     return NextResponse.json(result);
   } catch (error) {
     logger.error('Login failed:', error);
     return handleApiError(error);
   }
-} 
+}

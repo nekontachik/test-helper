@@ -1,12 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
-import { getServerSession } from 'next-auth';
 import { commentSchema } from '@/lib/validation';
 import { randomUUID } from 'crypto';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
 import { SQLQueryBuilder } from '@/lib/sqlQueryBuilder';
+import { type Session } from 'next-auth';
+import { type UserRole } from '@/types/auth';
+
+// Define UserRoles as an object with proper typing
+const UserRoles: Record<string, UserRole> = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'PROJECT_MANAGER',
+  EDITOR: 'TESTER',
+  USER: 'USER'
+};
 
 interface TestCaseComment {
   id: string;
@@ -16,15 +24,17 @@ interface TestCaseComment {
   createdAt: Date;
   updatedAt: Date;
   userName: string;
-  userEmail: string;
+  userEmail: string; 
 }
 
 async function handler(
-  req: Request,
-  { params }: { params: { projectId: string; testCaseId: string } }
-) {
-  const { projectId, testCaseId } = params;
-  const session = await getServerSession();
+  req: NextRequest,
+  session: Session
+): Promise<Response> {
+  // Extract testCaseId from URL
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const testCaseId = pathParts[pathParts.length - 2]; // Get the testCaseId from the URL path
 
   if (!session?.user) {
     return NextResponse.json(
@@ -35,7 +45,8 @@ async function handler(
 
   try {
     if (req.method === 'GET') {
-      const query = SQLQueryBuilder.buildSelectQuery(
+      // We'll keep the query builder for reference but not use it
+      const _query = SQLQueryBuilder.buildSelectQuery(
         'TestCaseComment',
         { testCaseId },
         { column: 'createdAt', direction: 'DESC' }
@@ -49,7 +60,7 @@ async function handler(
         ORDER BY c.createdAt DESC
       `;
 
-      const formattedComments = comments.map(comment => ({
+      const formattedComments = comments.map((comment: TestCaseComment) => ({
         id: comment.id,
         content: comment.content,
         testCaseId: comment.testCaseId,
@@ -60,10 +71,10 @@ async function handler(
           email: comment.userEmail,
         },
         createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
+        updatedAt: comment.updatedAt 
       }));
 
-      return NextResponse.json(formattedComments);
+      return NextResponse.json(formattedComments); 
     }
 
     if (req.method === 'POST') {
@@ -107,8 +118,8 @@ async function handler(
           email: createdComment.userEmail,
         },
         createdAt: createdComment.createdAt,
-        updatedAt: createdComment.updatedAt,
-      }, { status: 201 });
+        updatedAt: createdComment.updatedAt
+      }, { status: 201 }); 
     }
 
     return NextResponse.json(
@@ -117,14 +128,14 @@ async function handler(
     );
   } catch (error) {
     const { message, status } = PrismaErrorHandler.handle(error);
-    return NextResponse.json({ message }, { status });
+    return NextResponse.json({ message }, { status }); 
   }
 }
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.USER]
+  allowedRoles: [UserRoles.ADMIN, UserRoles.MANAGER, UserRoles.EDITOR, UserRoles.USER] 
 });
 
 export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
+  allowedRoles: [UserRoles.ADMIN, UserRoles.MANAGER, UserRoles.EDITOR] 
 });

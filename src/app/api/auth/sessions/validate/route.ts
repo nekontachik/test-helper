@@ -1,61 +1,40 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
 import { checkRateLimit } from '@/lib/auth/rateLimit';
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     // Check rate limit
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = _req.headers.get('x-forwarded-for') || 'unknown';
     const rateLimitResult = await checkRateLimit(`session_validate_${ip}`);
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { message: 'Too many requests' },
-        { status: 429 }
-      );
-    }
+      return createErrorResponse('Too many requests', 'ERROR_CODE', 429); }
 
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
-    const sessionId = request.headers.get('x-session-id');
+    const sessionId = _req.headers.get('x-session-id');
 
     if (!sessionId) {
-      return NextResponse.json(
-        { message: 'Session ID not provided' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('Session ID not provided', 'ERROR_CODE', 400); }
 
     const isValid = await SessionService.validateSession(sessionId);
 
     if (!isValid) {
-      return NextResponse.json(
-        { message: 'Invalid or expired session' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Invalid or expired session', 'ERROR_CODE', 401); }
 
     // Update session activity
     await SessionService.updateSessionActivity(sessionId);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       valid: true,
-      message: 'Session is valid',
-    });
-  } catch (error) {
+      message: 'Session is valid' }; } catch (error) {
     console.error('Session validation error:', error);
-    return NextResponse.json(
-      { message: 'Failed to validate session' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to validate session', 'ERROR_CODE', 500); }
 }

@@ -1,19 +1,15 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import logger from '@/lib/logger';
-import { AppError, ValidationError, NotFoundError } from '@/lib/errors';
+import { AppError, NotFoundError } from '@/lib/errors';
 
 interface UpdateTestReportBody {
   title: string;
   content?: string;
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { projectId: string; reportId: string } }
-) {
+export async function GET(_req: NextRequest, { params }: { params: { projectId: string; reportId: string } }): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -49,21 +45,18 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { projectId: string; reportId: string } }
-) {
+export async function PUT(_req: NextRequest, { params }: { params: { projectId: string; reportId: string } }): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       throw new AppError('Unauthorized', 401);
     }
 
-    const body = await request.json() as UpdateTestReportBody;
+    const body = await _req.json() as UpdateTestReportBody;
     const { projectId, reportId } = params;
 
     const existingReport = await prisma.testReport.findUnique({
-      where: { id: reportId },
+      where: { id: reportId }
     });
 
     if (!existingReport) {
@@ -76,7 +69,7 @@ export async function PUT(
 
     const updatedReport = await prisma.testReport.update({
       where: { id: reportId },
-      data: body,
+      data: body
     });
 
     return NextResponse.json(updatedReport);
@@ -88,10 +81,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { projectId: string; reportId: string } }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: { projectId: string; reportId: string } }): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -101,7 +91,7 @@ export async function DELETE(
     const { projectId, reportId } = params;
 
     const existingReport = await prisma.testReport.findUnique({
-      where: { id: reportId },
+      where: { id: reportId }
     });
 
     if (!existingReport) {
@@ -113,7 +103,7 @@ export async function DELETE(
     }
 
     await prisma.testReport.delete({
-      where: { id: reportId },
+      where: { id: reportId }
     });
 
     return NextResponse.json({ message: 'Test report deleted successfully' });

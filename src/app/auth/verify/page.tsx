@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { EmailVerification } from '@/components/EmailVerification';
 
-export default async function VerifyPage() {
+export default async function VerifyPage(): Promise<JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -18,7 +18,8 @@ export default async function VerifyPage() {
     redirect('/dashboard');
   }
 
-  const handleResendVerification = async () => {
+  // Server action for resending verification email
+  const _handleResendVerification = async (): Promise<void> => {
     'use server';
     
     const response = await fetch('/api/auth/verify-email', {

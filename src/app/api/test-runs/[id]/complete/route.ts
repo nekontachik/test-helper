@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/withAuth';
 import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
 import { TestRunService } from '@/lib/services/report/testRunService';
 import { ApiErrorHandler } from '@/lib/utils/apiErrorHandler';
+import type { PrismaClient } from '@prisma/client';
 
 interface RouteParams {
   params: { id: string };
@@ -19,7 +20,7 @@ export const POST = withAuth(async (req: AuthenticatedRequest, { params }: Route
       );
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: PrismaClient['$transaction']) => {
       return TestRunService.completeTestRun(tx, id);
     });
 

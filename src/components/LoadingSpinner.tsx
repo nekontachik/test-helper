@@ -4,7 +4,7 @@ interface LoadingSpinnerProps {
   size?: string
 }
 
-export function LoadingSpinner({ size = 'xl' }: LoadingSpinnerProps) {
+const LoadingSpinner = ({ size = 'xl' }: LoadingSpinnerProps): JSX.Element => {
   return (
     <Box display="flex" justifyContent="center" alignItems="center" h="200px">
       <Spinner
@@ -17,3 +17,5 @@ export function LoadingSpinner({ size = 'xl' }: LoadingSpinnerProps) {
     </Box>
   )
 }
+
+export default LoadingSpinner

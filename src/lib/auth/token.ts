@@ -36,7 +36,7 @@ export async function validateToken(token: string): Promise<AuthUser> {
     }
 
     return user
-  } catch (error) {
+  } catch {
     throw new AuthError(
       'Invalid token',
       'INVALID_TOKEN',

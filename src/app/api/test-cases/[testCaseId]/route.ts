@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { Action, Resource } from '@/types/rbac';
 import type { SecureRouteContext, SecureRouteHandler } from '@/lib/api/createSecureRoute';
 import { createSecureRoute } from '@/lib/api/createSecureRoute';
 import { z } from 'zod';
 import logger from '@/lib/logger';
-import type { Session } from 'next-auth';
 
 // Define request schema
 const updateTestCaseSchema = z.object({
@@ -18,8 +15,7 @@ const updateTestCaseSchema = z.object({
   expectedResult: z.string().optional(),
   actualResult: z.string().optional(),
   status: z.string().optional(),
-  priority: z.string().optional(),
-});
+  priority: z.string().optional() });
 
 const handler: SecureRouteHandler = async (request: Request, context: SecureRouteContext) => {
   const { params, session } = context;
@@ -42,13 +38,7 @@ const handler: SecureRouteHandler = async (request: Request, context: SecureRout
           include: {
             members: {
               select: {
-                userId: true
-              }
-            }
-          }
-        }
-      }
-    });
+                userId: true } } } } } });
 
     if (!testCase) {
       return NextResponse.json(
@@ -64,8 +54,7 @@ const handler: SecureRouteHandler = async (request: Request, context: SecureRout
       {
         action: Action.UPDATE,
         resource: Resource.TEST_CASE,
-        resourceId: testCaseId
-      }
+        resourceId: testCaseId }
     );
 
     if (!hasPermission) {
@@ -86,17 +75,12 @@ const handler: SecureRouteHandler = async (request: Request, context: SecureRout
         project: {
           select: {
             name: true,
-            id: true
-          }
-        }
-      }
-    });
+            id: true } } } });
 
     logger.info('Test case updated', {
       testCaseId,
       userId: session.user.id,
-      changes: body
-    });
+      changes: body });
 
     return NextResponse.json(updatedTestCase);
   } catch (error) {
@@ -125,7 +109,6 @@ export const PUT = createSecureRoute(handler, {
     action: 'UPDATE_TEST_CASE',
     getMetadata: async (req) => ({
       ip: req.headers.get('x-forwarded-for'),
-      userAgent: req.headers.get('user-agent')
-    })
+      userAgent: req.headers.get('user-agent') })
   }
 }); 

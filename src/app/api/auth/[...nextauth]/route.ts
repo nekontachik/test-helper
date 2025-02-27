@@ -1,3 +1,5 @@
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import NextAuth from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { apiLogger } from '@/lib/logger';

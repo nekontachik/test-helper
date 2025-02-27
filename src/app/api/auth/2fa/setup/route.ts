@@ -1,64 +1,49 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
-import { generateTOTPConfig, verifyTOTP } from '@/lib/utils/totp';
+import { verifyTOTP } from '@/lib/utils/totp';
 import { authOptions } from '@/lib/auth';
 import { AUTH_ERRORS } from '@/lib/utils/error';
 
-export async function POST(request: Request) {
-  // Initialize 2FA setup
-  // Generate and return QR code
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
+  throw new Error('Not implemented');
 }
 
-export async function PUT(request: Request) {
+export async function PUT(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: AUTH_ERRORS.SESSION_REQUIRED },
-        { status: 401 }
-      );
+      return createErrorResponse(AUTH_ERRORS.SESSION_REQUIRED, 'UNAUTHORIZED', 401);
     }
 
-    const { token } = await request.json();
+    const { token } = await _req.json();
     if (!token) {
-      return NextResponse.json(
-        { error: 'Verification code is required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Verification code is required', 'VALIDATION_ERROR', 400);
     }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { twoFactorSecret: true },
+      select: { twoFactorSecret: true }
     });
 
     if (!user?.twoFactorSecret) {
-      return NextResponse.json(
-        { error: '2FA setup not initiated' },
-        { status: 400 }
-      );
+      return createErrorResponse('2FA setup not initiated', 'VALIDATION_ERROR', 400);
     }
 
     const isValid = verifyTOTP(token, user.twoFactorSecret);
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid verification code' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid verification code', 'VALIDATION_ERROR', 400);
     }
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { twoFactorEnabled: true },
+      data: { twoFactorEnabled: true }
     });
 
-    return NextResponse.json({ success: true });
+    return createSuccessResponse({ success: true });
   } catch (error) {
     console.error('2FA verification error:', error);
-    return NextResponse.json(
-      { error: AUTH_ERRORS.UNKNOWN },
-      { status: 500 }
-    );
+    return createErrorResponse(AUTH_ERRORS.UNKNOWN, 'INTERNAL_ERROR', 500);
   }
 }

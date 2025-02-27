@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { SecurityService } from '@/lib/auth/securityService';
@@ -9,22 +10,20 @@ import logger from '@/lib/logger';
 import { ActivityEventType } from '@/types/activity';
 
 const requestSchema = z.object({
-  email: z.string().email(),
-});
+  email: z.string().email() });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
-    const { email } = requestSchema.parse(await request.json());
-    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const userAgent = request.headers.get('user-agent') || undefined;
+    const { email } = requestSchema.parse(await _req.json());
+    const ip = _req.headers.get('x-forwarded-for') || 'anonymous';
+    const userAgent = _req.headers.get('user-agent') || undefined;
 
     // Check rate limit
     await SecurityService.checkBruteForce(ip, 'password');
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, name: true },
-    });
+      select: { id: true, email: true, name: true } });
 
     if (user) {
       const token = await generateToken();
@@ -34,28 +33,18 @@ export async function POST(request: Request) {
         where: { id: user.id },
         data: {
           resetToken: token,
-          resetTokenExpiry: expires,
-        },
-      });
+          resetTokenExpiry: expires, } });
 
       await sendPasswordResetEmail(user.email, user.name || 'User', token);
       await ActivityService.log(user.id, ActivityEventType.PASSWORD_RESET_REQUESTED, {
         ip,
-        userAgent,
-      });
+        userAgent });
 
-      logger.info('Password reset requested', { userId: user.id, ip });
-    }
+      logger.info('Password reset requested', { userId: user.id, ip }); }
 
     // Always return success to prevent email enumeration
-    return NextResponse.json({
-      message: 'If an account exists, a password reset link has been sent.',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'If an account exists, a password reset link has been sent.' }; } catch (error) {
     logger.error('Password reset request error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process request' },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: 'Failed to process request' }, { status: 500 }; }
+}

@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -8,33 +9,27 @@ import logger from '@/lib/logger';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(6),
+  newPassword: z.string().min(6)
 });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401);
     }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { currentPassword, newPassword } = changePasswordSchema.parse(body);
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { password: true },
+      select: { password: true }
     });
 
     if (!user?.password) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('User not found', 'ERROR_CODE', 404);
     }
 
     const isValid = await SecurityService.verifyPassword(currentPassword, user.password);
@@ -43,31 +38,25 @@ export async function POST(request: Request) {
       logger.warn('Invalid password attempt during password change', {
         userId: session.user.id
       });
-      return NextResponse.json(
-        { message: 'Current password is incorrect' },
-        { status: 400 }
-      );
+      return createErrorResponse('Current password is incorrect', 'ERROR_CODE', 400);
     }
 
     const hashedPassword = await SecurityService.hashPassword(newPassword);
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { password: hashedPassword },
+      data: { password: hashedPassword }
     });
 
     logger.info('Password changed successfully', {
       userId: session.user.id
     });
 
-    return NextResponse.json({
-      message: 'Password changed successfully',
+    return createSuccessResponse({
+      message: 'Password changed successfully'
     });
   } catch (error) {
     logger.error('Change password error:', error);
-    return NextResponse.json(
-      { message: 'Failed to change password' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to change password', 'ERROR_CODE', 500);
   }
 }

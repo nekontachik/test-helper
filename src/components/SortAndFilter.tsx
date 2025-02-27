@@ -8,7 +8,6 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  Icon,
 } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 
@@ -49,11 +48,11 @@ export function SortAndFilter({
   initialFilter = '',
   filterPlaceholder = 'Search...',
   className,
-}: SortAndFilterProps) {
+}: SortAndFilterProps): JSX.Element {
   const [sortValue, setSortValue] = React.useState(initialSort);
   const [filterValue, setFilterValue] = React.useState(initialFilter);
 
-  const handleSortChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSortChange = async (event: React.ChangeEvent<HTMLSelectElement>): Promise<void> => {
     const value = event.target.value;
     setSortValue(value);
     
@@ -63,7 +62,7 @@ export function SortAndFilter({
     window.history.pushState({}, '', url);
   };
 
-  const handleFilterChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const value = event.target.value;
     setFilterValue(value);
     

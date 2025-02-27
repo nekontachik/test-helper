@@ -1,14 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import {prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { ApiError } from '@/lib/errors';
 import { testCaseSchema } from '@/lib/validationSchemas';
-import { Prisma } from '@prisma/client';
 import { TestCaseStatus, TestCasePriority } from '@/types';
+
+// Import the correct error type from Prisma
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
-) {
+): Promise<void> {
   const { method } = req;
 
   switch (method) {
@@ -26,10 +28,10 @@ export default async function handler(
       try {
         const validatedData = await testCaseSchema.validate(req.body);
 
-        const testCaseData: Prisma.TestCaseCreateInput = {
+        // Use a more specific type that matches your schema
+        const testCaseData = {
           title: validatedData.title,
           description: validatedData.description ?? '',
-          steps: validatedData.steps,
           expectedResult: validatedData.expectedResult ?? '',
           priority: (validatedData.priority as TestCasePriority)?.toString() || TestCasePriority.MEDIUM.toString(),
           status: (validatedData.status as TestCaseStatus)?.toString() || TestCaseStatus.ACTIVE.toString(),
@@ -46,7 +48,7 @@ export default async function handler(
         });
         res.status(201).json(testCase);
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error instanceof PrismaClientKnownRequestError) {
           res.status(400).json({ error: 'Database error' });
         } else if (error instanceof ApiError) {
           res.status(error.statusCode).json({ error: error.message });

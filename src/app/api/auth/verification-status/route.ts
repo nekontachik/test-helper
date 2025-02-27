@@ -1,36 +1,24 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const emailSchema = z.object({
-  email: z.string().email(),
-});
+  email: z.string().email() });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
-    const body = await request.json();
+    const body = await _req.json();
     const { email } = emailSchema.parse(body);
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { emailVerified: true },
-    });
+      select: { emailVerified: true } });
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
-    }
+      return createErrorResponse('User not found', 'ERROR_CODE', 404); }
 
-    return NextResponse.json({
-      isVerified: !!user.emailVerified,
-    });
-  } catch (error) {
+    return createSuccessResponse({ isVerified: !!user.emailVerified }; } catch (error) {
     console.error('Verification status check error:', error);
-    return NextResponse.json(
-      { message: 'Failed to check verification status' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to check verification status', 'ERROR_CODE', 500); }
 }

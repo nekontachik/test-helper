@@ -1,6 +1,6 @@
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getApiDocs } from '@/lib/api/swagger';
-import { NextResponse } from 'next/server';
 
-export async function GET() {
-  return NextResponse.json(getApiDocs());
-} 
+export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
+  return NextResponse.json(getApiDocs()); } 

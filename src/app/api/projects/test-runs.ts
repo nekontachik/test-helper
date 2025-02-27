@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
-import { AppError } from '@/lib/errors';
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1');

@@ -27,7 +27,7 @@ interface ExtendedSession extends Omit<Session, 'user'> {
   user: SessionUser;
 }
 
-export default function AccountSettingsPage() {
+export default function AccountSettingsPage(): JSX.Element | null {
   const { data: session, status } = useSession();
   const router = useRouter();
 

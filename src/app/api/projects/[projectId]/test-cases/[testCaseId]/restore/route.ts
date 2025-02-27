@@ -1,15 +1,11 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
 import logger from '@/lib/logger';
-import type { Prisma } from '@prisma/client';
 
-export async function POST(
-  request: Request,
-  { params }: { params: { projectId: string; testCaseId: string } }
-) {
+export async function POST(_req: NextRequest, { params }: { params: { projectId: string, testCaseId: string } }): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -17,11 +13,11 @@ export async function POST(
     }
 
     const { projectId, testCaseId } = params;
-    const { versionNumber } = await request.json();
+    const { versionNumber } = await _req.json();
 
     const testCase = await prisma.testCase.findUnique({
       where: { id: testCaseId, projectId },
-      include: { versions: true },
+      include: { versions: true }
     });
 
     if (!testCase) {
@@ -32,21 +28,21 @@ export async function POST(
       where: {
         testCaseId,
         versionNumber,
-      },
+      }
     });
 
     if (!versionToRestore) {
       throw new AppError('Version not found', 404);
     }
 
-    const versionData: Prisma.VersionCreateWithoutTestCaseInput = {
+    const versionData = {
       versionNumber: testCase.versions.length + 1,
       title: testCase.title,
       description: testCase.description,
       steps: testCase.steps,
       expectedResult: testCase.expectedResult,
       status: testCase.status,
-      priority: testCase.priority,
+      priority: testCase.priority
     };
 
     const restoredTestCase = await prisma.testCase.update({
@@ -62,7 +58,7 @@ export async function POST(
           create: versionData
         },
       },
-      include: { versions: true },
+      include: { versions: true }
     });
 
     logger.info(`Restored test case ${testCaseId} to version ${versionNumber}`);

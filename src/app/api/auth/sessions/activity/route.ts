@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -6,27 +7,19 @@ import { checkRateLimit } from '@/lib/auth/rateLimit';
 import { UAParser } from 'ua-parser-js';
 import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
 
-export async function GET(request: Request) {
+export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     // Check rate limit
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = _req.headers.get('x-forwarded-for') || 'unknown';
     const rateLimitResult = await checkRateLimit(`session_activity_${ip}`);
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { message: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      );
-    }
+      return createErrorResponse('Too many requests. Please try again later.', 'ERROR_CODE', 429); }
 
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
     const activities = await prisma.session.findMany({
       where: { userId: session.user.id },
@@ -38,9 +31,7 @@ export async function GET(request: Request) {
         ipAddress: true,
         createdAt: true,
         lastActive: true,
-        expiresAt: true,
-      },
-    });
+        expiresAt: true, } });
 
     const parser = new UAParser();
     const formattedActivities = activities.map(activity => {
@@ -52,51 +43,31 @@ export async function GET(request: Request) {
         device: {
           browser: device.browser.name,
           os: device.os.name,
-          device: device.device.type || 'desktop',
-        },
-        isExpired: activity.expiresAt < new Date(),
-      };
-    });
+          device: device.device.type || 'desktop', },
+        isExpired: activity.expiresAt < new Date() }; });
 
-    return NextResponse.json(formattedActivities);
-  } catch (error) {
+    return NextResponse.json(formattedActivities); } catch (error) {
     console.error('Session activity fetch error:', error);
-    return NextResponse.json(
-      { message: 'Failed to fetch session activity' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to fetch session activity', 'ERROR_CODE', 500); }
 }
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { sessionId } = body;
 
     await SessionTrackingService.trackSession({
       sessionId,
       userId: session.user.id,
-      ip: request.headers.get('x-forwarded-for') || undefined,
-      userAgent: request.headers.get('user-agent') || undefined,
-    });
+      ip: _req.headers.get('x-forwarded-for') || undefined,
+      userAgent: _req.headers.get('user-agent') || undefined });
 
-    return NextResponse.json({
-      message: 'Activity logged successfully'
-    });
-  } catch (error) {
+    return createErrorResponse('Activity logged successfully'); } catch (error) {
     console.error('Session activity log error:', error);
-    return NextResponse.json(
-      { message: 'Failed to log session activity' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to log session activity', 'ERROR_CODE', 500); }
 }

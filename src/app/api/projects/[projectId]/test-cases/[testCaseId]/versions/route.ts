@@ -1,32 +1,19 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import { withAuth } from '@/middleware/auth';
 import { prisma } from '@/lib/prisma';
-import { UserRole } from '@/types/auth';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
-
-interface TestCaseVersion {
-  id: string;
-  versionNumber: number;
-  title: string;
-  description: string | null;
-  expectedResult: string | null;
-  status: string;
-  priority: string;
-  testCaseId: string;
-  createdAt: Date;
-}
 
 async function handler(
   req: Request,
   { params }: { params: { projectId: string; testCaseId: string } }
-) {
-  const { projectId, testCaseId } = params;
+): Promise<NextResponse> {
+  const { testCaseId } = params;
 
   try {
     if (req.method === 'GET') {
       const versions = await prisma.version.findMany({
         where: { testCaseId },
-        orderBy: { versionNumber: 'desc' },
+        orderBy: { versionNumber: 'desc' }
       });
       return NextResponse.json(versions);
     }
@@ -39,12 +26,12 @@ async function handler(
         where: {
           testCaseId,
           versionNumber,
-        },
+        }
       });
 
       if (!version) {
         return NextResponse.json(
-          { message: 'Version not found' },
+          { error: 'Version not found' },
           { status: 404 }
         );
       }
@@ -58,17 +45,17 @@ async function handler(
           expectedResult: version.expectedResult,
           status: version.status,
           priority: version.priority,
-        },
+        }
       });
 
       return NextResponse.json({
         message: 'Version restored successfully',
-        testCase: updatedTestCase,
+        testCase: updatedTestCase
       });
     }
 
     return NextResponse.json(
-      { message: 'Method not allowed' },
+      { error: 'Method not allowed' },
       { status: 405 }
     );
   } catch (error) {
@@ -78,9 +65,9 @@ async function handler(
 }
 
 export const GET = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR, UserRole.USER]
+  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'USER']
 });
 
 export const POST = withAuth(handler, {
-  allowedRoles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
+  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER']
 });

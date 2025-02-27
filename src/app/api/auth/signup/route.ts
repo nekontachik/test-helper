@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/utils/hashPassword';
 import { logger } from '@/lib/utils/logger';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const body = await request.json();
     const { name, email, password } = body;
@@ -14,12 +15,12 @@ export async function POST(request: Request) {
     });
 
     if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return createErrorResponse('Missing required fields', 'VALIDATION_ERROR', 400);
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+      return createErrorResponse('User already exists', 'USER_EXISTS', 409);
     }
 
     const hashedPassword = await hashPassword(password);
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         role: 'USER',
-      },
+      }
     });
 
     logger.info('Signup API - User created successfully:', { 
@@ -38,9 +39,9 @@ export async function POST(request: Request) {
       email: user.email 
     });
 
-    return NextResponse.json({ success: true, user }, { status: 201 });
+    return createSuccessResponse({ success: true, user });
   } catch (error) {
     logger.error('Signup API - Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return createErrorResponse('Internal Server Error', 'SERVER_ERROR', 500);
   }
-} 
+}

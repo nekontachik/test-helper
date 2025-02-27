@@ -3,7 +3,7 @@
 import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 
-export default function AuthError() {
+export default function AuthError(): JSX.Element {
   const router = useRouter();
 
   return (

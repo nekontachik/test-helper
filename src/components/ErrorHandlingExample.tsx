@@ -2,10 +2,10 @@ import React from 'react';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { Box, Button, Text } from '@chakra-ui/react';
 
-export const ErrorHandlingExample: React.FC = () => {
+export const ErrorHandlingExample: React.FC = (): JSX.Element => {
   const { handleError } = useErrorHandler();
 
-  const simulateError = () => {
+  const simulateError = (): void => {
     try {
       throw new Error('Simulated error');
     } catch (error) {
@@ -17,7 +17,7 @@ export const ErrorHandlingExample: React.FC = () => {
     <Box>
       <Button onClick={simulateError}>Simulate Error</Button>
       <Text mt={4}>
-        Click the button to simulate an error and see how it's handled.
+        Click the button to simulate an error and see how it&apos;s handled.
       </Text>
     </Box>
   );

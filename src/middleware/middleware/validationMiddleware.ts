@@ -31,7 +31,7 @@ export function createValidationMiddleware<T extends z.ZodType>(schema: T) {
       }
 
       // Add validated data to request context
-      request.validated = result.data;
+      (request as NextRequestWithValidation<z.infer<T>>).validated = result.data;
       
       return next();
     } catch (error) {
@@ -45,9 +45,14 @@ export function createValidationMiddleware<T extends z.ZodType>(schema: T) {
   };
 }
 
+// Type augmentation for NextRequest with generic type
+interface NextRequestWithValidation<T> extends NextRequest {
+  validated?: T;
+}
+
 // Type augmentation for NextRequest
 declare module 'next/server' {
   interface NextRequest {
-    validated?: any;
+    validated?: unknown;
   }
 }

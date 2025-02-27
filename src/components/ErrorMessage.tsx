@@ -5,7 +5,7 @@ interface ErrorMessageProps {
   message: string;
 }
 
-export function ErrorMessage({ message }: ErrorMessageProps) {
+export const ErrorMessage = ({ message }: ErrorMessageProps): JSX.Element => {
   return (
     <Box bg="red.100" color="red.700" p={3} borderRadius="md">
       <Text>{message}</Text>

@@ -3,6 +3,7 @@ import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { TestRunStatus } from '@/types';
+import type { ApiResponse } from '@/types/api';
 
 jest.mock('@/lib/prisma', () => ({
   testRun: {
@@ -35,16 +36,21 @@ describe('Test Runs API', () => {
         value: url
       });
 
-      const context = {
-        params: { projectId: '1' }
-      };
-
       const handler = await GET;
       const response = await handler(request, { params: { projectId: '1' } });
+      
+      // Check if response is an ApiResponse or a Response
+      let data;
+      if ('success' in response) {
+        // It's an ApiResponse
+        data = response.data;
+        expect(response.success).toBe(true);
+      } else {
+        // It's a Response
+        data = await response.json();
+        expect(response.status).toBe(200);
+      }
 
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
       expect(data).toEqual({
         items: [{ id: '1', name: 'Test Run 1' }],
         currentPage: 1,
@@ -67,7 +73,15 @@ describe('Test Runs API', () => {
       const handler = await GET;
       const response = await handler(request, { params: { projectId: '1' } });
 
-      expect(response.status).toBe(401);
+      // Check if response is an ApiResponse or a Response
+      if ('success' in response) {
+        // It's an ApiResponse
+        expect(response.success).toBe(false);
+        expect(response.statusCode).toBe(401);
+      } else {
+        // It's a Response
+        expect(response.status).toBe(401);
+      }
     });
   });
 
@@ -86,11 +100,20 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request);
+      const response = await handler(request, { params: { projectId: '1' } });
 
-      const data = await response.json();
+      // Check if response is an ApiResponse or a Response
+      let data;
+      if ('success' in response) {
+        // It's an ApiResponse
+        data = response.data;
+        expect(response.success).toBe(true);
+      } else {
+        // It's a Response
+        data = await response.json();
+        expect(response.status).toBe(201);
+      }
 
-      expect(response.status).toBe(201);
       expect(data).toEqual({ id: '1', name: 'New Test Run' });
       expect(prisma.testRun.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -114,9 +137,17 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request);
+      const response = await handler(request, { params: { projectId: '1' } });
 
-      expect(response.status).toBe(401);
+      // Check if response is an ApiResponse or a Response
+      if ('success' in response) {
+        // It's an ApiResponse
+        expect(response.success).toBe(false);
+        expect(response.statusCode).toBe(401);
+      } else {
+        // It's a Response
+        expect(response.status).toBe(401);
+      }
     });
 
     it('should return 400 when name is missing', async () => {
@@ -132,9 +163,17 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request);
+      const response = await handler(request, { params: { projectId: '1' } });
 
-      expect(response.status).toBe(400);
+      // Check if response is an ApiResponse or a Response
+      if ('success' in response) {
+        // It's an ApiResponse
+        expect(response.success).toBe(false);
+        expect(response.statusCode).toBe(400);
+      } else {
+        // It's a Response
+        expect(response.status).toBe(400);
+      }
     });
   });
 });

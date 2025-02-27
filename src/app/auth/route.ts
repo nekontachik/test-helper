@@ -3,22 +3,22 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import logger from '@/lib/utils/logger';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
-  logger.debug({ requestId }, '[AUTH] Processing request');
+  logger.debug(`[AUTH] Processing request: ${requestId}`);
 
   try {
     const session = await getServerSession(authOptions);
     
     if (session) {
-      logger.info({ requestId, userId: session.user.id }, '[AUTH] Redirecting authenticated user');
+      logger.info(`[AUTH] Redirecting authenticated user: ${requestId}, userId: ${session.user.id}`);
       return redirect('/dashboard');
     }
 
-    logger.info({ requestId }, '[AUTH] Redirecting to signin');
+    logger.info(`[AUTH] Redirecting to signin: ${requestId}`);
     return redirect('/auth/signin');
   } catch (error) {
-    logger.error({ requestId, error }, '[AUTH] Error in auth route');
+    logger.error(`[AUTH] Error in auth route: ${requestId}, error: ${error instanceof Error ? error.message : String(error)}`);
     return redirect('/auth/signin');
   }
 } 

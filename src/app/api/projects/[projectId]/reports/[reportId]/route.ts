@@ -1,5 +1,5 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -16,48 +16,30 @@ type TestReportWithRelations = Prisma.TestReportGetPayload<{
       include: {
         testRunCases: {
           include: {
-            testCase: true;
-          };
-        };
-      };
-    };
-    createdBy: true;
-  };
-}>;
+            testCase: true; }; }; }; };
+    createdBy: true; }; }>;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { projectId: string; reportId: string } }
-) {
+export async function GET(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+      throw new AppError('Unauthorized', 401); }
 
     const report = await prisma.testReport.findUnique({
       where: {
         id: params.reportId,
-        projectId: params.projectId
-      },
+        projectId: params.projectId },
       include: {
         project: true,
         testRun: {
           include: {
             testRunCases: {
               include: {
-                testCase: true
-              }
-            }
-          }
-        },
-        createdBy: true
-      }
-    }) as TestReportWithRelations | null;
+                testCase: true } } } },
+        createdBy: true } }) as TestReportWithRelations | null;
 
     if (!report) {
-      throw new AppError('Report not found', 404);
-    }
+      throw new AppError('Report not found', 404); }
 
     const transformedReport = {
       id: report.id,
@@ -71,15 +53,13 @@ export async function GET(
         failed: number;
         blocked: number;
         skipped: number;
-        passRate: number;
-      },
+        passRate: number; },
       results: report.results as {
         testCaseId: string;
         status: TestCaseResultStatus;
         notes?: string;
         executedBy: string;
-        executedAt: string;
-      }[],
+        executedAt: string; }[],
       createdById: report.createdById,
       createdAt: report.createdAt.toISOString(),
       updatedAt: report.updatedAt.toISOString(),
@@ -94,17 +74,11 @@ export async function GET(
           status: testCase.status as TestCaseStatus,
           projectId: testCase.projectId,
           createdAt: testCase.createdAt.toISOString(),
-          updatedAt: testCase.updatedAt.toISOString()
-        }))
-      }
-    };
+          updatedAt: testCase.updatedAt.toISOString() })) } };
 
-    return NextResponse.json(transformedReport);
-  } catch (error) {
+    return NextResponse.json(transformedReport); } catch (error) {
     dbLogger.error('Error fetching test report:', error);
     if (error instanceof AppError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
-    }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-} 
+      return NextResponse.json({ error: error.message }, { status: error.statusCode }); }
+    return createSuccessResponse({ error: 'Internal server error' }, { status: 500 }; }
+}

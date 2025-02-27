@@ -1,28 +1,24 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { AppError } from '@/lib/errors';
 import { dbLogger } from '@/lib/logger';
 import { executeTestSchema } from '@/lib/validations/testResult';
-import type { Prisma } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { projectId: string; runId: string } }
-) {
+export async function POST(_req: NextRequest, { params }: { params: { projectId: string; runId: string } }): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       throw new AppError('Unauthorized', 401);
     }
 
-    const body = await request.json();
+    const body = await _req.json();
     const validatedData = executeTestSchema.parse(body);
 
     // Start transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: PrismaClient) => {
       // Check if test run exists and is active
       const testRun = await tx.testRun.findUnique({
         where: { 
@@ -40,7 +36,7 @@ export async function POST(
       }
 
       // Create test result with type-safe data
-      const testResultData: Prisma.TestCaseResultCreateInput = {
+      const testResultData = {
         testCase: { connect: { id: validatedData.testCaseId } },
         testRun: { connect: { id: params.runId } },
         status: validatedData.status,
@@ -89,9 +85,6 @@ export async function POST(
         { status: error.statusCode }
       );
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

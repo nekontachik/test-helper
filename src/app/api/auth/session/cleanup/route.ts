@@ -1,31 +1,22 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
     // Clean up expired sessions
     const result = await SessionService.cleanupExpiredSessions();
 
     return NextResponse.json({
       message: `Cleaned up ${result.count} expired sessions`,
-      count: result.count,
-    });
-  } catch (error) {
+      count: result.count }); } catch (error) {
     console.error('Session cleanup error:', error);
-    return NextResponse.json(
-      { message: 'Failed to cleanup sessions' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to cleanup sessions', 'ERROR_CODE', 500); }
 }

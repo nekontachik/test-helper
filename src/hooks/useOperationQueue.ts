@@ -6,15 +6,24 @@ type OperationPriority = 'high' | 'medium' | 'low';
 interface QueuedOperation {
   id: string;
   type: OperationType;
-  data: any;
+  data: unknown;
   priority: OperationPriority;
   timestamp: number;
   retryCount: number;
 }
 
+type OperationQueueResult = {
+  queue: QueuedOperation[];
+  addToQueue: (type: OperationType, data: unknown, priority?: OperationPriority) => void;
+  removeFromQueue: (id: string) => void;
+  updateOperation: (id: string, updates: Partial<QueuedOperation>) => void;
+  getNextOperation: () => QueuedOperation | undefined;
+  hasOperations: boolean;
+};
+
 const QUEUE_KEY = 'operationQueue';
 
-export function useOperationQueue(projectId: string) {
+export function useOperationQueue(projectId: string): OperationQueueResult {
   const [queue, setQueue] = useState<QueuedOperation[]>(() => {
     try {
       const saved = localStorage.getItem(`${QUEUE_KEY}:${projectId}`);
@@ -26,7 +35,7 @@ export function useOperationQueue(projectId: string) {
 
   const addToQueue = useCallback((
     type: OperationType,
-    data: any,
+    data: unknown,
     priority: OperationPriority = 'medium'
   ) => {
     const operation: QueuedOperation = {

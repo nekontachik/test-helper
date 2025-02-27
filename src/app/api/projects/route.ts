@@ -1,58 +1,60 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse } from '@/types/api';
 import { withProtect } from '@/middleware/apiProtect';
 import { withAuthorization } from '@/middleware/authorize';
 import { Action, Resource } from '@/types/rbac';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import type { Session } from 'next-auth';
-import type { NextRequest } from 'next/server';
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(100),
-  description: z.string().optional(),
+  description: z.string().optional()
 });
 
-async function handlePOST(request: NextRequest, session: Session) {
+async function handlePOST(request: Request, context: { session: Session }): Promise<Response> {
   const body = await request.json();
   const data = createProjectSchema.parse(body);
 
   const project = await prisma.project.create({
     data: {
       ...data,
-      userId: session.user.id,
-    },
+      userId: context.session.user.id
+    }
   });
 
   return NextResponse.json(project, { status: 201 });
 }
 
-async function handleGET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '10');
+async function handleGET(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const limit = parseInt(url.searchParams.get('limit') || '10');
 
   const [projects, total] = await Promise.all([
     prisma.project.findMany({
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }
     }),
-    prisma.project.count(),
+    prisma.project.count()
   ]);
 
-  return NextResponse.json({
+  const response = createSuccessResponse({
     items: projects,
     currentPage: page,
     totalPages: Math.ceil(total / limit),
-    totalCount: total,
+    totalCount: total
   });
+
+  return NextResponse.json(response);
 }
 
 export const POST = withProtect(
-  withAuthorization(handlePOST as any, {
+  withAuthorization(handlePOST as (request: Request) => Promise<Response>, {
     action: Action.CREATE,
     resource: Resource.PROJECT,
-    allowTeamMembers: false,
+    allowTeamMembers: false
   }),
   {
     action: Action.CREATE,
@@ -66,10 +68,10 @@ export const POST = withProtect(
 );
 
 export const GET = withProtect(
-  withAuthorization(handleGET as any, {
+  withAuthorization(handleGET, {
     action: Action.READ,
     resource: Resource.PROJECT,
-    allowTeamMembers: true,
+    allowTeamMembers: true
   }),
   {
     action: Action.READ,

@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { authUtils } from '@/lib/utils/authUtils';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await authUtils.getSession();
-    const body = await req.json();
+    const body = await _req.json();
 
     const log = await prisma.activityLog.create({
       data: {
@@ -13,17 +14,10 @@ export async function POST(req: Request) {
         action: 'ERROR_BOUNDARY',
         userId: session?.user?.id || 'SYSTEM',
         metadata: JSON.stringify(body),
-        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        userAgent: req.headers.get('user-agent')
-      }
-    });
+        ipAddress: _req.headers.get('x-forwarded-for') || _req.headers.get('x-real-ip'),
+        userAgent: _req.headers.get('user-agent') } });
 
-    return NextResponse.json({ success: true, log });
-  } catch (error) {
+    return createSuccessResponse({ success: true, log }; } catch (error) {
     console.error('Failed to log error:', error);
-    return NextResponse.json(
-      { error: 'Failed to log error' },
-      { status: 500 }
-    );
-  }
-} 
+    return createSuccessResponse({ error: 'Failed to log error' }, { status: 500 }; }
+}

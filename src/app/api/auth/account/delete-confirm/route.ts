@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -7,21 +8,16 @@ import { z } from 'zod';
 
 const confirmSchema = z.object({
   password: z.string().min(1),
-  confirmPhrase: z.literal('DELETE'),
-});
+  confirmPhrase: z.literal('DELETE') });
 
-export async function POST(request: Request) {
+export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+      return createErrorResponse('Unauthorized', 'ERROR_CODE', 401); }
 
-    const body = await request.json();
+    const body = await _req.json();
     const { password, confirmPhrase } = confirmSchema.parse(body);
 
     // Verify password
@@ -31,30 +27,18 @@ export async function POST(request: Request) {
     );
 
     if (!isValid) {
-      return NextResponse.json(
-        { message: 'Invalid password' },
-        { status: 400 }
-      );
-    }
+      return createErrorResponse('Invalid password', 'ERROR_CODE', 400); }
 
     // Delete all user data
     await prisma.$transaction([
       prisma.session.deleteMany({
-        where: { userId: session.user.id },
-      }),
+        where: { userId: session.user.id } }),
       prisma.user.delete({
-        where: { id: session.user.id },
-      }),
+        where: { id: session.user.id } }),
     ]);
 
-    return NextResponse.json({
-      message: 'Account deleted successfully',
-    });
-  } catch (error) {
+    return createSuccessResponse({
+      message: 'Account deleted successfully' }; } catch (error) {
     console.error('Account deletion error:', error);
-    return NextResponse.json(
-      { message: 'Failed to delete account' },
-      { status: 500 }
-    );
-  }
+    return createErrorResponse('Failed to delete account', 'ERROR_CODE', 500); }
 }

@@ -5,7 +5,7 @@ import logger from '@/lib/logger';
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
-) {
+): Promise<void> {
   const { runId, projectId } = req.query;
 
   if (typeof runId !== 'string' || typeof projectId !== 'string') {

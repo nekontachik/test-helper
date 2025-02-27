@@ -6,6 +6,7 @@ import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
 import { TestRunService } from '@/lib/services/report/testRunService';
 import { TEST_RESULT_STATUS } from '@/lib/services/report/constants';
 import { ApiErrorHandler } from '@/lib/utils/apiErrorHandler';
+import type { PrismaClient } from '@prisma/client';
 
 const executeTestRunSchema = z.object({
   results: z.array(z.object({
@@ -15,9 +16,7 @@ const executeTestRunSchema = z.object({
       TEST_RESULT_STATUS.FAILED,
       TEST_RESULT_STATUS.SKIPPED
     ]),
-    notes: z.string().max(1000).optional()
-  })).optional()
-});
+    notes: z.string().max(1000).optional() })).optional() });
 
 interface RouteParams {
   params: { id: string };
@@ -35,12 +34,11 @@ export const POST = withAuth(async (req: AuthenticatedRequest, { params }: Route
 
     const body = await executeTestRunSchema.parseAsync(await req.json());
     
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: PrismaClient['$transaction']) => {
       return TestRunService.executeTestRun(tx, {
         testRunId: id,
         userId: req.user.id,
-        results: body.results
-      });
+        results: body.results });
     });
 
     if (!result.success) {

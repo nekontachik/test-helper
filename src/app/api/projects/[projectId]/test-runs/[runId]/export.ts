@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
 import logger from '@/lib/logger';
-import type { TestCase } from '@prisma/client';
+
+// Define our own TestCase interface instead of importing from @prisma/client
+interface TestCase {
+  id: string;
+  title: string;
+  status: string;
+  [key: string]: unknown;
+}
 
 interface TestRunWithCases {
   id: string;
@@ -16,7 +23,7 @@ interface TestRunWithCases {
 export async function GET(
   request: Request,
   { params }: { params: { projectId: string; runId: string } }
-) {
+): Promise<Response> {
   try {
     const testRun = await prisma.testRun.findUnique({
       where: {
