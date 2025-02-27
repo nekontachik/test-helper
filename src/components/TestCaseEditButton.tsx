@@ -2,13 +2,16 @@
 
 import { Button } from '@/components/ui/button';
 import { OwnershipGuard } from '@/components/OwnershipGuard';
+import { useRouter } from 'next/navigation';
 
 interface TestCaseEditButtonProps {
   testCaseId: string;
-  onEdit: () => void;
+  editUrl: string;
 }
 
-export function TestCaseEditButton({ testCaseId, onEdit }: TestCaseEditButtonProps) {
+export function TestCaseEditButton({ testCaseId, editUrl }: TestCaseEditButtonProps): JSX.Element {
+  const router = useRouter();
+  
   return (
     <OwnershipGuard
       resourceType="testCase"
@@ -16,7 +19,7 @@ export function TestCaseEditButton({ testCaseId, onEdit }: TestCaseEditButtonPro
       requireOwnership={true}
       allowTeamMembers={false}
     >
-      <Button onClick={onEdit}>Edit Test Case</Button>
+      <Button onClick={() => router.push(editUrl)}>Edit Test Case</Button>
     </OwnershipGuard>
   );
 } 

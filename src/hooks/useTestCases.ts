@@ -9,7 +9,19 @@ interface UseTestCasesOptions {
   initialFilters?: TestCaseFilters;
 }
 
-export function useTestCases({ projectId, initialFilters }: UseTestCasesOptions) {
+interface TestCasesResult {
+  testCases: TestCase[];
+  totalPages: number;
+  currentPage: number;
+  isLoading: boolean;
+  error: Error | null;
+  createTestCase: (data: Omit<TestCase, 'id' | 'createdAt' | 'updatedAt'>) => Promise<TestCase>;
+  updateTestCase: (id: string, data: Partial<TestCase>) => Promise<TestCase>;
+  deleteTestCase: (id: string) => Promise<void>;
+  refetch: () => Promise<unknown>;
+}
+
+export function useTestCases({ projectId, initialFilters }: UseTestCasesOptions): TestCasesResult {
   const query = useTestCaseQuery({ projectId, ...initialFilters });
   const createMutation = useCreateTestCase();
   const updateMutation = useUpdateTestCase();

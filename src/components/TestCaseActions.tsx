@@ -3,14 +3,17 @@
 import { Button } from '@/components/ui/button';
 import { PermissionGuard } from '@/components/PermissionGuard';
 import { Action, Resource } from '@/lib/auth/rbac/types';
+import { useRouter } from 'next/navigation';
 
 interface TestCaseActionsProps {
   testCaseId: string;
-  onEdit: () => void;
-  onDelete: () => void;
+  editUrl: string;
+  deleteUrl: string;
 }
 
-export function TestCaseActions({ testCaseId, onEdit, onDelete }: TestCaseActionsProps) {
+export function TestCaseActions({ testCaseId, editUrl, deleteUrl }: TestCaseActionsProps): JSX.Element {
+  const router = useRouter();
+  
   return (
     <div className="flex gap-2">
       <PermissionGuard
@@ -18,7 +21,7 @@ export function TestCaseActions({ testCaseId, onEdit, onDelete }: TestCaseAction
         resource={Resource.TEST_CASE}
         resourceId={testCaseId}
       >
-        <Button onClick={onEdit}>Edit</Button>
+        <Button onClick={() => router.push(editUrl)}>Edit</Button>
       </PermissionGuard>
 
       <PermissionGuard
@@ -26,7 +29,7 @@ export function TestCaseActions({ testCaseId, onEdit, onDelete }: TestCaseAction
         resource={Resource.TEST_CASE}
         resourceId={testCaseId}
       >
-        <Button variant="destructive" onClick={onDelete}>
+        <Button variant="destructive" onClick={() => router.push(deleteUrl)}>
           Delete
         </Button>
       </PermissionGuard>

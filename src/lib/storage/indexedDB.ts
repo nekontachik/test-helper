@@ -29,17 +29,17 @@ export async function initDB(): Promise<IDBPDatabase<TestAppDB>> {
   });
 }
 
-export async function addTestResult(result: TestAppDB['test-results']['value']) {
+export async function addTestResult(result: TestAppDB['test-results']['value']): Promise<string> {
   const db = await initDB();
   return db.add('test-results', result);
 }
 
-export async function getTestResults() {
+export async function getTestResults(): Promise<TestAppDB['test-results']['value'][]> {
   const db = await initDB();
   return db.getAllFromIndex('test-results', 'by-timestamp');
 }
 
-export async function clearTestResults() {
+export async function clearTestResults(): Promise<void> {
   const db = await initDB();
   return db.clear('test-results');
 } 

@@ -3,9 +3,11 @@ import { getToken } from 'next-auth/jwt';
 import { SessionTrackingService } from '@/lib/auth/sessionTrackingService';
 import type { JWT } from 'next-auth/jwt';
 
-export async function sessionTrackingMiddleware(request: Request) {
+export async function sessionTrackingMiddleware(request: Request): Promise<Response> {
   try {
-    const token = await getToken({ req: request as any }) as JWT & { jti: string };
+    // next-auth/jwt expects a different request type, but this works in practice
+    // @ts-expect-error - getToken expects a different request type
+    const token = await getToken({ req: request }) as JWT & { jti: string };
     
     if (!token?.sub || !token?.jti) {
       return NextResponse.next();
@@ -27,8 +29,8 @@ export async function sessionTrackingMiddleware(request: Request) {
   }
 }
 
-export function withSessionTracking(handler: Function) {
-  return async function(request: Request) {
+export function withSessionTracking(handler: (request: Request) => Promise<Response>): (request: Request) => Promise<Response> {
+  return async function(request: Request): Promise<Response> {
     await sessionTrackingMiddleware(request);
     return handler(request);
   };

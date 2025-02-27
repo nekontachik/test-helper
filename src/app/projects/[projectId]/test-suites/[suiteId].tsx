@@ -4,7 +4,7 @@ import { useTestSuite } from '@/hooks/useTestSuite';
 import { TestSuiteDetails } from '@/components/TestSuiteDetails';
 import { Spinner, Box, Text } from '@chakra-ui/react';
 
-export default function TestSuitePage() {
+export default function TestSuitePage(): React.ReactElement {
   const params = useParams();
   const projectId = params?.projectId as string;
   const suiteId = params?.suiteId as string;

@@ -1,4 +1,4 @@
-import type { Prisma, TestCaseResult, TestCase } from '@prisma/client';
+import type { Prisma, TestCase } from '@prisma/client';
 import type { ReportInput, MetricsResult, TestCasePriority } from './types';
 import { calculateMetrics } from '@/lib/utils/testMetrics';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';

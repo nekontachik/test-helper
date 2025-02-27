@@ -1,12 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
 import type { TestCase, TestCaseFormData } from '@/types';
-import { createMutationHook } from '@/lib/hooks/createMutationHook';
-import { queryClient } from '@/lib/queryClient';
+import { createMutation } from '@/lib/hooks/createMutationHook';
 import { ROUTES } from '@/lib/routes';
 import { ApiError } from '@/lib/api/errorHandler';
 
-export function useTestCase(projectId: string, testCaseId: string) {
+interface QueryResult<T> {
+  data?: T;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  refetch: () => Promise<unknown>;
+}
+
+interface MutationResult<TData, TVariables> {
+  mutate: (variables: TVariables) => void;
+  mutateAsync: (variables: TVariables) => Promise<TData>;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  reset: () => void;
+}
+
+interface TestCaseInput {
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  projectId: string;
+  steps?: Array<{description: string}>;
+  tags?: string[];
+}
+
+export function useTestCase(projectId: string, testCaseId: string): QueryResult<TestCase> {
   return useQuery({
     queryKey: ['testCase', projectId, testCaseId],
     queryFn: () => apiClient.getTestCase(projectId, testCaseId),
@@ -14,34 +40,24 @@ export function useTestCase(projectId: string, testCaseId: string) {
   });
 }
 
-export const useCreateTestCase = createMutationHook<TestCase, TestCaseInput>(
-  {
-    mutationFn: async (input) => {
-      const response = await fetch(ROUTES.API.TEST_CASES.CREATE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new ApiError(error.message, response.status);
-      }
-      
-      return response.json();
-    },
-    invalidateQueries: ['testCases'],
-    onSuccess: (data) => {
-      // Additional success handling
-    },
-    onError: (error) => {
-      // Error handling
+export const useCreateTestCase = createMutation<TestCase, TestCaseInput>({
+  mutationFn: async (input: TestCaseInput) => {
+    const response = await fetch(ROUTES.API.PROJECT.TEST_CASES.INDEX(input.projectId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(error.message, response.status);
     }
-  },
-  queryClient
-);
+    
+    return response.json();
+  }
+});
 
-export function useTestCaseVersions(projectId: string, testCaseId: string) {
+export function useTestCaseVersions(projectId: string, testCaseId: string): QueryResult<Array<TestCase>> {
   return useQuery({
     queryKey: ['testCaseVersions', projectId, testCaseId],
     queryFn: () => apiClient.getTestCaseVersions(projectId, testCaseId),
@@ -49,7 +65,7 @@ export function useTestCaseVersions(projectId: string, testCaseId: string) {
   });
 }
 
-export function useRestoreTestCaseVersion(projectId: string, testCaseId: string) {
+export function useRestoreTestCaseVersion(projectId: string, testCaseId: string): MutationResult<TestCase, number> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -62,7 +78,7 @@ export function useRestoreTestCaseVersion(projectId: string, testCaseId: string)
   });
 }
 
-export function useUpdateTestCase(projectId: string, testCaseId: string) {
+export function useUpdateTestCase(projectId: string, testCaseId: string): MutationResult<TestCase, TestCaseFormData> {
   const queryClient = useQueryClient();
 
   return useMutation({

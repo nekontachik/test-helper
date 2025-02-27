@@ -8,7 +8,7 @@ interface TestRunDetailsProps {
 }
 
 export const TestRunDetails: React.FC<TestRunDetailsProps> = ({ testRun }) => {
-  const getStatusColor = (status: TestCaseResultStatus) => {
+  const getStatusColor = (status: TestCaseResultStatus): string => {
     switch (status) {
       case TestCaseResultStatus.PASSED:
         return 'green';

@@ -8,7 +8,7 @@ interface TestCaseVersionComparisonProps {
 }
 
 const TestCaseVersionComparison: React.FC<TestCaseVersionComparisonProps> = ({ oldVersion, newVersion }) => {
-  const compareField = (field: keyof TestCaseVersion) => {
+  const compareField = (field: keyof TestCaseVersion): JSX.Element | null => {
     if (field === 'steps') {
       return (
         <Tr key={field}>

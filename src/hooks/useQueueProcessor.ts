@@ -11,7 +11,13 @@ interface ProcessError extends Error {
   response?: ApiErrorResponse;
 }
 
-export function useQueueProcessor(projectId: string) {
+interface QueueProcessorResult {
+  isProcessing: boolean;
+  queueLength: number;
+  processBatch: () => Promise<void>;
+}
+
+export function useQueueProcessor(projectId: string): QueueProcessorResult {
   const { 
     queue, 
     removeFromQueue, 
@@ -40,7 +46,7 @@ export function useQueueProcessor(projectId: string) {
 
   const processOperation = useCallback(async (operation: QueuedOperation) => {
     try {
-      if (operation.type === 'upload' && operation.data.file) {
+      if (operation.type === 'upload' && 'file' in operation.data) {
         const formData = new FormData();
         formData.append('file', operation.data.file);
         
@@ -74,7 +80,7 @@ export function useQueueProcessor(projectId: string) {
     }
   }, [projectId, removeFromQueue, handleOperationError]);
 
-  const processBatch = useCallback(async () => {
+  const processBatch = useCallback(async (): Promise<void> => {
     if (isProcessing || queue.length === 0) return;
 
     setIsProcessing(true);
@@ -82,7 +88,7 @@ export function useQueueProcessor(projectId: string) {
 
     try {
       const results = await Promise.allSettled(
-        batch.map(operation => processOperation(operation))
+        batch.map(operation => processOperation(operation as QueuedOperation))
       );
 
       // Log batch processing results

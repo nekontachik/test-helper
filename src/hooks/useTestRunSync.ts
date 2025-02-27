@@ -14,7 +14,7 @@ export function useTestRunSync(projectId: string, testRunId: string): {
   isProcessing: boolean;
   isSyncing: boolean;
   queueLength: number;
-  pendingOperations: any[];
+  pendingOperations: unknown[];
   syncNow: () => Promise<void>;
 } {
   const [isOnline, setIsOnline] = useState(navigator.onLine);

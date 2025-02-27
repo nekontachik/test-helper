@@ -45,10 +45,10 @@ export function validateEmail(email: unknown): string {
   return emailSchema.parse(email);
 }
 
-export function validatePagination(query: unknown) {
+export function validatePagination(query: unknown): z.infer<typeof paginationSchema> {
   return paginationSchema.parse(query);
 }
 
-export function validateSearch(query: unknown) {
+export function validateSearch(query: unknown): z.infer<typeof searchSchema> {
   return searchSchema.parse(query);
 } 

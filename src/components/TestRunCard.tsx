@@ -7,8 +7,8 @@ interface TestRunCardProps {
   testRun: TestRun;
 }
 
-export function TestRunCard({ testRun }: TestRunCardProps) {
-  const getStatusColor = (status: TestRunStatus) => {
+export function TestRunCard({ testRun }: TestRunCardProps): JSX.Element {
+  const getStatusColor = (status: TestRunStatus): string => {
     switch (status) {
       case TestRunStatus.PENDING:
         return 'yellow';

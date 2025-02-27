@@ -11,13 +11,15 @@ import {
   Box,
   Text,
   FormErrorMessage,
+  useToast,
 } from '@chakra-ui/react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import type { TestCase, TestCaseResultStatus } from '@/types';
 
 interface TestRunExecutionFormProps {
   testCases: TestCase[];
-  onSubmit: (results: TestCaseResult[]) => void;
+  submitUrl: string;
+  onSubmitComplete?: () => void;
 }
 
 interface TestCaseResult {
@@ -30,12 +32,13 @@ interface FormData {
   results: TestCaseResult[];
 }
 
-export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFormProps) {
+export function TestRunExecutionForm({ testCases, submitUrl, onSubmitComplete }: TestRunExecutionFormProps): JSX.Element {
+  const toast = useToast();
   const {
     control,
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
       results: testCases.map((testCase) => ({
@@ -51,8 +54,37 @@ export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFo
     name: 'results',
   });
 
-  const onSubmitForm = (data: FormData) => {
-    onSubmit(data.results);
+  const onSubmitForm = async (data: FormData): Promise<void> => {
+    try {
+      const response = await fetch(submitUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data.results),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to submit results');
+      }
+      
+      toast({
+        title: 'Results submitted successfully',
+        status: 'success',
+        duration: 3000,
+      });
+      
+      if (onSubmitComplete) {
+        onSubmitComplete();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error submitting results',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        status: 'error',
+        duration: 5000,
+      });
+    }
   };
 
   return (
@@ -92,7 +124,7 @@ export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFo
           );
         })}
 
-        <Button type="submit" colorScheme="blue">
+        <Button type="submit" colorScheme="blue" isLoading={isSubmitting}>
           Submit Results
         </Button>
       </VStack>

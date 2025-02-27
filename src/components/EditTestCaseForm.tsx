@@ -27,7 +27,7 @@ interface EditTestCaseFormProps {
 export function EditTestCaseForm({
   testCase,
   onSubmit,
-}: EditTestCaseFormProps) {
+}: EditTestCaseFormProps): JSX.Element {
   const {
     register,
     handleSubmit,

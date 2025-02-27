@@ -3,12 +3,13 @@ import { useRouter } from 'next/router';
 import { useCreateProject } from '../../hooks/useProjects';
 import { ProjectForm } from '../../components/ProjectForm';
 import { Button } from '@chakra-ui/react';
+import type { ProjectFormData } from '@/types';
 
-export default function NewProject() {
+export default function NewProject(): JSX.Element {
   const router = useRouter();
   const createProject = useCreateProject();
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ProjectFormData): Promise<void> => {
     try {
       await createProject.mutateAsync(data);
       router.push('/projects');

@@ -20,11 +20,11 @@ interface EmailVerificationProps {
 
 type ResendStatus = 'idle' | 'success' | 'error';
 
-export function EmailVerification({ email, resendUrl }: EmailVerificationProps) {
+export function EmailVerification({ email, resendUrl }: EmailVerificationProps): JSX.Element {
   const [isResending, setIsResending] = React.useState(false);
   const [resendStatus, setResendStatus] = React.useState<ResendStatus>('idle');
 
-  const handleResend = async () => {
+  const handleResend = async (): Promise<void> => {
     try {
       setIsResending(true);
       const response = await fetch(resendUrl, {

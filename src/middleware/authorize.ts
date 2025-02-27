@@ -3,8 +3,9 @@ import { getToken } from 'next-auth/jwt';
 // import { prisma } from '@/lib/prisma';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { OwnershipService } from '@/lib/auth/ownership/service';
-import type { Action, UserRole } from '@/types/rbac';
+import type { Action } from '@/types/rbac';
 import { Resource } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
 import { AuthorizationError } from '@/lib/errors';
 import logger from '@/lib/logger';
 
@@ -36,7 +37,8 @@ export async function authorize(
   options: AuthorizeOptions
 ): Promise<Response> {
   try {
-    const token = await getToken({ req: request as any }) as AuthToken | null;
+    // @ts-expect-error - getToken expects a different request type
+    const token = await getToken({ req: request }) as AuthToken | null;
     if (!token?.sub) {
       throw new AuthorizationError('No authentication token');
     }

@@ -1,13 +1,20 @@
 /**
  * Test Cases API Usage Examples
+ * 
+ * This file contains example code snippets for documentation purposes.
+ * These are not actual functional components but examples of how to use the API.
  */
 
+/**
+ * Example of how to use the useTestCases hook
+ */
+export const testCaseListExample = `
+// Import the hook
 import { useTestCases } from '@/hooks/useTestCases';
-import { useTestCase } from '@/hooks/useTestCase';
 import { TestCaseStatus, TestCasePriority } from '@/types/testCase';
 
-// List test cases with filters
-function TestCaseListExample() {
+// Inside your component
+function TestCaseList() {
   const { testCases, isLoading, error } = useTestCases({
     projectId: 'project-123',
     initialFilters: {
@@ -18,10 +25,21 @@ function TestCaseListExample() {
       limit: 10,
     },
   });
+  
+  // Render your component using the data
 }
+`;
 
-// Create a test case
-function CreateTestCaseExample() {
+/**
+ * Example of how to create a test case
+ */
+export const createTestCaseExample = `
+// Import the hook
+import { useTestCases } from '@/hooks/useTestCases';
+import { TestCaseStatus, TestCasePriority } from '@/types/testCase';
+
+// Inside your component
+function CreateTestCase() {
   const projectId = 'project-123';
   const { createTestCase } = useTestCases({ projectId });
 
@@ -41,10 +59,21 @@ function CreateTestCaseExample() {
       ],
     });
   };
+  
+  // Render your component with a form that calls handleCreate
 }
+`;
 
-// Update a test case
-function UpdateTestCaseExample() {
+/**
+ * Example of how to update a test case
+ */
+export const updateTestCaseExample = `
+// Import the hook
+import { useTestCases } from '@/hooks/useTestCases';
+import { TestCaseStatus, TestCasePriority } from '@/types/testCase';
+
+// Inside your component
+function UpdateTestCase() {
   const { updateTestCase } = useTestCases({ projectId: 'project-123' });
 
   const handleUpdate = async () => {
@@ -53,4 +82,7 @@ function UpdateTestCaseExample() {
       priority: TestCasePriority.MEDIUM,
     });
   };
-} 
+  
+  // Render your component with a form that calls handleUpdate
+}
+`; 

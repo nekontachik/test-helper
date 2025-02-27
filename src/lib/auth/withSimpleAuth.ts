@@ -3,18 +3,24 @@ import type { NextRequest } from 'next/server';
 import { MOCK_USER } from './simpleAuth';
 import { logger } from '@/lib/utils/logger';
 
+// Define a type for the extended request with user
+interface AuthenticatedRequest extends NextRequest {
+  user: typeof MOCK_USER;
+}
+
 export function withSimpleAuth(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async function authHandler(req: NextRequest) {
     try {
       // Attach mock user to request
-      (req as any).user = MOCK_USER;
+      const authReq = req as AuthenticatedRequest;
+      authReq.user = MOCK_USER;
       
       // Log the request
-      logger.debug({
+      logger.debug('Authenticated request', {
         path: req.nextUrl.pathname,
         method: req.method,
         userId: MOCK_USER.id
-      }, 'Authenticated request');
+      });
 
       return handler(req);
     } catch (error) {

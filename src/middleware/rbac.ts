@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRole } from '@/types/rbac';
+// Create a local enum if it's not exported from the module
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  USER = 'USER',
+  GUEST = 'GUEST'
+}
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
+import type { NextRequest } from 'next/server';
 
 interface RBACOptions {
   roles?: UserRole[];
@@ -20,10 +27,15 @@ function isValidUserRole(role: string | undefined): role is UserRole {
   return Object.values(UserRole).includes(role as UserRole);
 }
 
-export function withRBAC(handler: Function, options: RBACOptions) {
-  return async function rbacMiddleware(request: Request) {
+export function withRBAC(
+  handler: (request: Request) => Promise<Response>, 
+  options: RBACOptions
+) {
+  return async function rbacMiddleware(request: Request): Promise<Response> {
     try {
-      const token = await getToken({ req: request as any }) as AuthToken | null;
+      // Use NextRequest type for getToken compatibility
+      const req = request as unknown as NextRequest;
+      const token = await getToken({ req }) as AuthToken | null;
 
       if (!token?.sub) {
         return NextResponse.json(

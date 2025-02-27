@@ -4,7 +4,7 @@ import { MIDDLEWARE_CONFIG } from './config';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { SecurityService } from '@/lib/security/securityService';
 import { AuditService } from '@/lib/audit/auditService';
-import { UserRole } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
 import { AuditAction, AuditLogType } from '@/types/audit';
 import type { JWT } from 'next-auth/jwt';
 import { logger } from '@/lib/utils/logger';
@@ -29,7 +29,8 @@ interface RequestMetadata {
 
 class RequestHandler {
   private static isValidUserRole(role: string): role is UserRole {
-    return Object.values(UserRole).includes(role as UserRole);
+    // Check if role is one of the valid UserRole values
+    return ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER', 'USER'].includes(role);
   }
 
   private static isPublicPath(pathname: string): boolean {
@@ -59,7 +60,8 @@ class RequestHandler {
         method: metadata.method,
         ip: metadata.ip,
         userAgent: metadata.userAgent,
-      }
+      },
+      status: 'SUCCESS' // Add the required status field
     });
   }
 
@@ -85,7 +87,8 @@ class RequestHandler {
       }
 
       // Get and validate user token
-      const token = await getToken({ req: request as any }) as AuthToken | null;
+      // @ts-expect-error - getToken expects a different request type
+      const token = await getToken({ req: request }) as AuthToken | null;
       if (!token?.sub) {
         const signInUrl = new URL('/auth/signin', request.url);
         signInUrl.searchParams.set('callbackUrl', pathname);
@@ -125,7 +128,7 @@ class RequestHandler {
             : MIDDLEWARE_CONFIG.rateLimit.api;
 
           await rateLimiter.checkLimit(ip, config);
-        } catch (error) {
+        } catch {
           logger.warn('Rate limit exceeded', { ip, path: pathname });
           return NextResponse.json(
             { error: 'Rate limit exceeded' },

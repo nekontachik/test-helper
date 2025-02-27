@@ -5,8 +5,8 @@ type QueryKey = readonly unknown[];
 
 interface UseQueryOptions<
   TQueryFnData = unknown,
-  TError = unknown,
-  TData = TQueryFnData,
+  _TError = unknown,
+  _TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 > {
   queryKey: TQueryKey;

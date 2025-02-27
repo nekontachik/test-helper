@@ -1,7 +1,23 @@
 import { useSession as useNextAuthSession } from 'next-auth/react';
 import { useCallback } from 'react';
+import type { Session } from 'next-auth';
 
-export function useSession() {
+interface UpdateData {
+  name?: string;
+  email?: string;
+  image?: string;
+  [key: string]: unknown;
+}
+
+interface SessionResult {
+  session: Session | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+  update: (data?: UpdateData) => Promise<Session | null>;
+  invalidateOtherSessions: () => Promise<boolean>;
+  invalidateSession: (sessionId: string) => Promise<boolean>;
+}
+
+export function useSession(): SessionResult {
   const { data: session, status, update } = useNextAuthSession();
 
   const invalidateOtherSessions = useCallback(async () => {

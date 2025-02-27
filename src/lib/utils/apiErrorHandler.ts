@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { CustomError, ErrorFactory } from '@/lib/errors/ErrorFactory';
+import { CustomError } from '@/lib/errors/ErrorFactory';
 import type { ErrorResponse } from '@/lib/errors/types';
 
 export class ApiErrorHandler {

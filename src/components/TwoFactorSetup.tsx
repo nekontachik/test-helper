@@ -56,7 +56,7 @@ const ERROR_MESSAGES = {
 export function TwoFactorSetup({ 
   onComplete = '/settings', 
   onError 
-}: TwoFactorSetupProps) {
+}: TwoFactorSetupProps): JSX.Element {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [status, setStatus] = useState<SetupStatus>('initial');
@@ -88,13 +88,13 @@ export function TwoFactorSetup({
     };
   }, [form, status]);
 
-  const handleRetry = () => {
+  const handleRetry = (): void => {
     setStatus('initial');
   };
 
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
 
-  const initiate2FASetup = async () => {
+  const initiate2FASetup = async (): Promise<void> => {
     setIsSubmitting(true);
     setStatus('initial');
     try {
@@ -231,6 +231,7 @@ export function TwoFactorSetup({
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
+            control={form.control}
             name="code"
             render={({ field }) => (
               <FormItem>

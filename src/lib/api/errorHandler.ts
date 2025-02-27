@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import type { Prisma } from '@prisma/client';
-import { 
-  AppError, 
-  ValidationError, 
-  AuthenticationError, 
-  AuthorizationError,
-  NotFoundError,
-  RateLimitError,
-  DatabaseError
-} from '@/lib/errors';
 import { logger } from '@/lib/utils/logger';
-import { createApiError } from '@/types/api';
 
 interface ErrorResponseData {
   code: string;
@@ -21,6 +11,21 @@ interface ErrorResponseData {
 
 interface ErrorResponse {
   error: ErrorResponseData;
+}
+
+// Helper function to create API error responses
+function createApiError(
+  message: string,
+  code: string = 'INTERNAL_SERVER_ERROR',
+  details?: unknown
+): ErrorResponse {
+  return {
+    error: {
+      code,
+      message,
+      ...(details ? { details } : {})
+    }
+  };
 }
 
 export class ApiError extends Error {
@@ -34,7 +39,7 @@ export class ApiError extends Error {
   }
 }
 
-export function handleApiError(error: unknown) {
+export function handleApiError(error: unknown): NextResponse {
   logger.error('API Error:', error);
 
   if (error instanceof ZodError) {
@@ -52,7 +57,9 @@ export function handleApiError(error: unknown) {
   }
 
   // Prisma errors handling
-  if (error.constructor.name === 'PrismaClientKnownRequestError') {
+  if (error && typeof error === 'object' && 'constructor' in error && 
+      error.constructor && typeof error.constructor === 'function' && 
+      error.constructor.name === 'PrismaClientKnownRequestError') {
     return NextResponse.json(
       createApiError('Database error', 'DB_ERROR'),
       { status: 500 }
@@ -70,7 +77,7 @@ interface PrismaErrorResponse {
   status: number;
 }
 
-function handlePrismaError(error: Prisma.PrismaClientKnownRequestError): PrismaErrorResponse {
+function _handlePrismaError(error: Prisma.PrismaClientKnownRequestError): PrismaErrorResponse {
   switch (error.code) {
     case 'P2002': // Unique constraint violation
       return {

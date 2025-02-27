@@ -10,7 +10,15 @@ interface QueuedTestResult {
   timestamp: number;
 }
 
-export function useTestResultQueue(projectId: string, runId: string) {
+interface TestResultQueueResult {
+  queuedResults: QueuedTestResult[];
+  enqueueResult: (result: Omit<QueuedTestResult, 'timestamp'>) => Promise<void>;
+  processQueue: () => Promise<void>;
+  isSyncing: boolean;
+  queueLength: number;
+}
+
+export function useTestResultQueue(projectId: string, runId: string): TestResultQueueResult {
   const [queuedResults, setQueuedResults] = useState<QueuedTestResult[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const isOnline = useOnlineStatus();

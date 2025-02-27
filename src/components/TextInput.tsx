@@ -5,9 +5,9 @@ import {
   Input,
   FormErrorMessage,
 } from '@chakra-ui/react';
-import type { InputProps } from '@chakra-ui/input';
+import type { InputProps as ChakraInputProps } from '@chakra-ui/react';
 
-interface TextInputProps extends Omit<InputProps, 'onChange'> {
+interface TextInputProps extends Omit<ChakraInputProps, 'onChange'> {
   label: string;
   name: string;
   error?: string;
@@ -22,8 +22,8 @@ export function TextInput({
   value,
   onChange,
   ...props
-}: TextInputProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+}: TextInputProps): JSX.Element {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onChange(e.target.value);
   };
 

@@ -9,7 +9,7 @@ interface ErrorDisplayProps {
   onReset?: () => void;
 }
 
-export function ErrorDisplay({ message, code, onRetry, onReset }: ErrorDisplayProps) {
+export function ErrorDisplay({ message, code, onRetry, onReset }: ErrorDisplayProps): JSX.Element {
   return (
     <Alert variant="destructive" className="bg-red-50">
       <AlertTriangle className="h-4 w-4" />

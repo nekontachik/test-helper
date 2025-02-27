@@ -5,7 +5,16 @@ interface TestResultWithEvidence extends TestResult {
   evidence?: File[];
 }
 
-export function useTestRunExecution(projectId: string, testRunId: string) {
+interface TestRunExecutionResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+}
+
+export function useTestRunExecution(projectId: string, testRunId: string): {
+  executeTestRun: (results: TestResultWithEvidence[]) => Promise<TestRunExecutionResponse>;
+  isUploading: boolean;
+  uploadProgress: number;
+} {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -42,7 +51,7 @@ export function useTestRunExecution(projectId: string, testRunId: string) {
     }
   };
 
-  const executeTestRun = async (results: TestResultWithEvidence[]) => {
+  const executeTestRun = async (results: TestResultWithEvidence[]): Promise<TestRunExecutionResponse> => {
     const MAX_RETRIES = 3;
     const INITIAL_RETRY_DELAY = 1000;
     

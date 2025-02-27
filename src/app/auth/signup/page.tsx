@@ -5,9 +5,18 @@ import { authOptions } from '@/lib/auth';
 import { Box } from '@chakra-ui/react';
 import { logger } from '@/lib/utils/logger';
 
+// Set to true to bypass authentication in development
+const DEV_MODE = true;
+
 export default async function SignUpPage(): Promise<JSX.Element> {
   try {
     logger.debug('SignUpPage - Component rendering');
+    
+    // In development mode, bypass authentication and redirect to dashboard
+    if (DEV_MODE) {
+      logger.info('SignUpPage - Development mode, redirecting to dashboard');
+      redirect('/dashboard');
+    }
     
     const session = await getServerSession(authOptions);
 

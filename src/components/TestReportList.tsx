@@ -16,7 +16,7 @@ interface TestReportListProps {
   projectId: string;
 }
 
-export default function TestReportList({ projectId }: TestReportListProps) {
+export default function TestReportList({ projectId }: TestReportListProps): JSX.Element {
   const { data: testReports, isLoading, error } = useTestReports(projectId);
 
   if (isLoading) {

@@ -11,7 +11,7 @@ interface TestRunListProps {
   projectId: string;
 }
 
-export default function TestRunList({ projectId }: TestRunListProps) {
+export default function TestRunList({ projectId }: TestRunListProps): JSX.Element {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState('createdAt:desc');

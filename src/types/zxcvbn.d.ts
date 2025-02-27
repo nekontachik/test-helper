@@ -7,7 +7,7 @@ declare module 'zxcvbn' {
     };
     guesses: number;
     guesses_log10: number;
-    sequence: any[];
+    sequence: unknown[];
     calc_time: number;
     crack_times_seconds: {
       online_throttling_100_per_hour: number;

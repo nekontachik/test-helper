@@ -10,24 +10,48 @@ interface FileInfo {
   type?: string;
   size?: number;
   url?: string;
+  id: string;
 }
 
 interface FilePreviewProps {
   files: FileInfo[];
-  onRemove: (index: number) => void;
+  removeUrl: string;
+  onRemoveComplete?: () => void;
 }
 
-export function FilePreview({ files, onRemove }: FilePreviewProps) {
+export function FilePreview({ files, removeUrl, onRemoveComplete }: FilePreviewProps): JSX.Element {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [fileIds, setFileIds] = useState<string[]>(files.map(file => file.id));
 
-  const renderPreview = (file: FileInfo, index: number) => {
+  const handleRemove = async (fileId: string): Promise<void> => {
+    try {
+      const response = await fetch(`${removeUrl}/${fileId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setFileIds(prev => prev.filter(id => id !== fileId));
+        if (onRemoveComplete) {
+          // This function will only be called client-side
+          onRemoveComplete();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to remove file:', error);
+    }
+  };
+
+  const renderPreview = (file: FileInfo, _index: number): JSX.Element | null => {
+    // Skip rendering removed files
+    if (!fileIds.includes(file.id)) return null;
+    
     const isImage = file.type?.startsWith('image/');
     const isPDF = file.type === 'application/pdf';
     const imageUrl = file.url || (file.type ? URL.createObjectURL(new File([], file.name, { type: file.type })) : null);
 
     if (isImage && imageUrl) {
       return (
-        <div key={index} className="relative group">
+        <div key={file.id} className="relative group">
           <Image
             src={imageUrl}
             alt={file.name}
@@ -40,7 +64,7 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
             variant="destructive"
             size="icon"
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => onRemove(index)}
+            onClick={() => handleRemove(file.id)}
             aria-label="Remove file"
           >
             <X className="h-4 w-4" />
@@ -51,14 +75,14 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
 
     if (isPDF) {
       return (
-        <div key={index} className="relative group p-4 border rounded bg-gray-50 hover:bg-gray-100 transition-colors">
+        <div key={file.id} className="relative group p-4 border rounded bg-gray-50 hover:bg-gray-100 transition-colors">
           <p className="text-sm truncate">{file.name}</p>
           {file.size && <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>}
           <Button
             variant="destructive"
             size="icon"
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => onRemove(index)}
+            onClick={() => handleRemove(file.id)}
             aria-label="Remove file"
           >
             <X className="h-4 w-4" />
@@ -81,7 +105,7 @@ export function FilePreview({ files, onRemove }: FilePreviewProps) {
   return (
     <div>
       <div className="grid grid-cols-3 gap-4">
-        {files.map((file, index) => renderPreview(file, index))}
+        {files.map((file, _index) => renderPreview(file, _index))}
       </div>
 
       {expandedImage && (

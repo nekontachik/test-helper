@@ -27,7 +27,7 @@ const publicLimiter = new Ratelimit({
 export async function rateLimiter(
   request: NextRequest,
   isAuthenticated: boolean = false
-) {
+): Promise<NextResponse | null> {
   const ip = request.ip ?? '127.0.0.1';
   const limiter = isAuthenticated ? authenticatedLimiter : publicLimiter;
 

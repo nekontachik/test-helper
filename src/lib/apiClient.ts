@@ -11,11 +11,20 @@ class ApiError extends Error {
   }
 }
 
+// Set to true to bypass authentication in development
+const DEV_MODE = true;
+
 const api: AxiosInstance = axios.create({
   baseURL: '/api',
 });
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  if (DEV_MODE) {
+    // Use a hardcoded token for development
+    config.headers.Authorization = `Bearer dev-token`;
+    return config;
+  }
+  
   const session = await getSession();
   if (session?.user) {
     config.headers.Authorization = `Bearer ${session.user.id}`;

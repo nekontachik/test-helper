@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRole } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
 import type { JWT } from 'next-auth/jwt';
 
 interface RouteConfig {
@@ -31,22 +31,22 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   // Role-specific routes
   '/projects/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
+    roles: ['EDITOR', 'MANAGER', 'ADMIN'] as UserRole[],
     requireVerified: true 
   },
   '/test-cases/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.EDITOR, UserRole.MANAGER, UserRole.ADMIN],
+    roles: ['EDITOR', 'MANAGER', 'ADMIN'] as UserRole[],
     requireVerified: true 
   },
   '/reports/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.MANAGER, UserRole.ADMIN],
+    roles: ['MANAGER', 'ADMIN'] as UserRole[],
     requireVerified: true 
   },
   '/admin/(.*)': { 
     requireAuth: true, 
-    roles: [UserRole.ADMIN],
+    roles: ['ADMIN'] as UserRole[],
     requireVerified: true,
     require2FA: true 
   },
@@ -58,7 +58,7 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
  * @returns boolean indicating if role is valid
  */
 function isValidUserRole(role: string): role is UserRole {
-  return Object.values(UserRole).includes(role as UserRole);
+  return ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER', 'USER'].includes(role as UserRole);
 }
 
 /**
@@ -80,7 +80,8 @@ export async function routeProtection(request: Request): Promise<Response> {
       return NextResponse.next();
     }
 
-    const token = await getToken({ req: request as any }) as AuthToken | null;
+    // @ts-expect-error - getToken expects a different request type
+    const token = await getToken({ req: request }) as AuthToken | null;
 
     // Handle unauthenticated users
     if (!token?.sub) {

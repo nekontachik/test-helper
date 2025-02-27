@@ -1,4 +1,4 @@
-import type { TestReport, TestRun, TestCase, TestCaseResult, Prisma } from '@prisma/client';
+import type { TestReport, TestRun, TestCase } from '@prisma/client';
 import type { TestResultStatus } from './constants';
 
 export interface TestRunCase {

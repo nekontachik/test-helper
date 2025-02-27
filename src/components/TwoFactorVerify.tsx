@@ -39,13 +39,13 @@ export function TwoFactorVerify({
   email,
   onVerifyComplete,
   redirectPath = '/dashboard'
-}: TwoFactorVerifyProps) {
+}: TwoFactorVerifyProps): JSX.Element {
   const router = useRouter();
   const [code, setCode] = React.useState('');
   const [status, setStatus] = React.useState<VerifyStatus>('idle');
   const [error, setError] = React.useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setStatus('verifying');
     setError(null);

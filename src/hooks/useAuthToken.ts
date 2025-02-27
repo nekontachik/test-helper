@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-export function useAuthToken() {
+interface AuthTokenResult {
+  token: string | null;
+  isLoading: boolean;
+  refreshToken: () => Promise<boolean>;
+  logout: () => void;
+}
+
+export function useAuthToken(): AuthTokenResult {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();

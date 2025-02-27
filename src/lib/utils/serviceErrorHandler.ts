@@ -1,7 +1,8 @@
 import type { ServiceResponse } from './serviceResponse';
 import type { ApiErrorCode } from '@/lib/errors/types';
 
-interface ApiError {
+// Prefix with underscore to indicate it's not used directly
+interface _ApiError {
   code: ApiErrorCode;
   message: string;
   details?: unknown;

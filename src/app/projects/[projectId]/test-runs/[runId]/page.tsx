@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Box, Button, Heading, useDisclosure } from '@chakra-ui/react';
+import { Box, Heading, useDisclosure } from '@chakra-ui/react';
 import { useTestRun } from '@/hooks/useTestRuns';
 import { TestRunDetails } from '@/components/test-run/TestRunDetails';
 import { GenerateReport } from '@/components/test-run/GenerateReport';
@@ -11,16 +10,16 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { TestRunStatus } from '@/types';
 import { GenerateReportButton } from '@/components/reports/GenerateReportButton';
 
-export default function TestRunPage() {
+export default function TestRunPage(): JSX.Element {
   const params = useParams();
   const projectId = params?.projectId as string;
   const runId = params?.runId as string;
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onClose } = useDisclosure();
   
   const { data: testRun, isLoading, error } = useTestRun(projectId, runId);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorAlert error={error} />;
+  if (error) return <ErrorAlert error={error as Error} />;
   if (!testRun) return <ErrorAlert message="Test run not found" />;
 
   return (

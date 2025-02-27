@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box } from '@chakra-ui/react';
-import { Skeleton as ChakraSkeleton } from '@chakra-ui/skeleton';
+import { Box, Skeleton as ChakraSkeleton } from '@chakra-ui/react';
 
 interface SkeletonProps {
   height?: string | number;
@@ -8,7 +7,7 @@ interface SkeletonProps {
   isCircle?: boolean;
 }
 
-export function Skeleton({ height = '20px', width = '100%', isCircle = false }: SkeletonProps) {
+export function Skeleton({ height = '20px', width = '100%', isCircle = false }: SkeletonProps): JSX.Element {
   if (isCircle) {
     return <ChakraSkeleton height={height} width={height} borderRadius="50%" />;
   }

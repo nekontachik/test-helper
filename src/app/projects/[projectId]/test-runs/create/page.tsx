@@ -8,24 +8,26 @@ import { useTestCases } from '@/hooks/useTestCases';
 import { useCreateTestRun } from '@/hooks/useTestRuns';
 import { TestRunForm } from '@/components/TestRunForm';
 import type {
-  TestRunFormData} from '@/types';
+  TestRunFormData, TestCase} from '@/types';
 import {
   TestRunStatus,
-  TestCase,
   TestCaseStatus,
   TestCasePriority,
 } from '@/types';
 
-export default function CreateTestRunPage() {
+export default function CreateTestRunPage(): JSX.Element {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
   const projectId = params?.projectId as string;
-  const createTestRun = useCreateTestRun(projectId);
-  const { data: testCases, isLoading, error } = useTestCases(projectId);
+  const createTestRun = useCreateTestRun();
+  const { testCases: testCasesData, isLoading, error } = useTestCases({ projectId });
+
+  // Use type assertion to handle the type mismatch between different TestCase types
+  const testCases = testCasesData as unknown as TestCase[];
 
   const handleSubmit = useCallback(
-    (data: TestRunFormData) => {
+    (data: TestRunFormData): void => {
       createTestRun.mutate(
         {
           name: data.name,
@@ -76,7 +78,7 @@ export default function CreateTestRunPage() {
     return (
       <Text color="red.500">Error loading test cases: {error.message}</Text>
     );
-  if (!testCases || testCases.data.length === 0)
+  if (!testCases || testCases.length === 0)
     return (
       <Text>No test cases available. Please create some test cases first.</Text>
     );
@@ -88,7 +90,7 @@ export default function CreateTestRunPage() {
       </Heading>
       <TestRunForm
         onSubmit={handleSubmit}
-        testCases={testCases.data}
+        testCases={testCases}
         isSubmitting={createTestRun.isPending}
         projectId={projectId}
       />

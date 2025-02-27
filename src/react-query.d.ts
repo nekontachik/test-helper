@@ -1,5 +1,4 @@
 import '@tanstack/react-query';
-import { QueryClientProvider as OriginalQueryClientProvider } from '@tanstack/react-query';
 import type { ComponentType } from 'react';
 
 declare module '@tanstack/react-query' {

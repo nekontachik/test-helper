@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TestResultStatus } from '@/types/testRun';
-import { ROUTES } from '@/lib/routes';
 import { logger } from '@/lib/utils/logger';
 
 interface ExecuteTestRunInput {
@@ -13,19 +12,33 @@ interface ExecuteTestRunInput {
   }[];
 }
 
-export function useTestExecution() {
+interface MutationResult<TData, TVariables> {
+  mutate: (variables: TVariables) => void;
+  mutateAsync: (variables: TVariables) => Promise<TData>;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  reset: () => void;
+}
+
+interface ExecuteTestRunResponse {
+  success: boolean;
+  data: Record<string, unknown>;
+}
+
+export function useTestExecution(): MutationResult<ExecuteTestRunResponse, ExecuteTestRunInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ projectId, runId, results }: ExecuteTestRunInput) => {
-      const response = await fetch(
-        ROUTES.API.PROJECT.TEST_RUNS.EXECUTE(projectId, runId),
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ results }),
-        }
-      );
+      // Use direct URL construction
+      const url = `/api/projects/${projectId}/test-runs/${runId}/execute`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results }),
+      });
 
       if (!response.ok) {
         const error = await response.json();
@@ -34,7 +47,7 @@ export function useTestExecution() {
 
       return response.json();
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (_data: ExecuteTestRunResponse, variables: ExecuteTestRunInput) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({
         queryKey: ['testRun', variables.projectId, variables.runId],
@@ -43,7 +56,7 @@ export function useTestExecution() {
         queryKey: ['testResults', variables.runId],
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       logger.error('Test execution error:', error);
     },
   });

@@ -21,12 +21,12 @@ interface SecuritySettingsProps {
   user: User;
 }
 
-export function SecuritySettings({ user }: SecuritySettingsProps) {
+export function SecuritySettings({ user }: SecuritySettingsProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(user.twoFactorEnabled);
   const toast = useToast();
 
-  const handleToggle2FA = async () => {
+  const handleToggle2FA = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/2fa/toggle', {
@@ -58,7 +58,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps) {
     }
   };
 
-  const handleGenerateBackupCodes = async () => {
+  const handleGenerateBackupCodes = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/backup-codes/generate', {

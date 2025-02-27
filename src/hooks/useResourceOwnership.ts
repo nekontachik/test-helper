@@ -6,13 +6,18 @@ interface UseResourceOwnershipOptions {
   resourceId: string;
 }
 
-export function useResourceOwnership({ resourceType, resourceId }: UseResourceOwnershipOptions) {
+interface OwnershipResult {
+  isOwner: boolean | null;
+  isTeamMember: boolean | null;
+}
+
+export function useResourceOwnership({ resourceType, resourceId }: UseResourceOwnershipOptions): OwnershipResult {
   const { data: session } = useSession();
   const [isOwner, setIsOwner] = useState<boolean | null>(null);
   const [isTeamMember, setIsTeamMember] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkOwnership = async () => {
+    const checkOwnership = async (): Promise<void> => {
       if (!session?.user) {
         setIsOwner(false);
         setIsTeamMember(false);

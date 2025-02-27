@@ -7,8 +7,6 @@ import {
   Textarea,
   Select,
   VStack,
-} from '@chakra-ui/react';
-import {
   Modal,
   ModalOverlay,
   ModalContent,
@@ -16,7 +14,7 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-} from '@chakra-ui/modal';
+} from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
 import type { TestCaseFormData} from '@/types';
 import { TestCaseStatus, TestCasePriority } from '@/types';
@@ -33,14 +31,14 @@ export function CreateTestCaseModal({
   onClose,
   onCreateTestCase,
   projectId,
-}: CreateTestCaseModalProps) {
+}: CreateTestCaseModalProps): JSX.Element {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<TestCaseFormData>();
 
-  const onSubmit = (data: TestCaseFormData) => {
+  const onSubmit = (data: TestCaseFormData): void => {
     onCreateTestCase({ ...data, projectId });
     onClose();
   };

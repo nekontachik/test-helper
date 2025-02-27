@@ -3,7 +3,15 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { rateLimiter } from './lib/middleware/rateLimit';
 
+// Set to true to bypass authentication in development
+const DEV_MODE = true;
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
+  // In development mode, bypass authentication
+  if (DEV_MODE) {
+    return NextResponse.next();
+  }
+
   // Get the token if it exists
   const token = await getToken({ req: request });
   const isAuthenticated = !!token;

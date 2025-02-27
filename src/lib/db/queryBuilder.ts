@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client';
 import type { FilterCondition, WhereClause } from './filters';
-import { ApiError } from 'next';
+import { ApiError } from '@/lib/api/errorHandler';
 
-export interface QueryOptions<T extends Record<string, any>> {
+export interface QueryOptions<T extends Record<string, unknown>> {
   select?: (keyof T)[];
   include?: Partial<Record<keyof T, boolean | object>>;
   where?: WhereClause<T>;
@@ -13,7 +13,7 @@ export interface QueryOptions<T extends Record<string, any>> {
   distinct?: keyof T;
 }
 
-export class PrismaQueryBuilder<T extends Record<string, any>> {
+export class PrismaQueryBuilder<T extends Record<string, unknown>> {
   private readonly MAX_LIMIT = 50;
   private readonly DEFAULT_LIMIT = 10;
   private readonly ALLOWED_OPERATORS = new Set([
@@ -23,7 +23,7 @@ export class PrismaQueryBuilder<T extends Record<string, any>> {
 
   constructor(private readonly model: string) {}
 
-  private validateQueryOptions(options: QueryOptions<T>) {
+  private validateQueryOptions(options: QueryOptions<T>): void {
     // Essential validations only
     if (options.page && (options.page < 1 || !Number.isInteger(options.page))) {
       throw new ApiError('Invalid page number', 400);
@@ -44,6 +44,7 @@ export class PrismaQueryBuilder<T extends Record<string, any>> {
 
   buildQuery(options: QueryOptions<T>): Prisma.PrismaPromise<T[]> {
     this.validateQueryOptions(options);
+    // Return as any since we're building a query object that will be passed to Prisma
     return {
       where: this.buildWhere(options.where, options.filters),
       select: this.buildSelect(options.select),
@@ -54,27 +55,27 @@ export class PrismaQueryBuilder<T extends Record<string, any>> {
         skip: (options.page - 1) * options.limit,
         take: options.limit,
       } : {}),
-    };
+    } as unknown as Prisma.PrismaPromise<T[]>;
   }
 
-  private buildWhere(where?: WhereClause<T>, filters?: FilterCondition<T>[]): Prisma.WhereInput {
+  private buildWhere(where?: WhereClause<T>, filters?: FilterCondition<T>[]): Record<string, unknown> {
     const baseWhere = where || {};
     if (!filters?.length) return baseWhere;
 
     const filterConditions = filters.reduce((acc, filter) => {
       const condition = this.buildFilterCondition(filter);
       if (filter.isRelation) {
-        acc[filter.field] = { some: condition };
+        acc[filter.field as string] = { some: condition };
       } else {
-        acc[filter.field] = condition;
+        acc[filter.field as string] = condition;
       }
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
 
     return { ...baseWhere, ...filterConditions };
   }
 
-  private buildFilterCondition(filter: FilterCondition<T>): any {
+  private buildFilterCondition(filter: FilterCondition<T>): Record<string, unknown> {
     const { operator, value } = filter;
 
     switch (operator) {
@@ -101,9 +102,9 @@ export class PrismaQueryBuilder<T extends Record<string, any>> {
     }
   }
 
-  private buildSelect(fields?: (keyof T)[]): Prisma.SelectSubset<T, T> | undefined {
+  private buildSelect(fields?: (keyof T)[]): Record<string, boolean> | undefined {
     if (!fields?.length) return undefined;
-    return fields.reduce((acc, field) => ({ ...acc, [field]: true }), {});
+    return fields.reduce((acc, field) => ({ ...acc, [field as string]: true }), {} as Record<string, boolean>);
   }
 
   private isValidField(field: keyof T): boolean {

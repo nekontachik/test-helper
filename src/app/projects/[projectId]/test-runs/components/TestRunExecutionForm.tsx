@@ -37,7 +37,7 @@ const STATUS_OPTIONS = [
   { value: 'SKIPPED' as TestCaseResultStatus, label: 'Skipped' },
 ] as const;
 
-export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFormProps) {
+export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFormProps): JSX.Element {
   // Memoize default values to prevent unnecessary recalculations
   const defaultValues = useMemo(() => ({
     results: testCases.map((testCase) => ({
@@ -61,7 +61,7 @@ export function TestRunExecutionForm({ testCases, onSubmit }: TestRunExecutionFo
     name: 'results',
   });
 
-  const onSubmitForm = (data: FormData) => {
+  const onSubmitForm = (data: FormData): void => {
     onSubmit(data.results);
   };
 

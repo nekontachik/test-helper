@@ -29,7 +29,7 @@ export function TestRunSummary({
   name = 'Test Run Summary',
   isLoading = false,
   error
-}: TestRunSummaryProps) {
+}: TestRunSummaryProps): JSX.Element {
   if (error) {
     return (
       <Card className="bg-red-50">

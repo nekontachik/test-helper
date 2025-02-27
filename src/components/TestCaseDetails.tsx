@@ -30,12 +30,12 @@ interface TestCaseDetailsProps {
   testCaseId: string;
 }
 
-export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps) {
+export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
   const { data: testCase, isLoading, error } = useTestCase(projectId, testCaseId);
   const toast = useToast();
 
-  const handleDelete = async () => {
+  const handleDelete = async (): Promise<void> => {
     try {
       const response = await fetch(`/api/projects/${projectId}/test-cases/${testCaseId}`, {
         method: 'DELETE',
@@ -61,7 +61,7 @@ export function TestCaseDetails({ projectId, testCaseId }: TestCaseDetailsProps)
     }
   };
 
-  const handleEditSubmit = async (formData: TestCaseFormData) => {
+  const handleEditSubmit = async (formData: TestCaseFormData): Promise<void> => {
     try {
       const response = await fetch(`/api/projects/${projectId}/test-cases/${testCaseId}`, {
         method: 'PUT',

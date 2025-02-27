@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/response';
+import { ApiError } from '@/lib/api/errorHandler';
 import { imageSchema, documentSchema } from '@/lib/validation/schema';
 
 export async function validateFile(
@@ -14,11 +14,11 @@ export async function validateFile(
     });
     return file;
   } catch (error) {
+    console.error('File validation error:', error);
     throw new ApiError(
       'Invalid file',
-      'INVALID_FILE',
       400,
-      { file: file.name }
+      'INVALID_FILE'
     );
   }
 }
@@ -42,9 +42,8 @@ export async function processUpload(
   if (!response.ok) {
     throw new ApiError(
       'Failed to upload file',
-      'UPLOAD_FAILED',
       500,
-      { file: file.name }
+      'UPLOAD_FAILED'
     );
   }
   

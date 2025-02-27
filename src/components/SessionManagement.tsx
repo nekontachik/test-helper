@@ -50,13 +50,13 @@ interface SessionManagementProps {
   currentSessionId: string;
 }
 
-export function SessionManagement({ currentSessionId }: SessionManagementProps) {
+export function SessionManagement({ currentSessionId }: SessionManagementProps): JSX.Element {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
-  const fetchSessions = useCallback(async () => {
+  const fetchSessions = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/sessions');
       if (!response.ok) throw new Error('Failed to fetch sessions');
@@ -83,7 +83,7 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
     fetchSessions();
   }, [fetchSessions]);
 
-  const terminateSession = async (sessionId: string) => {
+  const terminateSession = async (sessionId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/auth/sessions/${sessionId}`, {
         method: 'DELETE',
@@ -108,7 +108,7 @@ export function SessionManagement({ currentSessionId }: SessionManagementProps) 
     }
   };
 
-  const terminateAllOtherSessions = async () => {
+  const terminateAllOtherSessions = async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/sessions', {
         method: 'DELETE',

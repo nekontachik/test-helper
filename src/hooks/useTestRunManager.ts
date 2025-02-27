@@ -3,9 +3,14 @@ import { useErrorHandler } from './useErrorHandler';
 import { TestResultError } from '@/lib/errors/specific/testErrors';
 import type { TestResultFormData } from '@/lib/validations/testResult';
 
+interface TestResultResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+}
+
 export function useTestRunManager(projectId: string, testRunId: string): { 
   isSubmitting: boolean;
-  submitTestResult: (data: TestResultFormData) => Promise<any>;
+  submitTestResult: (data: TestResultFormData) => Promise<TestResultResponse>;
 } {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { withErrorHandling } = useErrorHandler();
@@ -35,9 +40,6 @@ export function useTestRunManager(projectId: string, testRunId: string): {
       } finally {
         setIsSubmitting(false);
       }
-    }, {
-      retryCount: 2,
-      retryDelay: 1000
     });
   }, [projectId, testRunId, withErrorHandling]);
 

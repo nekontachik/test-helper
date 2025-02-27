@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
   { label: 'Reports', href: '/reports', icon: SettingsIcon },
 ];
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps): JSX.Element {
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
   const textColor = useColorModeValue('gray.700', 'gray.200');

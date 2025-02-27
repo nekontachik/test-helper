@@ -5,10 +5,10 @@ import { Box, Heading, Button } from '@chakra-ui/react';
 import ProjectList from '@/components/ProjectList';
 import { useProjects } from '@/hooks/useProjects';
 import { withAuth } from '@/components/withAuth';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { UserRole } from '@/types/auth';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import type { UserRole } from '@/types/auth';
 
-function ProjectsPage() {
+function ProjectsPage(): JSX.Element {
   const { data, isLoading, error } = useProjects();
 
   if (isLoading) {
@@ -30,10 +30,10 @@ function ProjectsPage() {
   );
 }
 
-// Use the correct UserRole values
+// Use string literals for roles instead of enum values
 export default withAuth(ProjectsPage, [
-  UserRole.USER,
-  UserRole.EDITOR,
-  UserRole.MANAGER,
-  UserRole.ADMIN
-]);
+  'USER',
+  'EDITOR',
+  'MANAGER',
+  'ADMIN'
+] as UserRole[]);

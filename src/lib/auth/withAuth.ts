@@ -41,7 +41,8 @@ export function withAuth(handler: AuthenticatedHandler) {
       };
 
       return handler(authenticatedReq, params);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Authentication error:', error);
       return NextResponse.json(
         { error: 'Authentication failed' },
         { status: 500 }

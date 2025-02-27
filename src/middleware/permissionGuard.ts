@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { UserRole } from '@/types/rbac';
+import { UserRole } from './rbac';
 import logger from '@/lib/logger';
 import type { JWT } from 'next-auth/jwt';
+import type { NextRequest } from 'next/server';
 
 interface AuthToken extends Omit<JWT, 'role'> {
   sub: string;
@@ -25,7 +26,8 @@ export async function permissionGuard(
   config: PermissionGuardConfig
 ): Promise<Response | undefined> {
   try {
-    const token = await getToken({ req: request as any }) as AuthToken | null;
+    const req = request as unknown as NextRequest;
+    const token = await getToken({ req }) as AuthToken | null;
 
     if (!token?.sub) {
       return NextResponse.json(

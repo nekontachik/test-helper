@@ -16,14 +16,14 @@ interface CreateTestRunFormProps {
   projectId: string;
 }
 
-export function CreateTestRunForm({ onSubmit, projectId }: CreateTestRunFormProps) {
+export function CreateTestRunForm({ onSubmit, projectId }: CreateTestRunFormProps): JSX.Element {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<TestRunFormData>();
 
-  const onFormSubmit = (data: TestRunFormData) => {
+  const onFormSubmit = (data: TestRunFormData): void => {
     onSubmit({ ...data, projectId });
   };
 

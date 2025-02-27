@@ -7,11 +7,11 @@ export default async function VerifyPage(): Promise<JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/auth/signin');
+    redirect('/auth/login');
   }
 
   if (!session.user.email) {
-    redirect('/auth/signin?error=EmailRequired');
+    redirect('/auth/login?error=EmailRequired');
   }
 
   if (session.user.emailVerified) {

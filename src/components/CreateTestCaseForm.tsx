@@ -22,14 +22,14 @@ interface CreateTestCaseFormProps {
 export function CreateTestCaseForm({
   onSubmit,
   projectId,
-}: CreateTestCaseFormProps) {
+}: CreateTestCaseFormProps): JSX.Element {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<TestCaseFormData>();
 
-  const onFormSubmit = (data: TestCaseFormData) => {
+  const onFormSubmit = (data: TestCaseFormData): void => {
     onSubmit({ ...data, projectId });
   };
 

@@ -13,7 +13,7 @@ interface TestCaseResponse {
   currentPage: number;
 }
 
-interface QueryParams {
+interface _QueryParams {
   projectId: string;
   filters: Omit<TestCaseQueryParams, 'projectId'>;
 }

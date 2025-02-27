@@ -8,7 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorAlert } from '@/components/ui/ErrorAlert';
 
-export default function TestRunExecutionPage() {
+export default function TestRunExecutionPage(): JSX.Element {
   const params = useParams();
   const projectId = params?.projectId as string;
   const runId = params?.runId as string;
@@ -16,7 +16,7 @@ export default function TestRunExecutionPage() {
   const { data: testRun, isLoading, error } = useTestRun(projectId, runId);
 
   if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorAlert error={error} />;
+  if (error) return <ErrorAlert error={error as Error} />;
   if (!testRun) return <ErrorAlert message="Test run not found" />;
 
   return (

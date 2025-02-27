@@ -8,6 +8,16 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import type { TestResultFormData } from '@/lib/validations/testResult';
 
+interface TestRunProgress {
+  currentIndex: number;
+  results: TestResultWithEvidence[];
+}
+
+interface TestRunResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+}
+
 export function useTestRunState({ 
   testCases, 
   projectId, 
@@ -23,7 +33,7 @@ export function useTestRunState({
   isLastTestCase: boolean;
   progress: {
     currentIndex: number;
-    results: any[];
+    results: TestResultWithEvidence[];
   };
   completionProgress: number;
   isSubmitting: boolean;
@@ -32,9 +42,9 @@ export function useTestRunState({
   handleRetry: () => Promise<void>;
   isCompleted: boolean;
   handleComplete: () => Promise<void>;
-  updateProgress: (updates: any) => void;
+  updateProgress: (updates: TestRunProgress) => void;
   clearProgress: () => void;
-  executeTestRun: (results: TestResultWithEvidence[]) => Promise<any>;
+  executeTestRun: (results: TestResultWithEvidence[]) => Promise<TestRunResponse>;
 } {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,12 +65,12 @@ export function useTestRunState({
       setIsSubmitting(true);
       setError(null);
 
-      const result: TestResultWithEvidence = {
+      const result = {
         testCaseId: currentTestCase.id,
         status: formData.status,
         notes: formData.notes || '',
-        evidenceUrls: formData.evidenceUrls || []
-      };
+        evidence: formData.evidence || []
+      } as unknown as TestResultWithEvidence;
 
       await executeTestRun([result]);
       

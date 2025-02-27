@@ -78,7 +78,7 @@ export function useDeleteTestRun(projectId: string): {
 }
 
 export function useCreateTestCase(projectId: string): {
-  mutate: (data: TestCaseFormData) => Promise<any>;
+  mutate: (data: TestCaseFormData) => Promise<TestCaseFormData>;
   isLoading: boolean;
   error: unknown;
 } {

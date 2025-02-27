@@ -7,8 +7,8 @@ import {
   Input,
   VStack,
   FormErrorMessage,
+  Checkbox,
 } from '@chakra-ui/react';
-import { Checkbox } from '@chakra-ui/checkbox';
 import { useForm } from 'react-hook-form';
 import type { TestRunFormData, TestCase } from '@/types';
 
@@ -19,14 +19,14 @@ interface TestRunFormProps {
   isSubmitting: boolean;
 }
 
-export function TestRunForm({ onSubmit, projectId, testCases, isSubmitting }: TestRunFormProps) {
+export function TestRunForm({ onSubmit, projectId, testCases, isSubmitting }: TestRunFormProps): JSX.Element {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<TestRunFormData>();
 
-  const onFormSubmit = (data: TestRunFormData) => {
+  const onFormSubmit = (data: TestRunFormData): void => {
     onSubmit({ ...data, projectId });
   };
 

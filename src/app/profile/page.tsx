@@ -63,13 +63,13 @@ export default async function ProfilePage(): Promise<JSX.Element> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      redirect('/auth/signin');
+      redirect('/auth/login');
     }
 
     const user = await getUserData(session.user.id);
     if (!user) {
       logger.warn('User not found:', { userId: session.user.id });
-      redirect('/auth/signin');
+      redirect('/auth/login');
     }
 
     const authUser: AuthUser = {

@@ -4,10 +4,9 @@ import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function Unauthorized() {
+export default function Unauthorized(): JSX.Element {
   const router = useRouter();
-  const { session } = useAuth();
-  const user = session?.user;
+  const { user } = useAuth();
 
   return (
     <Box textAlign="center" py={10} px={6}>

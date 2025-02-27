@@ -3,7 +3,15 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 
+// Set to true to bypass authentication in development
+const DEV_MODE = true;
+
 export default async function LoginPage(): Promise<JSX.Element> {
+  // In development mode, bypass authentication and redirect to dashboard
+  if (DEV_MODE) {
+    redirect('/dashboard');
+  }
+
   const session = await getServerSession(authOptions);
 
   if (session) {

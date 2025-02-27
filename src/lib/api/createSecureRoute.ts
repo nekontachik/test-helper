@@ -30,7 +30,7 @@ interface SecureRouteOptions {
 
 export function createSecureRoute(
   handler: SecureRouteHandler,
-  options: SecureRouteOptions
+  _options: SecureRouteOptions
 ): SecureRouteHandler {
   return async (request: Request, context: SecureRouteContext) => {
     try {
