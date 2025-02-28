@@ -1,26 +1,37 @@
-import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import { getSession } from 'next-auth/react';
 import type { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
 
 // Custom error class for API errors
 class ApiError extends Error {
-  constructor(message: string, public statusCode: number) {
+  code: string;
+  details?: unknown;
+  
+  constructor(message: string, public statusCode: number, options?: { code?: string; details?: unknown }) {
     super(message);
     this.name = 'ApiError';
+    this.code = options?.code ?? 'UNKNOWN_ERROR';
+    this.details = options?.details;
   }
 }
 
-// Set to true to bypass authentication in development
-const DEV_MODE = true;
+const config = {
+  devMode: process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEV_AUTH === 'true',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api',
+};
+
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  devMode?: boolean;
+  skipAuth?: boolean;
+}
 
 const api: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: config.baseURL,
 });
 
-api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  if (DEV_MODE) {
-    // Use a hardcoded token for development
+api.interceptors.request.use(async (config: ExtendedAxiosRequestConfig) => {
+  if (config.devMode) {
     config.headers.Authorization = `Bearer dev-token`;
     return config;
   }
@@ -32,28 +43,53 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-const handleApiError = (error: unknown): never => {
+interface ApiErrorResponse {
+  message: string;
+  code: string;
+  details?: unknown;
+}
+
+const handleAxiosError = (error: unknown): never => {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<{ error?: string }>;
-    throw new ApiError(axiosError.response?.data?.error || 'An unexpected error occurred', axiosError.response?.status || 500);
+    const errorData = error.response?.data as Partial<ApiErrorResponse>;
+    throw new ApiError(
+      errorData?.message ?? 'Request failed',
+      error.response?.status ?? 500,
+      {
+        code: errorData?.code,
+        details: errorData?.details
+      }
+    );
   }
-  throw new ApiError('An unexpected error occurred', 500);
+  throw error;
 };
 
 const apiClient = {
   async get<T>(url: string, params?: unknown): Promise<T> {
-    const response = await api.get<T>(url, { params });
-    return response.data;
+    try {
+      const response = await api.get<T>(url, { params });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
   },
 
   async post<T>(url: string, data: unknown): Promise<T> {
-    const response = await api.post<T>(url, data);
-    return response.data;
+    try {
+      const response = await api.post<T>(url, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
   },
 
   async put<T>(url: string, data: unknown): Promise<T> {
-    const response = await api.put<T>(url, data);
-    return response.data;
+    try {
+      const response = await api.put<T>(url, data);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error);
+    }
   },
 
   async delete(url: string): Promise<void> {
@@ -65,7 +101,7 @@ const apiClient = {
       const response = await api.get<PaginatedResponse<Project>>(`/projects`, { params: { page, limit } });
       return response.data;
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 
@@ -74,7 +110,7 @@ const apiClient = {
       const response = await api.post<Project>('/projects', data);
       return response.data;
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 
@@ -91,7 +127,7 @@ const apiClient = {
     try {
       return this.get<PaginatedResponse<TestCase>>(`/projects/${projectId}/test-cases`, params);
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 
@@ -103,7 +139,7 @@ const apiClient = {
     try {
       return this.post<TestCase>(`/projects/${projectId}/test-cases`, data);
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 
@@ -116,7 +152,7 @@ const apiClient = {
       const response = await api.get(`/projects/${projectId}/test-cases/${testCaseId}/versions`);
       return response.data;
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 
@@ -152,7 +188,7 @@ const apiClient = {
     try {
       return this.post<TestCase>(`/projects/${projectId}/test-cases/${testCaseId}/restore`, { versionNumber });
     } catch (error) {
-      return handleApiError(error);
+      throw handleAxiosError(error);
     }
   },
 

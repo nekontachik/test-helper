@@ -60,7 +60,7 @@ export default function RegisterPage(): JSX.Element {
         isClosable: true,
       });
 
-      router.push('/login');
+      router.push('/auth/signin');
     } catch (error) {
       toast({
         title: 'Registration failed',

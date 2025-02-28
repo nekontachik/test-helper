@@ -90,7 +90,7 @@ export function AuthVerification({ token }: AuthVerificationProps): JSX.Element 
             </AlertTitle>
             <AlertDescription maxWidth="sm">
               Your email has been successfully verified. You will be redirected to
-              the login page shortly.
+              the sign in page shortly.
             </AlertDescription>
           </Alert>
         ) : (

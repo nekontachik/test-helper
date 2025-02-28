@@ -1,6 +1,4 @@
-import { NextResponse } from 'next/server';
-
-export function securityHeaders(request: Request): NextResponse {
+export function securityHeaders(request: Request): Headers {
   const headers = new Headers(request.headers);
 
   // Security Headers
@@ -28,11 +26,6 @@ export function securityHeaders(request: Request): NextResponse {
     upgrade-insecure-requests;
   `.replace(/\s+/g, ' ').trim());
 
-  const response = NextResponse.next({
-    request: {
-      headers,
-    },
-  });
-
-  return response;
+  // Return the headers instead of creating a NextResponse
+  return headers;
 } 

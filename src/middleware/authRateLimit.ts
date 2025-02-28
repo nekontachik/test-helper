@@ -6,12 +6,13 @@ import { RateLimitError } from '@/lib/errors';
 export async function authRateLimitMiddleware(
   request: NextRequest,
   type: 'login' | 'password' = 'login'
-): Promise<NextResponse> {
+): Promise<Response | null> {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'anonymous';
   
   try {
     await SecurityService.checkBruteForce(ip, type);
-    return NextResponse.next();
+    // Return null instead of NextResponse.next() to indicate success
+    return null;
   } catch (error) {
     if (error instanceof RateLimitError) {
       return new NextResponse(

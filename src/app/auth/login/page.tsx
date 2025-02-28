@@ -1,26 +1,17 @@
-import { LoginForm } from '@/components/auth/LoginForm';
-import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { RedirectType } from 'next/dist/client/components/redirect';
 
-// Set to true to bypass authentication in development
-const DEV_MODE = true;
-
-export default async function LoginPage(): Promise<JSX.Element> {
-  // In development mode, bypass authentication and redirect to dashboard
-  if (DEV_MODE) {
-    redirect('/dashboard');
-  }
-
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    redirect('/dashboard');
-  }
-
-  return (
-    <div className="container max-w-lg py-8">
-      <LoginForm />
-    </div>
-  );
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}): never {
+  // Get the callback URL if it exists
+  const callbackUrl = searchParams?.callbackUrl 
+    ? `?callbackUrl=${encodeURIComponent(searchParams.callbackUrl as string)}`
+    : '';
+  
+  // Redirect to signin page with 308 status (permanent redirect)
+  // This preserves any query parameters
+  return redirect(`/auth/signin${callbackUrl}`, RedirectType.replace);
 }

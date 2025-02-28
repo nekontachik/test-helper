@@ -3,6 +3,15 @@ import type { TestRun, TestCase, TestRunCase, TestCaseResult } from '@prisma/cli
 import { serviceResponse, type ServiceResponse } from '@/lib/utils/serviceResponse';
 import { authUtils } from '@/lib/utils/authUtils';
 import { ErrorFactory } from '@/lib/errors/BaseError';
+import { v4 as uuidv4 } from 'uuid';
+import logger from '@/lib/utils/logger';
+import type { 
+  TestResult, 
+  TestStatus, 
+  CreateTestRunInput, 
+  UpdateTestResultInput 
+} from '@/lib/types/testRun';
+import type { ErrorCode } from '@/lib/errors/types';
 
 // Add result status type
 type TestResultStatus = 'PASSED' | 'FAILED' | 'PENDING' | 'SKIPPED';
@@ -47,6 +56,199 @@ interface TestRunWithCases extends TestRun {
 interface TestDuration {
   testCaseId: string;
   duration: number;
+}
+
+export class TestRunService {
+  private testRuns: Map<string, TestRun> = new Map();
+  private testResults: Map<string, TestResult> = new Map();
+
+  async createTestRun(input: CreateTestRunInput, userId: string): Promise<TestRun> {
+    try {
+      logger.info('Creating new test run', { input, userId });
+
+      const testRun: TestRun = {
+        id: uuidv4(),
+        projectId: input.projectId,
+        name: input.name,
+        description: input.description,
+        status: 'DRAFT',
+        environment: input.environment,
+        browser: input.browser,
+        platform: input.platform,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        testResults: [],
+        totalTests: input.testCaseIds.length,
+        passedTests: 0,
+        failedTests: 0,
+        blockedTests: 0,
+        skippedTests: 0
+      };
+
+      // Initialize test results
+      const testResults = input.testCaseIds.map(testCaseId => ({
+        id: uuidv4(),
+        testCaseId,
+        status: 'IN_PROGRESS' as TestStatus,
+        executedBy: userId,
+        executedAt: new Date(),
+        duration: 0
+      }));
+
+      testResults.forEach(result => {
+        this.testResults.set(result.id, result);
+        testRun.testResults.push(result);
+      });
+
+      this.testRuns.set(testRun.id, testRun);
+      
+      logger.info('Test run created successfully', { testRunId: testRun.id });
+      return testRun;
+    } catch (error) {
+      logger.error('Failed to create test run', { error, input });
+      throw ErrorFactory.create('PROCESSING_ERROR' as ErrorCode, 'Failed to create test run');
+    }
+  }
+
+  async startTestRun(testRunId: string): Promise<TestRun> {
+    try {
+      logger.info('Starting test run', { testRunId });
+      
+      const testRun = this.testRuns.get(testRunId);
+      if (!testRun) {
+        throw ErrorFactory.create('NOT_FOUND' as ErrorCode, 'Test run not found');
+      }
+
+      testRun.status = 'IN_PROGRESS';
+      testRun.startedAt = new Date();
+      testRun.updatedAt = new Date();
+
+      this.testRuns.set(testRunId, testRun);
+      
+      logger.info('Test run started successfully', { testRunId });
+      return testRun;
+    } catch (error) {
+      logger.error('Failed to start test run', { error, testRunId });
+      throw error;
+    }
+  }
+
+  async updateTestResult(
+    testRunId: string,
+    testResultId: string,
+    input: UpdateTestResultInput,
+    userId: string
+  ): Promise<TestResult> {
+    try {
+      logger.info('Updating test result', { testRunId, testResultId, input });
+
+      const testRun = this.testRuns.get(testRunId);
+      if (!testRun) {
+        throw ErrorFactory.create('NOT_FOUND' as ErrorCode, 'Test run not found');
+      }
+
+      const testResult = this.testResults.get(testResultId);
+      if (!testResult) {
+        throw ErrorFactory.create('NOT_FOUND' as ErrorCode, 'Test result not found');
+      }
+
+      // Update test result
+      const updatedResult: TestResult = {
+        ...testResult,
+        status: input.status,
+        notes: input.notes,
+        attachments: input.attachments,
+        errorDetails: input.errorDetails,
+        executedBy: userId,
+        executedAt: new Date()
+      };
+
+      this.testResults.set(testResultId, updatedResult);
+
+      // Update test run statistics
+      this.updateTestRunStats(testRun);
+      
+      logger.info('Test result updated successfully', { testRunId, testResultId });
+      return updatedResult;
+    } catch (error) {
+      logger.error('Failed to update test result', { error, testRunId, testResultId });
+      throw error;
+    }
+  }
+
+  async completeTestRun(testRunId: string): Promise<TestRun> {
+    try {
+      logger.info('Completing test run', { testRunId });
+
+      const testRun = this.testRuns.get(testRunId);
+      if (!testRun) {
+        throw ErrorFactory.create('NOT_FOUND' as ErrorCode, 'Test run not found');
+      }
+
+      // Check if all tests are completed
+      const hasIncompleteTests = testRun.testResults.some(
+        result => result.status === 'IN_PROGRESS'
+      );
+
+      if (hasIncompleteTests) {
+        throw ErrorFactory.create('VALIDATION_ERROR' as ErrorCode, 'Cannot complete test run with in-progress tests');
+      }
+
+      testRun.status = 'COMPLETED';
+      testRun.completedAt = new Date();
+      testRun.updatedAt = new Date();
+
+      this.testRuns.set(testRunId, testRun);
+      
+      logger.info('Test run completed successfully', { testRunId });
+      return testRun;
+    } catch (error) {
+      logger.error('Failed to complete test run', { error, testRunId });
+      throw error;
+    }
+  }
+
+  private updateTestRunStats(testRun: TestRun): void {
+    const stats = testRun.testResults.reduce(
+      (acc, result) => {
+        switch (result.status) {
+          case 'PASSED':
+            acc.passedTests++;
+            break;
+          case 'FAILED':
+            acc.failedTests++;
+            break;
+          case 'BLOCKED':
+            acc.blockedTests++;
+            break;
+          case 'SKIPPED':
+            acc.skippedTests++;
+            break;
+        }
+        return acc;
+      },
+      { passedTests: 0, failedTests: 0, blockedTests: 0, skippedTests: 0 }
+    );
+
+    Object.assign(testRun, stats);
+    testRun.updatedAt = new Date();
+    this.testRuns.set(testRun.id, testRun);
+  }
+
+  async getTestRun(testRunId: string): Promise<TestRun> {
+    const testRun = this.testRuns.get(testRunId);
+    if (!testRun) {
+      throw ErrorFactory.create('NOT_FOUND' as ErrorCode, 'Test run not found');
+    }
+    return testRun;
+  }
+
+  async getTestRunsByProject(projectId: string): Promise<TestRun[]> {
+    return Array.from(this.testRuns.values())
+      .filter(testRun => testRun.projectId === projectId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }
 
 /**

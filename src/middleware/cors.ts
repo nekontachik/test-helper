@@ -25,7 +25,7 @@ const ALLOWED_HEADERS = [
   'X-Request-Signature',
 ];
 
-export function corsMiddleware(request: NextRequest): NextResponse {
+export function corsMiddleware(request: NextRequest): Response | Headers {
   const origin = request.headers.get('origin');
   
   // Handle preflight requests
@@ -38,17 +38,9 @@ export function corsMiddleware(request: NextRequest): NextResponse {
     });
   }
 
-  // Add CORS headers to actual response
-  const response = NextResponse.next();
-  const corsHeaders = getCorsHeaders(origin);
-  
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    if (value) {
-      response.headers.set(key, value);
-    }
-  });
-
-  return response;
+  // For non-preflight requests, just return the CORS headers
+  // that can be applied to the actual response
+  return new Headers(getCorsHeaders(origin));
 }
 
 function getCorsHeaders(origin: string | null): Record<string, string> {

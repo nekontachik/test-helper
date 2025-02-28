@@ -300,7 +300,7 @@ export class AuthService {
   }
 
   private static validateUserRole(role: unknown): UserRole {
-    const validRoles: UserRole[] = ['USER', 'ADMIN']; // Removed 'MODERATOR' as it's not in UserRole type
+    const validRoles: UserRole[] = ['USER', 'ADMIN']; // Removed 'MODERATOR'
     return validRoles.includes(role as UserRole) ? (role as UserRole) : 'USER';
   }
 }

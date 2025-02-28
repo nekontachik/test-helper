@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,11 +18,12 @@ import {
   Flex
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import logger from '@/lib/utils/logger';
 
-// Validation schema
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters')
@@ -32,12 +32,10 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function SignInForm(): JSX.Element {
-  const { login, isLoading: authLoading, error: authError } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
   const toast = useToast();
+  const { login, error: authError, isLoading } = useAuth();
   
   const {
     register,
@@ -46,37 +44,36 @@ export function SignInForm(): JSX.Element {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema)
   });
-
+  
   const onSubmit = async (data: LoginFormData): Promise<void> => {
-    setIsSubmitting(true);
-    setFormError(null);
-    
     try {
+      logger.debug('Attempting sign in', { 
+        email: data.email, 
+        passwordLength: data.password.length
+      });
+      
       const success = await login(data.email, data.password);
       
       if (success) {
         toast({
           title: 'Login successful',
           status: 'success',
-          duration: 3000,
-          isClosable: true
+          duration: 2000
         });
         
+        setIsRedirecting(true);
+        logger.debug('Redirecting to dashboard');
         router.push('/dashboard');
-      } else {
-        console.error('Login failed without throwing an error');
-        setFormError('Authentication failed. Please check your credentials and try again.');
       }
     } catch (error) {
-      console.error('Login error in form submission:', error);
-      setFormError(error instanceof Error ? error.message : 'Authentication failed');
-    } finally {
-      setIsSubmitting(false);
+      logger.error('Sign in exception', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   };
   
-  if (authLoading) {
-    return <LoadingState text="Checking authentication..." />;
+  if (isRedirecting) {
+    return <LoadingState text="Redirecting..." />;
   }
   
   return (
@@ -86,20 +83,19 @@ export function SignInForm(): JSX.Element {
           Sign In
         </Heading>
         
-        {(formError || authError) && (
+        {authError && (
           <ErrorMessage
             title="Login Failed"
-            message={formError || authError || 'An error occurred during login'}
-            onClose={() => setFormError(null)}
+            message={authError}
+            onClose={() => {/* Error is managed by auth context */}}
           />
         )}
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={4}>
             <FormControl isInvalid={!!errors.email}>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <Input
-                id="email"
                 type="email"
                 placeholder="your.email@example.com"
                 autoComplete="email"
@@ -109,9 +105,8 @@ export function SignInForm(): JSX.Element {
             </FormControl>
 
             <FormControl isInvalid={!!errors.password}>
-              <FormLabel htmlFor="password">Password</FormLabel>
+              <FormLabel>Password</FormLabel>
               <Input
-                id="password"
                 type="password"
                 placeholder="********"
                 autoComplete="current-password"
@@ -125,19 +120,19 @@ export function SignInForm(): JSX.Element {
               colorScheme="blue"
               width="full"
               mt={4}
-              isLoading={isSubmitting}
+              isLoading={isLoading}
               loadingText="Signing in..."
             >
               Sign In
             </Button>
           </VStack>
         </form>
-
-        <Flex justifyContent="space-between" fontSize="sm">
-          <Link as={NextLink} href="/auth/reset-password/request" color="blue.500">
+        
+        <Flex justify="space-between" fontSize="sm">
+          <Link as={NextLink} href="/auth/reset-password" color="blue.500">
             Forgot password?
           </Link>
-          <Link as={NextLink} href="/auth/register" color="blue.500">
+          <Link as={NextLink} href="/auth/signup" color="blue.500">
             Create an account
           </Link>
         </Flex>

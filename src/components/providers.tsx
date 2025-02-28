@@ -1,36 +1,55 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import React from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { CacheProvider } from '@chakra-ui/next-js';
+import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import theme from '../../theme';
-import { ErrorBoundary } from './ErrorBoundary';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthStateProvider } from '@/components/auth/AuthStateProvider';
+import { SessionProvider } from '@/providers/SessionProvider';
 
-interface ProvidersProps {
-  children: ReactNode;
-}
+// Extend the theme to include custom colors, fonts, etc
+const theme = extendTheme({
+  // Add your theme customizations here
+  config: {
+    initialColorMode: 'system',
+    useSystemColorMode: true,
+  },
+  colors: {
+    brand: {
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      // ... add more shades as needed
+    },
+  },
+});
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
-      refetchOnWindowFocus: false,
     },
   },
 });
 
-export function Providers({ children }: ProvidersProps): React.ReactElement {
+interface ProvidersProps {
+  children: React.ReactNode;
+}
+
+export function Providers({ children }: ProvidersProps): JSX.Element {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ChakraProvider theme={theme}>
-          {children}
-        </ChakraProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <CacheProvider>
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider>
+            <AuthProvider>
+              <AuthStateProvider>{children}</AuthStateProvider>
+            </AuthProvider>
+          </SessionProvider>
+        </QueryClientProvider>
+      </ChakraProvider>
+    </CacheProvider>
   );
 }

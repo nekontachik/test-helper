@@ -15,11 +15,11 @@ export default async function TwoFactorVerifyPage(): Promise<JSX.Element> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/auth/login');
+    redirect('/auth/signin');
   }
 
   if (!session.user.email) {
-    redirect('/auth/login?error=EmailRequired');
+    redirect('/auth/signin?error=EmailRequired');
   }
 
   if (session.user.twoFactorAuthenticated) {

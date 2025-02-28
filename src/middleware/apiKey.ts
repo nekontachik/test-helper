@@ -5,7 +5,7 @@ import { ApiKeyService } from '@/lib/auth/apiKeyService';
 export async function apiKeyMiddleware(
   request: NextRequest,
   requiredScopes: string[] = []
-): Promise<NextResponse> {
+): Promise<Response | null> {
   const apiKey = request.headers.get('X-API-Key');
 
   if (!apiKey) {
@@ -24,5 +24,6 @@ export async function apiKeyMiddleware(
     );
   }
 
-  return NextResponse.next();
+  // Return null instead of NextResponse.next() to indicate success
+  return null;
 } 

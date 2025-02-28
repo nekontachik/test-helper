@@ -47,7 +47,7 @@ describe('ProtectedRoute', () => {
     );
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/auth/login');
+      expect(mockPush).toHaveBeenCalledWith('/auth/signin');
     });
   });
 

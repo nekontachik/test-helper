@@ -73,7 +73,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps): JSX.Elemen
         <AuthMessage
           status="success"
           title="Password Updated"
-          message="Your password has been successfully reset. You will be redirected to the login page."
+          message="Your password has been successfully reset. You will be redirected to the sign in page."
         />
       </AuthCard>
     );

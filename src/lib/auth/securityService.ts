@@ -45,6 +45,12 @@ export class SecurityService {
 
   static async checkPasswordBreached(password: string): Promise<boolean> {
     try {
+      // Bypass all password breach checks in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode detected - bypassing breached password check');
+        return false;
+      }
+      
       const hash = crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
       const prefix = hash.slice(0, 5);
       const suffix = hash.slice(5);

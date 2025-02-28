@@ -40,10 +40,18 @@ const getUserData = cache(async (userId: string) => {
     if (!user) return null;
 
     // Transform permissions to match Permission type
-    const permissions: Permission[] = user.userPermissions.map((up: { permission: { id: string; name: string; description: string | null } }) => ({
+    interface UserPermission {
+      permission: {
+        id: string;
+        name: string;
+        description: string | null;
+      };
+    }
+
+    const permissions: Permission[] = user.userPermissions.map((up: UserPermission) => ({
       id: up.permission.id,
       name: up.permission.name,
-      description: up.permission.description || '' // Convert null to empty string
+      description: up.permission.description ?? '' // Use nullish coalescing
     }));
 
     return {
@@ -63,13 +71,13 @@ export default async function ProfilePage(): Promise<JSX.Element> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      redirect('/auth/login');
+      redirect('/auth/signin');
     }
 
     const user = await getUserData(session.user.id);
     if (!user) {
       logger.warn('User not found:', { userId: session.user.id });
-      redirect('/auth/login');
+      redirect('/auth/signin');
     }
 
     const authUser: AuthUser = {

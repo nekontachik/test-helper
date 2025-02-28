@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { clearAuthState } from '@/utils/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -33,7 +35,15 @@ interface LoginError {
 
 export function LoginForm(): JSX.Element {
   const [error, setError] = useState<LoginError | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Ensure callbackUrl is a valid URL path
+  const rawCallbackUrl = searchParams?.get('callbackUrl');
+  const callbackUrl = rawCallbackUrl && rawCallbackUrl.startsWith('/') 
+    ? rawCallbackUrl 
+    : '/dashboard';
 
   const form = useForm<FormData>({
     resolver: zodResolver(loginSchema),
@@ -44,35 +54,49 @@ export function LoginForm(): JSX.Element {
   });
 
   const onSubmit = async (data: FormData): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    
+    // Clear any previous auth state before attempting login
+    clearAuthState();
+    
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      // Use NextAuth signIn instead of custom API
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+        callbackUrl,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 423) {
-          setError({
-            message: 'Account is locked due to too many failed attempts',
-            lockoutRemaining: result.lockoutRemaining,
-          });
-        } else {
-          setError({
-            message: result.error,
-            remainingAttempts: result.remainingAttempts,
-          });
-        }
+      if (result?.error) {
+        // Handle NextAuth error
+        setError({
+          message: result.error,
+        });
         return;
       }
 
-      router.push('/dashboard');
-    } catch {
-      setError({
-        message: 'An unexpected error occurred',
-      });
+      // Only redirect on successful authentication
+      if (result?.ok) {
+        router.push(callbackUrl);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      
+      // Provide more specific error messages based on error type
+      if (error instanceof Error) {
+        setError({
+          message: `Authentication failed: ${error.message}`
+        });
+      } else {
+        setError({
+          message: 'Unable to sign in. Please check your network connection and try again.'
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -128,9 +152,9 @@ export function LoginForm(): JSX.Element {
         <Button
           type="submit"
           className="w-full"
-          disabled={form.formState.isSubmitting}
+          disabled={isLoading}
         >
-          {form.formState.isSubmitting && (
+          {isLoading && (
             <Loader className="mr-2 h-4 w-4 animate-spin" />
           )}
           Sign In

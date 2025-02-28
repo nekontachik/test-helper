@@ -1,111 +1,97 @@
 'use client';
 
-import type { ErrorInfo, ReactNode } from 'react';
 import React, { Component } from 'react';
-import {
-  Box,
-  Button,
-  Heading,
-  Text,
-  VStack,
-  Code,
-  useColorModeValue,
-} from '@chakra-ui/react';
-import { logger } from '@/lib/utils/logger';
+import type { ErrorInfo, ReactNode } from 'react';
+import { Box, Heading, Text, Button, Code, Stack } from '@chakra-ui/react';
 
-interface ErrorBoundaryProps {
+interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
-  onReset?: () => void;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       hasError: false,
-      error: null
+      error: null,
+      errorInfo: null
     };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): State {
+    // Update state so the next render will show the fallback UI
     return {
       hasError: true,
-      error
+      error,
+      errorInfo: null
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    logger.error('Error caught by ErrorBoundary:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
+    // You can log the error to an error reporting service
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    this.setState({
+      error,
+      errorInfo
     });
   }
 
-  resetErrorBoundary = (): void => {
-    this.props.onReset?.();
-    this.setState({
-      hasError: false,
-      error: null
-    });
-  };
-
   render(): ReactNode {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      return <ErrorFallback error={this.state.error} resetErrorBoundary={this.resetErrorBoundary} />;
+      return (
+        <Box textAlign="center" p={8} maxW="800px" mx="auto">
+          <Heading as="h2" size="xl" mb={4} color="red.500">
+            Something went wrong
+          </Heading>
+          <Text fontSize="lg" mb={6}>
+            An error occurred in the application. Please try refreshing the page.
+          </Text>
+          
+          <Stack spacing={4} mb={8}>
+            {this.state.error && (
+              <Box p={4} bg="red.50" borderRadius="md" textAlign="left">
+                <Text fontWeight="bold" mb={2}>Error:</Text>
+                <Code p={2} colorScheme="red" display="block" whiteSpace="pre-wrap">
+                  {this.state.error.toString()}
+                </Code>
+              </Box>
+            )}
+            
+            {this.state.errorInfo && (
+              <Box p={4} bg="gray.50" borderRadius="md" textAlign="left">
+                <Text fontWeight="bold" mb={2}>Component Stack:</Text>
+                <Code p={2} colorScheme="gray" display="block" whiteSpace="pre-wrap" fontSize="sm" overflowX="auto">
+                  {this.state.errorInfo.componentStack}
+                </Code>
+              </Box>
+            )}
+          </Stack>
+          
+          <Button
+            colorScheme="blue"
+            onClick={() => window.location.reload()}
+            mr={4}
+          >
+            Refresh Page
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+          >
+            Try Again
+          </Button>
+        </Box>
+      );
     }
 
     return this.props.children;
   }
 }
 
-interface ErrorFallbackProps {
-  error: Error | null;
-  resetErrorBoundary: () => void;
-}
-
-export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps): React.ReactElement {
-  const bgColor = useColorModeValue('red.50', 'red.900');
-  const borderColor = useColorModeValue('red.200', 'red.700');
-
-  return (
-    <Box
-      p={6}
-      m={4}
-      bg={bgColor}
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor={borderColor}
-    >
-      <VStack align="start" spacing={4}>
-        <Heading as="h2" size="lg" color="red.500">
-          Something went wrong
-        </Heading>
-        <Text>An error occurred in the application.</Text>
-        {error && (
-          <Box w="100%" p={3} bg="blackAlpha.100" borderRadius="md">
-            <Text fontWeight="bold" mb={2}>
-              Error:
-            </Text>
-            <Code w="100%" p={2} borderRadius="md" variant="subtle">
-              {error.message}
-            </Code>
-          </Box>
-        )}
-        <Button colorScheme="red" onClick={resetErrorBoundary}>
-          Try again
-        </Button>
-      </VStack>
-    </Box>
-  );
-}
+export default ErrorBoundary;

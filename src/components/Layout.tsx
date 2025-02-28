@@ -39,12 +39,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                     <Button as="a" variant="ghost" mr={3}>Admin</Button>
                   </Link>
                 )}
-                <Button onClick={() => signOut()}>Logout</Button>
+                <Button onClick={() => signOut()}>Sign out</Button>
               </>
             ) : (
               <>
-                <Link href="/login" passHref>
-                  <Button as="a" mr={3}>Login</Button>
+                <Link href="/auth/signin" passHref>
+                  <Button as="a" mr={3}>Sign in</Button>
                 </Link>
                 <Link href="/register" passHref>
                   <Button as="a">Register</Button>

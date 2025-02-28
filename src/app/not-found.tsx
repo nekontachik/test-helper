@@ -1,8 +1,9 @@
 'use client';
 
+import React from 'react';
 import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
-import logger from '@/lib/logger';
+import logger from '@/lib/utils/logger';
 
 export default function NotFound(): JSX.Element {
   const router = useRouter();

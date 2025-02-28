@@ -1,34 +1,50 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { verify, type JwtPayload } from 'jsonwebtoken';
 import logger from '@/lib/utils/logger';
 
-// Set to true to bypass authentication in development
-const DEV_MODE = true;
+// Define the token payload interface
+interface TokenPayload extends JwtPayload {
+  id: string;
+  email: string;
+  role?: string;
+}
 
 export default async function HomePage(): Promise<never> {
   const requestId = crypto.randomUUID();
   logger.debug('[ROOT] Rendering HomePage', { requestId });
 
   try {
-    // In development mode, bypass authentication and redirect to dashboard
-    if (DEV_MODE) {
-      logger.info('[ROOT] Development mode, redirecting to dashboard', { requestId });
+    // Get the token from cookies
+    const cookieStore = cookies();
+    const token = cookieStore.get('session-token')?.value;
+    
+    if (!token) {
+      logger.info('[ROOT] No session token found, redirecting to signin', { requestId });
+      return redirect('/auth/signin');
+    }
+    
+    try {
+      // Verify the token
+      const decoded = verify(
+        token, 
+        process.env.NEXTAUTH_SECRET || 'a-very-secure-secret-for-development-only'
+      ) as TokenPayload;
+      
+      logger.info('[ROOT] Session found', { requestId, userId: decoded.id });
       return redirect('/dashboard');
+    } catch (error) {
+      logger.error('[ROOT] Invalid session token', { 
+        requestId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      return redirect('/auth/signin');
     }
-
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      logger.info('[ROOT] No session, redirecting to login', { requestId });
-      return redirect('/auth/login');
-    }
-
-    logger.info('[ROOT] Session found', { requestId, userId: session.user.id });
-    return redirect('/dashboard');
-    
   } catch (error) {
-    logger.error('[ROOT] Error in HomePage', { requestId, error });
-    return redirect('/auth/login');
+    logger.error('[ROOT] Error in HomePage', { 
+      requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    return redirect('/auth/signin');
   }
 }

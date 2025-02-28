@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './validation';
 export * from './security';
+export * from './authErrors';
 
 // Base error class for all application errors
 export class AppError extends Error {

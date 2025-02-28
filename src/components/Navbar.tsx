@@ -6,14 +6,29 @@ interface NavbarProps {
   hasProjects: boolean;
 }
 
-export default function Navbar({ hasProjects }: NavbarProps): JSX.Element {
+export default function Navbar({ hasProjects = false }: NavbarProps): JSX.Element {
   return (
-    <Box as="nav" bg="gray.100" py={4}>
+    <Box 
+      position="fixed"
+      top="0"
+      left="0"
+      right="0"
+      height="var(--navbar-height, 60px)"
+      zIndex="1000"
+      bg="white"
+      borderBottom="1px solid"
+      borderColor="gray.200"
+      boxShadow="md"
+      width="100%"
+      display="block"
+    >
       <Flex
         maxW="container.xl"
         mx="auto"
         align="center"
         justify="space-between"
+        height="100%"
+        px={4}
       >
         <NextLink href="/" passHref legacyBehavior>
           <Button as="a" variant="ghost" fontWeight="bold">
@@ -26,13 +41,13 @@ export default function Navbar({ hasProjects }: NavbarProps): JSX.Element {
               Dashboard
             </Button>
           </NextLink>
+          <NextLink href="/projects" passHref legacyBehavior>
+            <Button as="a" variant="ghost" mr={2}>
+              Projects
+            </Button>
+          </NextLink>
           {hasProjects && (
             <>
-              <NextLink href="/projects" passHref legacyBehavior>
-                <Button as="a" variant="ghost" mr={2}>
-                  Projects
-                </Button>
-              </NextLink>
               <NextLink href="/test-cases" passHref legacyBehavior>
                 <Button as="a" variant="ghost" mr={2}>
                   Test Cases

@@ -165,7 +165,7 @@ export function RegisterForm(): JSX.Element {
       </CardContent>
       <CardFooter className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <a href="/auth/login" className="text-primary hover:underline">
+        <a href="/auth/signin" className="text-primary hover:underline">
           Sign in
         </a>
       </CardFooter>

@@ -1,10 +1,11 @@
 // import NextPWA from 'next-pwa';
 
-// PWA is disabled
+// PWA configuration - disabled in development mode only
+// To enable PWA, uncomment the following lines and remove the comment from the export line
 // const withPWA = NextPWA({
 //   dest: 'public',
-//   disable: true,
-//   register: false,
+//   disable: process.env.NODE_ENV === 'development',
+//   register: true,
 //   skipWaiting: true,
 // });
 
@@ -33,4 +34,6 @@ const nextConfig = {
   },
 };
 
+// If you want to enable PWA, replace this line with:
+// export default withPWA(nextConfig);
 export default nextConfig; 

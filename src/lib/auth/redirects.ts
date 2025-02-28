@@ -44,7 +44,7 @@ export const publicPages = [
 ]
 
 // Default redirect after login if no callbackUrl is provided
-export const DEFAULT_LOGIN_REDIRECT = '/projects';
+export const DEFAULT_LOGIN_REDIRECT = '/dashboard?bypass=true';
 export const DEFAULT_UNAUTHORIZED_REDIRECT = '/auth/signup';
 
 export function isPublicPage(path: string): boolean {

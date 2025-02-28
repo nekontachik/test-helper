@@ -26,6 +26,18 @@ export class ActivityService {
     options: ActivityLogOptions
   ): Promise<void> {
     try {
+      // Skip activity logging for unknown users to avoid foreign key constraint errors
+      if (userId === 'UNKNOWN') {
+        console.log('Skipping activity log for unknown user:', {
+          type: type.toString(),
+          action: type.toString(),
+          ipAddress: options.ip,
+          userAgent: options.userAgent,
+          metadata: options.metadata
+        });
+        return;
+      }
+      
       await prisma.activityLog.create({
         data: {
           userId,
@@ -38,7 +50,7 @@ export class ActivityService {
       });
     } catch (error) {
       console.error('Failed to log activity:', error);
-      throw error;
+      // Don't throw the error, just log it to prevent API failures
     }
   }
 

@@ -1,51 +1,60 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { verifyPasswordResetToken } from '@/lib/auth/tokens';
-import { SecurityService } from '@/lib/auth/securityService';
-import { AUTH_ERRORS } from '@/lib/utils/error';
-import logger from '@/lib/logger';
+import { AuthService } from '@/lib/services/authService';
+import logger from '@/lib/utils/logger';
 
-const resetSchema = z.object({
-  token: z.string().min(1),
-  password: z.string().min(8)
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password is too long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
 });
 
-export async function POST(request: NextRequest): Promise<ApiResponse<unknown>> {
+const authService = new AuthService();
+
+export async function POST(request: Request): Promise<NextResponse> {
   try {
+    logger.info('Processing password reset request');
+    
     const body = await request.json();
-    const { token, password } = resetSchema.parse(body);
+    const validatedData = resetPasswordSchema.parse(body);
 
-    const user = await verifyPasswordResetToken(token);
-    if (!user) {
-      return createErrorResponse(AUTH_ERRORS.INVALID_TOKEN, 'INVALID_TOKEN', 400);
+    // Validate token first
+    const isValidToken = await authService.validateResetToken(validatedData.token);
+    if (!isValidToken) {
+      logger.warn('Invalid or expired reset token');
+      return NextResponse.json(
+        { message: 'Invalid or expired reset token' },
+        { status: 400 }
+      );
     }
 
-    // Check if password has been breached
-    const isBreached = await SecurityService.checkPasswordBreached(password);
-    if (isBreached) {
-      return createErrorResponse(AUTH_ERRORS.PASSWORD_COMPROMISED, 'PASSWORD_COMPROMISED', 400);
-    }
+    // Reset password
+    await authService.resetPassword(validatedData.token, validatedData.password);
 
-    const hashedPassword = await SecurityService.hashPassword(password);
-
-    await prisma.user.update({
-      where: { email: user.email },
-      data: { 
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null
-      }
-    });
-
-    logger.info('Password reset successful', { userId: user.id });
-    return createSuccessResponse({
-      message: 'Password reset successfully'
-    });
+    logger.info('Password reset successful');
+    return NextResponse.json(
+      { message: 'Password reset successful' },
+      { status: 200 }
+    );
   } catch (error) {
-    logger.error('Password reset error:', error);
-    return createErrorResponse(AUTH_ERRORS.UNKNOWN, 'UNKNOWN_ERROR', 500);
+    if (error instanceof z.ZodError) {
+      logger.warn('Invalid password reset data', { error: error.errors });
+      return NextResponse.json(
+        { message: 'Invalid input', errors: error.errors },
+        { status: 400 }
+      );
+    }
+
+    logger.error('Password reset failed', { error });
+    return NextResponse.json(
+      { message: 'Failed to reset password' },
+      { status: 500 }
+    );
   }
 }
 

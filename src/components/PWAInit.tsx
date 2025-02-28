@@ -7,7 +7,8 @@ export function PWAInit(): JSX.Element | null {
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&
-      'serviceWorker' in navigator
+      'serviceWorker' in navigator &&
+      process.env.NODE_ENV === 'production'
     ) {
       const wb = new Workbox('/service-worker.js');
 

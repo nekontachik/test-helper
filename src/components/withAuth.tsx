@@ -1,7 +1,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import type { UserRole } from '@/types/auth';
-import { LoadingSpinner } from './LoadingSpinner';
+import type { UserRole } from '@/lib/types/auth';
+import { LoadingSpinner } from './ui/LoadingSpinner';
 
 export function withAuth<P extends object>(
   Component: React.ComponentType<P>,
@@ -16,6 +16,12 @@ export function withAuth<P extends object>(
     }
 
     if (!session) {
+      router.push("/auth/signin");
+      return null;
+    }
+
+    if (!session.user) {
+      console.error("Session exists but user is null", session);
       router.push("/auth/signin");
       return null;
     }

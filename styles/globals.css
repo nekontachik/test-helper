@@ -5,11 +5,71 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
+  --navbar-height: 60px;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Layout styles */
+.dashboard-layout,
+.test-runs-layout,
+.projects-layout,
+.authenticated-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--navbar-height);
+  position: relative;
+}
+
+/* Fixed navbar spacing */
+main {
+  padding-top: calc(var(--navbar-height) + 60px); /* Increased spacing from navbar */
+  position: relative;
+  z-index: 1; /* Ensure main content is above other elements */
+}
+
+.authenticated-main {
+  padding-top: calc(var(--navbar-height) + 60px); /* Increased spacing from navbar */
+  margin-top: 0; /* Remove additional margin */
+  flex: 1;
+}
+
+/* Top buttons styling to prevent navbar overlap */
+main > div > button,
+main > div > a,
+main > div > div > button,
+main > div > div > a {
+  position: relative;
+  z-index: 2; /* Higher than main but lower than navbar */
+}
+
+/* Projects page specific styles */
+.projects-page-container {
+  position: relative;
+  z-index: 2;
+  margin-top: 0; /* Remove additional margin */
+}
+
+.projects-header {
+  position: relative;
+  z-index: 5;
+}
+
+/* Dashboard specific styles */
+.dashboard-container {
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+/* Ensure navbar is always visible */
+[data-nextjs-scroll-focus-boundary] {
+  display: contents;
 }
 
 /* High contrast styles */

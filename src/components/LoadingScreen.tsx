@@ -1,12 +1,15 @@
-import { Box, VStack, Spinner, Text } from '@chakra-ui/react'
+'use client';
+
+import React from 'react';
+import { Center, Spinner, Text, VStack } from '@chakra-ui/react';
 
 interface LoadingScreenProps {
-  message?: string
+  message?: string;
 }
 
-const LoadingScreen = ({ message = 'Loading...' }: LoadingScreenProps): JSX.Element => {
+export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps): JSX.Element {
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" h="100vh">
+    <Center h="100vh" w="100%">
       <VStack spacing={4}>
         <Spinner
           thickness="4px"
@@ -15,10 +18,10 @@ const LoadingScreen = ({ message = 'Loading...' }: LoadingScreenProps): JSX.Elem
           color="blue.500"
           size="xl"
         />
-        <Text>{message}</Text>
+        <Text fontSize="lg" fontWeight="medium">
+          {message}
+        </Text>
       </VStack>
-    </Box>
-  )
-}
-
-export default LoadingScreen 
+    </Center>
+  );
+} 

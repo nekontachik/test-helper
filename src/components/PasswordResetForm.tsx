@@ -72,7 +72,7 @@ export function PasswordResetForm({ token }: PasswordResetFormProps): JSX.Elemen
         {status === 'success' ? (
           <Alert>
             <AlertDescription>
-              Password reset successful! Redirecting to login...
+              Password reset successful! Redirecting to sign in...
             </AlertDescription>
           </Alert>
         ) : (

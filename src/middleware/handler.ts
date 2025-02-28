@@ -29,7 +29,6 @@ interface RequestMetadata {
 
 class RequestHandler {
   private static isValidUserRole(role: string): role is UserRole {
-    // Check if role is one of the valid UserRole values
     return ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER', 'USER'].includes(role);
   }
 
