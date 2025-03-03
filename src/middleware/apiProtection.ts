@@ -95,9 +95,7 @@ function isValidUserRole(role: string | undefined): role is UserRole {
   return validRoles.includes(role as UserRole);
 }
 
-/**
- * API protection middleware
- */
+// Yet another implementation for API routes
 export async function apiProtection(request: NextRequest | Request): Promise<Response | undefined> {
   try {
     const { pathname } = new URL(request.url);

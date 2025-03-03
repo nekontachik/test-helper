@@ -31,7 +31,9 @@
       "./types"
     ],
     "types": ["yup", "node"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": [
     "next-env.d.ts",

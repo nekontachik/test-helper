@@ -3,8 +3,6 @@ import type { TestResultStatus } from './constants';
 
 export interface TestRunCase {
   id: string;
-  testRunId: string;
-  testCaseId: string;
   testCase: TestCase;
   status: TestResultStatus;
   notes?: string | null;

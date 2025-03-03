@@ -15,6 +15,8 @@ import type {
 import { ServiceErrorHandler } from '../ServiceErrorHandler';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
 
+// Remove entire class - functionality should be moved to functional implementation
+
 export class ReportService extends BaseService<TestReport, 'testReport'> {
   constructor() {
     super(prisma.testReport, 'testReport');

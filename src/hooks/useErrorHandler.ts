@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useToast } from '@chakra-ui/react';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/clientLogger';
 import { getErrorMessage } from '@/lib/errors/errorMessages';
 import { AppError } from '@/lib/errors/types';
 import type { ErrorCode } from '@/lib/errors/types';

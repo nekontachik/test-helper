@@ -1,5 +1,5 @@
 import type { ErrorSeverity } from '@/lib/errors/types';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/clientLogger';
 
 interface ErrorOccurrence {
   timestamp: Date;
@@ -62,7 +62,8 @@ export class ErrorTracker {
       context,
       severity,
       count: current.count,
-      stack: error.stack
+      stack: error.stack,
+      metadata
     });
   }
 

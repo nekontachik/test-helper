@@ -1,6 +1,8 @@
 import { AppError } from './types';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/clientLogger';
 import { ErrorTracker } from '../monitoring/ErrorTracker';
+import { ErrorFactory } from './ErrorFactory';
+import type { ErrorCode } from './types';
 
 interface RetryOptions {
   maxAttempts?: number;
@@ -55,5 +57,15 @@ export class ErrorRecovery {
     }
     return error instanceof Error && 
       ['NetworkError', 'TimeoutError'].includes(error.name);
+  }
+
+  static async recover(error: unknown, context?: Record<string, unknown>): Promise<void> {
+    logger.error('Attempting error recovery', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      context 
+    });
+    
+    throw ErrorFactory.create('UNRECOVERABLE_ERROR' as ErrorCode, 'Unable to recover from error');
   }
 } 

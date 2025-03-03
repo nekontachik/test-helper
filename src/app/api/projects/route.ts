@@ -5,8 +5,15 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { withSimpleAuth } from '@/lib/auth/withSimpleAuth';
 import { MOCK_USER } from '@/lib/auth/simpleAuth';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import type { Project } from '@/types';
+import { createRouteHandler, successResponse } from '../[...route]/route';
+import { withAuth } from '../[...route]/middleware';
+import { authUtils } from '@/lib/utils/authUtils';
+import type { Prisma } from '@prisma/client';
+import { withRateLimit } from '../[...route]/rateLimiter';
+import { withValidation } from '../[...route]/validator';
+import { protect } from '@/lib/auth/protect';
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(100),
@@ -93,7 +100,12 @@ async function handleGET(request: NextRequest): Promise<NextResponse> {
 }
 
 export const POST = withSimpleAuth(handlePOST);
-export const GET = withSimpleAuth(handleGET);
+export const GET = protect(handleGET, {
+  roles: ['ADMIN', 'MANAGER', 'EDITOR', 'TESTER'],
+  requireVerified: true,
+  rateLimit: { points: 100, duration: 60 },
+  audit: true
+});
 
 export async function GETMock(request: Request): Promise<NextResponse> {
   try {
@@ -164,3 +176,187 @@ export async function POSTMock(request: Request): Promise<NextResponse> {
     );
   }
 }
+
+// Input validation schemas
+const projectSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(1000).optional(),
+  status: z.enum(['ACTIVE', 'ARCHIVED', 'COMPLETED']).default('ACTIVE')
+});
+
+const querySchema = z.object({
+  status: z.enum(['ACTIVE', 'ARCHIVED', 'COMPLETED']).optional(),
+  search: z.string().optional(),
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(50).default(20)
+});
+
+const idParamSchema = z.object({
+  id: z.string().uuid()
+});
+
+// List projects - accessible by all authenticated users
+const handleGetProjects = withAuth(
+  withRateLimit(
+    withValidation(
+      async (req, { query }) => {
+        const where: Prisma.ProjectWhereInput = {
+          ...(query?.status && { status: query.status }),
+          ...(query?.search && {
+            OR: [
+              { name: { contains: query.search } },
+              { description: { contains: query.search } }
+            ]
+          })
+        };
+
+        const [projects, total] = await Promise.all([
+          prisma.project.findMany({
+            where,
+            skip: ((query?.page || 1) - 1) * (query?.limit || 20),
+            take: query?.limit || 20,
+            orderBy: { updatedAt: 'desc' },
+            include: {
+              _count: {
+                select: {
+                  testCases: true,
+                  testRuns: true
+                }
+              }
+            }
+          }),
+          prisma.project.count({ where })
+        ]);
+
+        return successResponse({
+          items: projects,
+          total,
+          page: query?.page || 1,
+          limit: query?.limit || 20,
+          pages: Math.ceil(total / (query?.limit || 20))
+        });
+      },
+      { query: querySchema }
+    ),
+    { max: 100, windowMs: 60 * 1000 } // 100 requests per minute
+  )
+);
+
+// Create project - only accessible by ADMIN and PROJECT_MANAGER
+const handleCreateProject = withAuth(
+  withRateLimit(
+    withValidation(
+      async (req, { body }) => {
+        const session = await authUtils.getSession();
+        if (!session?.user) {
+          throw new Error('Unauthorized');
+        }
+
+        const createData: Prisma.ProjectCreateInput = {
+          ...body!,
+          user: { connect: { id: session.user.id } }
+        };
+
+        const project = await prisma.project.create({
+          data: createData,
+          include: {
+            _count: {
+              select: {
+                testCases: true,
+                testRuns: true
+              }
+            }
+          }
+        });
+
+        return successResponse(project, 201);
+      },
+      { body: projectSchema }
+    ),
+    { max: 20, windowMs: 60 * 1000 } // 20 creates per minute
+  ),
+  { requiredRoles: ['ADMIN', 'PROJECT_MANAGER'] }
+);
+
+// Update project - only accessible by ADMIN and PROJECT_MANAGER
+const handleUpdateProject = withAuth(
+  withRateLimit(
+    withValidation(
+      async (req, { body, params }) => {
+        const updateData: Prisma.ProjectUpdateInput = {
+          ...body!,
+          updatedAt: new Date()
+        };
+
+        const project = await prisma.project.update({
+          where: { id: params!.id },
+          data: updateData,
+          include: {
+            _count: {
+              select: {
+                testCases: true,
+                testRuns: true
+              }
+            }
+          }
+        });
+
+        return successResponse(project);
+      },
+      {
+        body: projectSchema,
+        params: idParamSchema
+      }
+    ),
+    { max: 50, windowMs: 60 * 1000 } // 50 updates per minute
+  ),
+  { requiredRoles: ['ADMIN', 'PROJECT_MANAGER'] }
+);
+
+// Delete project - only accessible by ADMIN
+const handleDeleteProject = withAuth(
+  withRateLimit(
+    withValidation(
+      async (req, { params }) => {
+        await prisma.project.update({
+          where: { id: params!.id },
+          data: { status: 'ARCHIVED' }
+        });
+
+        return successResponse({ success: true });
+      },
+      { params: idParamSchema }
+    ),
+    { max: 10, windowMs: 60 * 1000 } // 10 deletes per minute
+  ),
+  { requiredRoles: ['ADMIN'] }
+);
+
+// Export route handlers
+const routeHandlers = {
+  GET: handleGetProjects,
+  POST: handleCreateProject,
+  PUT: handleUpdateProject,
+  DELETE: handleDeleteProject
+};
+
+type RouteHandlers = {
+  GET: typeof handleGetProjects;
+  POST: typeof handleCreateProject;
+  PUT: typeof handleUpdateProject;
+  DELETE: typeof handleDeleteProject;
+};
+
+const wrappedHandlers = Object.fromEntries(
+  Object.entries(routeHandlers).map(([method, handler]) => [
+    method,
+    createRouteHandler({ [method]: handler })
+  ])
+) as RouteHandlers;
+
+export const {
+  GET,
+  POST,
+  PUT,
+  DELETE
+} = wrappedHandlers;

@@ -53,6 +53,8 @@ export default function Dashboard(): JSX.Element {
   const router = useRouter();
   
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const hoverBgColor = useColorModeValue('gray.50', 'gray.700');
 
   // Fetch test runs data when component mounts
   useEffect(() => {
@@ -110,47 +112,77 @@ export default function Dashboard(): JSX.Element {
   }, 0) || 0;
 
   return (
-    <Box p={[4, 6, 8]}>
-      <Flex justify="space-between" align="center" mb={8} flexWrap="wrap">
+    <Box p={[4, 6, 8]} maxW="1400px" mx="auto">
+      <Flex 
+        justify="space-between" 
+        align="center" 
+        mb={8} 
+        flexWrap="wrap" 
+        gap={4}
+      >
         <Box>
           <Heading size="xl" mb={2}>Dashboard</Heading>
           <Text color="gray.500">Welcome back, {session?.user?.name || 'User'}</Text>
         </Box>
-        <Button 
-          leftIcon={<FiPlus />} 
-          colorScheme="blue" 
-          onClick={handleCreateProject}
-          isLoading={isCreatingProject}
-        >
-          New Project
-        </Button>
+        <HStack spacing={4}>
+          <Button 
+            leftIcon={<FiPlus />} 
+            colorScheme="blue" 
+            onClick={handleCreateProject}
+            isLoading={isCreatingProject}
+            size="md"
+            _hover={{ transform: 'translateY(-2px)', shadow: 'md' }}
+            transition="all 0.2s"
+          >
+            New Project
+          </Button>
+          <Button
+            leftIcon={<FiPlay />}
+            colorScheme="teal"
+            onClick={handleCreateTestRun}
+            isLoading={isCreatingTestRun}
+            size="md"
+            _hover={{ transform: 'translateY(-2px)', shadow: 'md' }}
+            transition="all 0.2s"
+          >
+            New Test Run
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Stats Section */}
-      <SimpleGrid columns={{ base: 1, md: 4 }} spacing={6} mb={8}>
+      <SimpleGrid 
+        columns={{ base: 1, sm: 2, md: 4 }} 
+        spacing={6} 
+        mb={8}
+      >
         <StatCard 
           icon={FiFolder} 
           title="Total Projects" 
           stat={projects?.length || 0} 
           colorScheme="blue"
+          isLoading={isLoadingProjects}
         />
         <StatCard 
           icon={FiFileText} 
           title="Test Cases" 
           stat={testCaseCount} 
           colorScheme="purple"
+          isLoading={isLoadingProjects}
         />
         <StatCard 
           icon={FiClock} 
           title="Test Runs" 
           stat={testRuns?.length || 0} 
           colorScheme="green"
+          isLoading={isLoadingTestRuns}
         />
         <StatCard 
           icon={FiUser} 
           title="Role" 
           stat={session?.user?.role || 'User'} 
           colorScheme="orange"
+          isLoading={status === 'loading'}
         />
       </SimpleGrid>
 
@@ -159,43 +191,78 @@ export default function Dashboard(): JSX.Element {
         <Flex justify="space-between" align="center" mb={4}>
           <Heading size="md">Recent Projects</Heading>
           <Link href="/projects" passHref>
-            <Button size="sm" variant="ghost">View all</Button>
+            <Button 
+              size="sm" 
+              variant="ghost"
+              rightIcon={<FiPlus />}
+              _hover={{ bg: hoverBgColor }}
+            >
+              View all
+            </Button>
           </Link>
         </Flex>
         {isLoadingProjects ? (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
             {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} height="180px" borderRadius="lg" />
+              <Skeleton key={i} height="200px" borderRadius="lg" />
             ))}
           </SimpleGrid>
         ) : projects && projects.length > 0 ? (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
             {projects.slice(0, 3).map((project: Project) => (
-              <Card key={project.id} borderColor={borderColor} borderWidth="1px">
+              <Card 
+                key={project.id} 
+                borderColor={borderColor} 
+                borderWidth="1px"
+                bg={bgColor}
+                _hover={{ 
+                  transform: 'translateY(-4px)',
+                  shadow: 'lg',
+                  borderColor: 'blue.200'
+                }}
+                transition="all 0.2s"
+              >
                 <CardHeader pb={0}>
-                  <Heading size="md" mb={1}>{project.name}</Heading>
-                  <Badge colorScheme={project.status.toLowerCase() === 'active' ? 'green' : 'gray'}>
+                  <Heading size="md" mb={1} noOfLines={1}>{project.name}</Heading>
+                  <Badge 
+                    colorScheme={project.status.toLowerCase() === 'active' ? 'green' : 'gray'}
+                    variant="subtle"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                  >
                     {project.status}
                   </Badge>
                 </CardHeader>
                 <CardBody>
-                  <Text noOfLines={2} mb={4} color="gray.600">{project.description}</Text>
-                  <Flex justify="space-between" flexWrap="wrap">
-                    <HStack mb={2}>
+                  <Text 
+                    noOfLines={2} 
+                    mb={4} 
+                    color="gray.600"
+                    fontSize="sm"
+                  >
+                    {project.description}
+                  </Text>
+                  <Flex justify="space-between" flexWrap="wrap" gap={2}>
+                    <HStack spacing={2}>
                       <Icon as={FiFileText} color="blue.500" />
                       <Text fontSize="sm">{(project as ProjectWithCounts).testCaseCount || 0} Test Cases</Text>
                     </HStack>
-                    <HStack mb={2}>
+                    <HStack spacing={2}>
                       <Icon as={FiClock} color="green.500" />
                       <Text fontSize="sm">{(project as ProjectWithCounts).testRunCount || 0} Test Runs</Text>
                     </HStack>
                   </Flex>
                   <Button 
-                    mt={2} 
+                    mt={4} 
                     w="full" 
                     colorScheme="blue" 
                     variant="outline"
                     onClick={() => router.push(`/projects/${project.id}`)}
+                    _hover={{
+                      bg: 'blue.50',
+                      color: 'blue.600'
+                    }}
                   >
                     View Project
                   </Button>
@@ -204,10 +271,22 @@ export default function Dashboard(): JSX.Element {
             ))}
           </SimpleGrid>
         ) : (
-          <Card borderColor={borderColor} borderWidth="1px" borderRadius="lg">
-            <CardBody textAlign="center">
-              <Text mb={4}>No projects found.</Text>
-              <Button colorScheme="blue" onClick={handleCreateProject}>
+          <Card 
+            borderColor={borderColor} 
+            borderWidth="1px" 
+            borderRadius="lg"
+            bg={bgColor}
+          >
+            <CardBody textAlign="center" py={8}>
+              <Icon as={FiFolder} w={12} h={12} color="gray.400" mb={4} />
+              <Text mb={4} color="gray.600">No projects found.</Text>
+              <Button 
+                colorScheme="blue" 
+                onClick={handleCreateProject}
+                leftIcon={<FiPlus />}
+                _hover={{ transform: 'translateY(-2px)', shadow: 'md' }}
+                transition="all 0.2s"
+              >
                 Create your first project
               </Button>
             </CardBody>
@@ -220,15 +299,6 @@ export default function Dashboard(): JSX.Element {
         <Flex justify="space-between" align="center" mb={4}>
           <Heading size="md">Recent Test Runs</Heading>
           <HStack spacing={2}>
-            <Button 
-              leftIcon={<FiPlay />} 
-              size="sm"
-              colorScheme="teal" 
-              onClick={handleCreateTestRun}
-              isLoading={isCreatingTestRun}
-            >
-              New Test Run
-            </Button>
             <Button 
               size="sm" 
               variant="ghost" 

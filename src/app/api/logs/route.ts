@@ -1,27 +1,30 @@
-import { type NextRequest } from 'next/server';
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
-import { authUtils } from '@/lib/utils/authUtils';
-import { prisma } from '@/lib/prisma';
+import { createRouteHandler, successResponse } from '../[...route]/route';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { z } from 'zod';
 
-export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
-  try {
-    const session = await authUtils.getSession();
-    const body = await _req.json();
+// Input validation schema
+const querySchema = z.object({
+  lines: z.coerce.number().min(1).max(1000).default(100),
+  type: z.enum(['combined', 'error', 'routes']).default('combined')
+});
 
-    const log = await prisma.activityLog.create({
-      data: {
-        type: 'ERROR',
-        action: 'ERROR_BOUNDARY',
-        userId: session?.user?.id || 'SYSTEM',
-        metadata: JSON.stringify(body),
-        ipAddress: _req.headers.get('x-forwarded-for') || _req.headers.get('x-real-ip'),
-        userAgent: _req.headers.get('user-agent') 
-      } 
+export const GET = createRouteHandler({
+  GET: async (req) => {
+    const { searchParams } = new URL(req.url);
+    const query = querySchema.parse({
+      lines: searchParams.get('lines'),
+      type: searchParams.get('type')
     });
 
-    return createSuccessResponse({ success: true, log });
-  } catch (error) {
-    console.error('Failed to log error:', error);
-    return createErrorResponse('Failed to log error', 'LOG_ERROR', 500);
+    try {
+      const logFilePath = join(process.cwd(), 'logs', `${query.type}.log`);
+      const logs = readFileSync(logFilePath, 'utf-8');
+      const recentLogs = logs.split('\n').slice(-query.lines).join('\n');
+      
+      return successResponse({ logs: recentLogs });
+    } catch {
+      throw new Error('Error retrieving logs');
+    }
   }
-}
+});

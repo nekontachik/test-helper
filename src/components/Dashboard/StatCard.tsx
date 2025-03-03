@@ -8,7 +8,9 @@ import {
   StatLabel, 
   StatNumber, 
   StatHelpText, 
-  Icon, 
+  Icon,
+  Skeleton,
+  SkeletonText, 
   useColorModeValue 
 } from '@chakra-ui/react';
 import type { IconType } from 'react-icons';
@@ -19,6 +21,7 @@ interface StatCardProps {
   icon: IconType;
   helpText?: string;
   colorScheme?: string;
+  isLoading?: boolean;
 }
 
 export function StatCard({ 
@@ -26,7 +29,8 @@ export function StatCard({
   stat, 
   icon, 
   helpText, 
-  colorScheme = 'blue' 
+  colorScheme = 'blue',
+  isLoading = false 
 }: StatCardProps): JSX.Element {
   // Define color mode values at the top level to avoid conditional hooks
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -46,19 +50,41 @@ export function StatCard({
       boxShadow="sm"
       transition="all 0.3s"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+      position="relative"
+      overflow="hidden"
     >
       <Flex justifyContent="space-between">
-        <Box pl={2}>
-          <StatLabel fontWeight="medium" isTruncated>
-            {title}
-          </StatLabel>
-          <StatNumber fontSize="2xl" fontWeight="bold">
-            {stat}
-          </StatNumber>
-          {helpText && (
-            <StatHelpText fontSize="sm" color={textColor}>
-              {helpText}
-            </StatHelpText>
+        <Box pl={2} flex="1">
+          {isLoading ? (
+            <>
+              <SkeletonText noOfLines={1} width="80px" mb={2} />
+              <Skeleton height="36px" width="100px" mb={2} />
+              {helpText && <SkeletonText noOfLines={1} width="120px" />}
+            </>
+          ) : (
+            <>
+              <StatLabel 
+                fontWeight="medium" 
+                isTruncated
+                color={textColor}
+                fontSize="sm"
+              >
+                {title}
+              </StatLabel>
+              <StatNumber 
+                fontSize="2xl" 
+                fontWeight="bold"
+                bgGradient={`linear(to-r, ${colorScheme}.500, ${colorScheme}.300)`}
+                bgClip="text"
+              >
+                {stat}
+              </StatNumber>
+              {helpText && (
+                <StatHelpText fontSize="sm" color={textColor}>
+                  {helpText}
+                </StatHelpText>
+              )}
+            </>
           )}
         </Box>
         <Box
@@ -67,8 +93,16 @@ export function StatCard({
           borderRadius="full"
           bg={iconBg}
           p={2}
+          opacity={isLoading ? 0.5 : 1}
+          transition="opacity 0.2s"
         >
-          <Icon as={icon} boxSize={6} color={iconColor} />
+          <Icon 
+            as={icon} 
+            boxSize={6} 
+            color={iconColor}
+            transition="transform 0.2s"
+            _groupHover={{ transform: 'scale(1.1)' }}
+          />
         </Box>
       </Flex>
     </Stat>

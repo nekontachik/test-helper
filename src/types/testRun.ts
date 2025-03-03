@@ -22,6 +22,8 @@ export interface TestRun {
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  userId: string;
+  results: TestResult[];
 }
 
 export interface TestResult {
@@ -33,4 +35,12 @@ export interface TestResult {
   startedAt: Date;
   completedAt?: Date;
   executedById?: string;
-} 
+  name: string;
+  duration: number;
+  errorMessage?: string;
+  stackTrace?: string;
+  testRunId: string;
+}
+
+export type TestRunStatus = 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'CANCELLED' | 'ERROR';
+export type TestResultStatus = 'PASSED' | 'FAILED' | 'SKIPPED' | 'ERROR'; 

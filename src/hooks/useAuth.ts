@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import logger from '@/lib/utils/logger';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface User {
   id: string;
@@ -31,6 +32,10 @@ interface AuthHook {
 export function useAuth(): AuthHook {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  
+  const isAuthenticated = status === 'authenticated';
+  const isLoading = status === 'loading';
   
   // Map NextAuth session to our User type
   const user: User | null = session?.user ? {
@@ -41,48 +46,39 @@ export function useAuth(): AuthHook {
   } : null;
   
   // Login function using NextAuth
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string) => {
     try {
-      logger.debug('Attempting login with email', { email });
-      
+      setError(null);
       const result = await signIn('credentials', {
         redirect: false,
         email,
-        password
+        password,
       });
       
       if (result?.error) {
-        logger.error('Login failed', { error: result.error });
+        setError('Invalid email or password');
         return false;
       }
       
-      logger.debug('Login successful');
       return true;
-    } catch (error) {
-      logger.error('Login error', { error });
+    } catch (err) {
+      setError('An unexpected error occurred');
       return false;
     }
-  }, []);
+  };
   
   // Logout function using NextAuth
-  const logout = useCallback(async (): Promise<boolean> => {
-    try {
-      await signOut({ redirect: false });
-      router.push('/auth/signin');
-      logger.debug('Logout successful');
-      return true;
-    } catch (error) {
-      logger.error('Logout error', { error });
-      return false;
-    }
-  }, [router]);
+  const logout = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/login');
+  };
   
   return {
     user,
-    isAuthenticated: status === 'authenticated',
-    isLoading: status === 'loading',
-    error: null, // NextAuth handles errors internally
+    isAuthenticated,
+    isLoading,
+    error,
     login,
-    logout
+    logout,
   };
 }

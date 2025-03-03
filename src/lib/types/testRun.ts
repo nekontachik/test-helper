@@ -1,3 +1,5 @@
+import type { TestRun, TestCase, TestCaseResult } from '@prisma/client';
+
 export type TestStatus = 'PASSED' | 'FAILED' | 'BLOCKED' | 'SKIPPED' | 'IN_PROGRESS';
 
 export type TestRunStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'ARCHIVED';
@@ -59,4 +61,40 @@ export interface UpdateTestResultInput {
     stackTrace?: string;
     screenshot?: string;
   };
+}
+
+export type TestResultStatus = 'PASSED' | 'FAILED' | 'PENDING' | 'SKIPPED';
+
+export interface TestRunWithCases extends TestRun {
+  testRunCases: Array<{
+    id: string;
+    testRunId: string;
+    testCaseId: string;
+    status: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    testCase: TestCase;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
+    testCaseResults: TestCaseResult[];
+  }>;
+}
+
+export interface TestRunInput {
+  title: string;
+  description?: string | null;
+  projectId: string;
+  testCaseIds: string[];
+  environment: string;
+}
+
+export interface TestResultSummary {
+  status: TestResultStatus;
+  priority?: string;
+  startTime?: Date;
+  endTime?: Date | null;
 } 

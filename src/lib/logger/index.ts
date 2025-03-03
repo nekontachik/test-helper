@@ -1,22 +1,23 @@
-import winston from 'winston';
+import pino from 'pino';
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' })
-  ]
+// Create a single logger instance
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+    },
+  },
 });
 
-// Add console logging in development
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
-}
+// Export a standardized logger interface
+export const logger = {
+  debug: (message: string, data?: object) => pinoLogger.debug(data || {}, message),
+  info: (message: string, data?: object) => pinoLogger.info(data || {}, message),
+  warn: (message: string, data?: object) => pinoLogger.warn(data || {}, message),
+  error: (message: string, data?: object) => pinoLogger.error(data || {}, message),
+};
 
+// Default export for backward compatibility
 export default logger; 

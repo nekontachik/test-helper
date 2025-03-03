@@ -126,7 +126,7 @@ export class AuthService {
     };
   }
 
-  private async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+  private async updateUserPassword(userId: string, _hashedPassword: string): Promise<void> {
     // In a real app, this would update the user's password in your database
     // This is just a mock implementation
     logger.info('Updating user password', { userId });
@@ -139,7 +139,8 @@ export class AuthService {
   verifyAuthToken(token: string): { userId: string } {
     try {
       return jwt.verify(token, this.jwtSecret) as { userId: string };
-    } catch (error) {
+    } catch (error: unknown) {
+      logger.error('Failed to verify auth token', { error });
       throw ErrorFactory.create('INVALID_TOKEN' as ErrorCode, 'Invalid authentication token');
     }
   }

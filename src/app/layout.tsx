@@ -5,6 +5,8 @@ import { Providers } from '@/components/providers';
 import logger from '@/lib/utils/logger';
 import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
 import { PWAInit } from '@/components/PWAInit';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { PWAInstallPrompt } from '@/components/common/PWAInstallPrompt';
 
 export default function RootLayout({
   children,
@@ -21,9 +23,12 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning={true}>
         <PWAInit />
-        <ErrorBoundary>
-          <Providers>{children}</Providers>
-        </ErrorBoundary>
+        <NotificationProvider>
+          <ErrorBoundary>
+            <Providers>{children}</Providers>
+          </ErrorBoundary>
+        </NotificationProvider>
+        <PWAInstallPrompt />
       </body>
     </html>
   );

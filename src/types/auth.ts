@@ -1,12 +1,15 @@
 import type { Session } from 'next-auth';
+import 'next-auth';
 
 // Define user roles
-export type UserRole = 
-  | 'ADMIN' 
-  | 'PROJECT_MANAGER' 
-  | 'TESTER' 
-  | 'VIEWER'
-  | 'USER'; // Add this to match schema default
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  EDITOR = 'EDITOR',
+  TESTER = 'TESTER',
+  VIEWER = 'VIEWER',
+  USER = 'USER'
+}
 
 // Define account status type
 export enum AccountStatus {
@@ -40,15 +43,11 @@ export interface User {
 
 export interface AuthUser {
   id: string;
-  email: string | null;
-  name: string | null;
+  email: string;
+  name?: string;
   role: UserRole;
-  permissions: Permission[];
-  status: AccountStatus;
-  emailNotificationsEnabled: boolean;
-  twoFactorEnabled: boolean;
-  twoFactorAuthenticated: boolean;
-  emailVerified: Date | null;
+  emailVerified?: Date | null;
+  twoFactorAuthenticated?: boolean;
 }
 
 export interface AuthResult {
@@ -138,4 +137,35 @@ export enum AuditAction {
   EMAIL_VERIFICATION_REQUESTED = 'EMAIL_VERIFICATION_REQUESTED',
   EMAIL_VERIFIED = 'EMAIL_VERIFIED',
   EMAIL_VERIFICATION_FAILED = 'EMAIL_VERIFICATION_FAILED'
+}
+
+// Extend the next-auth session type
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string;
+      role: string;
+      emailVerified?: string | null;
+      twoFactorAuthenticated?: boolean;
+    };
+    expires: string;
+  }
+}
+
+// Extend the JWT type
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    role: string;
+    emailVerified?: string | null;
+    twoFactorAuthenticated?: boolean;
+  }
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
 }

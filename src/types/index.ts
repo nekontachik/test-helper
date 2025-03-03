@@ -7,18 +7,9 @@ export enum TestRunStatus {
   SKIPPED = 'skipped'
 }
 
-export enum TestCaseStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  DRAFT = 'DRAFT',
-  SKIPPED = 'SKIPPED',
-}
+export type TestCaseStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 
-export enum TestCasePriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-}
+export type TestCasePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export enum TestCaseResultStatus {
   PASSED = 'PASSED',
@@ -120,12 +111,10 @@ export interface TestReport {
 export interface TestCaseFormData {
   title: string;
   description: string;
-  steps: string;
+  steps: string[];
   expectedResult: string;
-  actualResult: string;
-  status: TestCaseStatus;
   priority: TestCasePriority;
-  projectId: string;
+  status?: TestCaseStatus;
 }
 
 export interface TestRunFormData {
@@ -150,13 +139,15 @@ export interface PaginationParams {
   limit: number;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
+export interface PaginatedData<T> {
+  items: T[];
   total: number;
   page: number;
   limit: number;
-  totalPages: number;
+  hasMore: boolean;
 }
+
+export type PaginatedResponse<T> = PaginatedData<T>;
 
 export interface ProjectFormData {
   name: string;
@@ -246,15 +237,16 @@ export * from './operations';
 
 export interface TestCase {
   id: string;
+  projectId: string;
   title: string;
-  description?: string;
+  description: string;
   steps: string[];
   expectedResult: string;
   priority: TestCasePriority;
   status: TestCaseStatus;
-  projectId: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
+  version: number;
 }
 
 export interface TestCaseFilters {

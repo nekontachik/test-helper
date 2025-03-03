@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { AuthService } from '@/lib/services/authService';
 import logger from '@/lib/utils/logger';
@@ -58,7 +59,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 }
 
-export async function PUT(_request: NextRequest): Promise<ApiResponse<unknown>> {
-  // Complete password reset
-  return createErrorResponse('Not implemented', 'NOT_IMPLEMENTED', 501);
+export async function PUT(_request: NextRequest): Promise<NextResponse> {
+  logger.warn('PUT /api/auth/reset-password not implemented');
+  return NextResponse.json(
+    { message: 'Not implemented' },
+    { status: 501 }
+  );
 }
