@@ -1,10 +1,4 @@
-// Unified role type for the entire application
-export type UserRole = 
-  | 'USER' 
-  | 'ADMIN'
-  | 'PROJECT_MANAGER'
-  | 'TESTER'
-  | 'VIEWER';
+import type { UserRole } from '@/types/auth';
 
 // Core user type that matches our database
 export type CoreUser = {

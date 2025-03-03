@@ -4,8 +4,9 @@ import { ServerSessionManager } from './session/serverSessionManager';
 import { AuthenticationError } from '@/lib/errors';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
-import type { UserRole } from '@/types/auth';
-import type { AccountStatus } from './types';
+import { v4 as uuidv4 } from 'uuid';
+import { UserRole } from '@/types/auth';
+import type { AccountStatus } from '@/types/auth';
 import logger from '@/lib/logger';
 import type { AuthResult } from './types';
 // Define User type locally instead of importing from @prisma/client
@@ -26,7 +27,6 @@ import { TokenType } from '@/types/token';
 import { TokenService } from '@/lib/auth/tokens/tokenService';
 import { SecurityService } from '@/lib/security/securityService';
 import { RefreshTokenService } from '@/lib/auth/tokens/refreshTokenService';
-import { v4 as uuidv4 } from 'uuid';
 
 interface LoginCredentials {
   email: string;
@@ -49,6 +49,23 @@ export class AuthService {
 
     logger.debug('Login attempt', { email, ip: ip || 'unknown' });
 
+    // Audit login attempt
+    const loginAttemptId = uuidv4(); // Generate unique ID for this login attempt
+    await AuditService.log({
+      userId: 'anonymous', // We don't know the user ID yet
+      action: AuditAction.USER_LOGIN_FAILED,
+      type: AuditLogType.AUTH,
+      metadata: { 
+        email,
+        attemptId: loginAttemptId,
+        stage: 'attempt',
+        ip: ip || 'unknown',
+        userAgent: userAgent || 'unknown'
+      },
+      details: { message: 'Login attempt initiated' },
+      status: 'SUCCESS'
+    });
+
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email }
@@ -58,6 +75,23 @@ export class AuthService {
 
     if (!user) {
       logger.warn('Login attempt with non-existent email', { email, ip });
+      
+      // Audit failed login with non-existent email
+      await AuditService.log({
+        userId: 'anonymous',
+        action: AuditAction.USER_LOGIN_FAILED,
+        type: AuditLogType.AUTH,
+        metadata: { 
+          email,
+          attemptId: loginAttemptId,
+          reason: 'non_existent_email',
+          ip: ip || 'unknown',
+          userAgent: userAgent || 'unknown'
+        },
+        details: { message: 'Login attempt with non-existent email' },
+        status: 'FAILED'
+      });
+      
       throw new AuthenticationError('Invalid email or password');
     }
 
@@ -65,12 +99,66 @@ export class AuthService {
     switch (user.status) {
       case 'LOCKED':
         logger.warn('Login attempt on locked account', { email, ip });
+        
+        // Audit login attempt on locked account
+        await AuditService.log({
+          userId: user.id,
+          action: AuditAction.USER_LOGIN_FAILED,
+          type: AuditLogType.AUTH,
+          metadata: { 
+            email,
+            attemptId: loginAttemptId,
+            accountStatus: 'LOCKED',
+            reason: 'account_locked',
+            ip: ip || 'unknown',
+            userAgent: userAgent || 'unknown'
+          },
+          details: { message: 'Login attempt on locked account' },
+          status: 'FAILED'
+        });
+        
         throw new AuthenticationError('Account is locked. Please contact support.');
       case 'DISABLED':
         logger.warn('Login attempt on disabled account', { email, ip });
+        
+        // Audit login attempt on disabled account
+        await AuditService.log({
+          userId: user.id,
+          action: AuditAction.USER_LOGIN_FAILED,
+          type: AuditLogType.AUTH,
+          metadata: { 
+            email,
+            attemptId: loginAttemptId,
+            accountStatus: 'DISABLED',
+            reason: 'account_disabled',
+            ip: ip || 'unknown',
+            userAgent: userAgent || 'unknown'
+          },
+          details: { message: 'Login attempt on disabled account' },
+          status: 'FAILED'
+        });
+        
         throw new AuthenticationError('Account is disabled. Please contact support.');
       case 'PENDING':
         logger.warn('Login attempt on unverified account', { email, ip });
+        
+        // Audit login attempt on unverified account
+        await AuditService.log({
+          userId: user.id,
+          action: AuditAction.USER_LOGIN_FAILED,
+          type: AuditLogType.AUTH,
+          metadata: { 
+            email,
+            attemptId: loginAttemptId,
+            accountStatus: 'PENDING',
+            reason: 'email_not_verified',
+            ip: ip || 'unknown',
+            userAgent: userAgent || 'unknown'
+          },
+          details: { message: 'Login attempt on unverified account' },
+          status: 'FAILED'
+        });
+        
         throw new AuthenticationError('Please verify your email before logging in.');
     }
 
@@ -81,7 +169,7 @@ export class AuthService {
 
     if (!isPasswordValid) {
       // Log failed attempt and update failed attempts counter
-      await this.handleFailedLoginAttempt(user, ip);
+      await this.handleFailedLoginAttempt(user, ip, userAgent, loginAttemptId);
       throw new AuthenticationError('Invalid email or password');
     }
 
@@ -98,7 +186,14 @@ export class AuthService {
           userId: user.id,
           action: AuditAction.RESET_FAILED_ATTEMPTS,
           type: AuditLogType.AUTH,
-          metadata: { ip },
+          metadata: { 
+            email,
+            attemptId: loginAttemptId,
+            previousFailedAttempts: user.failedLoginAttempts,
+            ip: ip || 'unknown',
+            userAgent: userAgent || 'unknown'
+          },
+          details: { message: 'Reset failed login attempts counter' },
           status: 'SUCCESS'
         });
       });
@@ -113,8 +208,8 @@ export class AuthService {
       const sessionToken = uuidv4();
       sessionId = await ServerSessionManager.createSession({
         userId: user.id,
-        userAgent,
-        ip,
+        userAgent: userAgent || '',
+        ip: ip || '',
         expiresAt,
         sessionToken
       });
@@ -158,10 +253,22 @@ export class AuthService {
     // Log successful login
     await AuditService.log({
       userId: user.id,
-      action: AuditAction.LOGIN,
+      action: AuditAction.USER_LOGIN,
       type: AuditLogType.AUTH,
-      context: { ip, userAgent },
-      metadata: { sessionId },
+      metadata: { 
+        email,
+        attemptId: loginAttemptId,
+        sessionId,
+        accountStatus: user.status,
+        emailVerified: !!user.emailVerified,
+        twoFactorEnabled: user.twoFactorEnabled ?? false,
+        ip: ip || 'unknown',
+        userAgent: userAgent || 'unknown'
+      },
+      details: { 
+        message: 'User successfully authenticated',
+        tokenExpiry: expiresAt.toISOString()
+      },
       status: 'SUCCESS'
     });
 
@@ -193,7 +300,12 @@ export class AuthService {
   /**
    * Handle failed login attempt
    */
-  private static async handleFailedLoginAttempt(user: User, ip?: string): Promise<void> {
+  private static async handleFailedLoginAttempt(
+    user: User, 
+    ip?: string, 
+    userAgent?: string,
+    attemptId?: string
+  ): Promise<void> {
     const MAX_FAILED_ATTEMPTS = 5;
     
     // Increment failed attempts
@@ -205,10 +317,19 @@ export class AuthService {
     // Log failed attempt
     await AuditService.log({
       userId: user.id,
-      action: AuditAction.LOGIN,
+      action: AuditAction.USER_LOGIN_FAILED,
       type: AuditLogType.AUTH,
-      context: { ip },
-      metadata: { failedAttempt: true },
+      metadata: { 
+        email: user.email,
+        attemptId,
+        failedAttempt: true,
+        failedAttemptCount: updatedUser.failedLoginAttempts,
+        maxAttempts: MAX_FAILED_ATTEMPTS,
+        reason: 'invalid_password',
+        ip: ip || 'unknown',
+        userAgent: userAgent || 'unknown'
+      },
+      details: { message: 'Failed login attempt - invalid password' },
       status: 'FAILED'
     });
 
@@ -228,7 +349,19 @@ export class AuthService {
         userId: user.id,
         action: AuditAction.ACCOUNT_LOCKOUT,
         type: AuditLogType.AUTH,
-        metadata: { reason: 'Too many failed login attempts' },
+        metadata: { 
+          email: user.email,
+          attemptId,
+          reason: 'too_many_failed_attempts',
+          failedAttempts: updatedUser.failedLoginAttempts,
+          threshold: MAX_FAILED_ATTEMPTS,
+          ip: ip || 'unknown',
+          userAgent: userAgent || 'unknown'
+        },
+        details: { 
+          message: 'Account locked due to too many failed login attempts',
+          automaticUnlockTime: null // If you have an automatic unlock feature, add the time here
+        },
         status: 'SUCCESS'
       });
     }
@@ -300,7 +433,12 @@ export class AuthService {
   }
 
   private static validateUserRole(role: unknown): UserRole {
-    const validRoles: UserRole[] = ['USER', 'ADMIN']; // Removed 'MODERATOR'
-    return validRoles.includes(role as UserRole) ? (role as UserRole) : 'USER';
+    // Check if the role is a valid UserRole enum value
+    if (role && Object.values(UserRole).includes(role as UserRole)) {
+      return role as UserRole;
+    }
+    
+    // Default to USER role if invalid
+    return UserRole.USER;
   }
 }

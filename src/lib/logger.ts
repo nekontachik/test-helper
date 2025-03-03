@@ -1,71 +1,94 @@
-// Simple logger implementation without worker threads
+// Simple logger implementation that works in both browser and server environments
 
-import winston from 'winston';
-import { format } from 'winston';
+// Define logger interface
+interface LoggerInterface {
+  error: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: unknown) => void;
+  info: (message: string, meta?: unknown) => void;
+  http: (message: string, meta?: unknown) => void;
+  debug: (message: string, meta?: unknown) => void;
+}
 
-// Define log levels
-const levels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  debug: 4,
-};
+// Define metadata type
+type LogMetadata = Record<string, unknown>;
 
-// Define log colors
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'blue',
-};
+/**
+ * Universal logger that works in both browser and server environments
+ * This implementation uses only browser-compatible APIs
+ */
+class UniversalLogger implements LoggerInterface {
+  private readonly level: string;
+  private readonly service: string;
+  
+  // Define log levels and their priorities
+  private readonly levels = {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    debug: 4,
+  };
 
-// Add colors to winston
-winston.addColors(colors);
+  constructor(options?: { level?: string; service?: string }) {
+    this.level = options?.level || 'info';
+    this.service = options?.service || 'app';
+  }
 
-// Define the format
-const logFormat = format.combine(
-  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-  format.colorize({ all: true }),
-  format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}${info.metadata ? ' ' + JSON.stringify(info.metadata) : ''}`
-  )
-);
+  private shouldLog(level: string): boolean {
+    const configuredLevel = this.levels[this.level as keyof typeof this.levels] || 2; // Default to info
+    const messageLevel = this.levels[level as keyof typeof this.levels] || 2;
+    return messageLevel <= configuredLevel;
+  }
 
-// Create the logger
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  levels,
-  format: format.combine(
-    format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-    format.json()
-  ),
-  defaultMeta: { service: 'test-app' },
-  transports: [
-    // Write logs to console in development
-    new winston.transports.Console({
-      format: logFormat,
-    }),
-    // Write to all logs with level 'info' and below to combined.log
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-    // Write all logs with level 'error' and below to error.log
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-  ],
+  private formatMessage(level: string, message: string, meta?: unknown): string {
+    const timestamp = new Date().toISOString();
+    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
+    return `[${timestamp}] [${this.service}] [${level.toUpperCase()}]: ${message}${metaStr}`;
+  }
+
+  error(message: string, meta?: unknown): void {
+    if (this.shouldLog('error')) {
+      console.error(this.formatMessage('error', message, meta));
+    }
+  }
+
+  warn(message: string, meta?: unknown): void {
+    if (this.shouldLog('warn')) {
+      console.warn(this.formatMessage('warn', message, meta));
+    }
+  }
+
+  info(message: string, meta?: unknown): void {
+    if (this.shouldLog('info')) {
+      console.info(this.formatMessage('info', message, meta));
+    }
+  }
+
+  http(message: string, meta?: unknown): void {
+    if (this.shouldLog('http')) {
+      console.log(this.formatMessage('http', message, meta));
+    }
+  }
+
+  debug(message: string, meta?: unknown): void {
+    if (this.shouldLog('debug')) {
+      console.debug(this.formatMessage('debug', message, meta));
+    }
+  }
+}
+
+// Create a singleton instance of the logger
+export const logger = new UniversalLogger({
+  level: typeof process !== 'undefined' && process.env?.LOG_LEVEL || 'info',
+  service: 'test-app'
 });
 
 // Export a database logger for Prisma
 export const dbLogger = {
-  info: (message: string, meta?: any) => logger.info(message, { metadata: meta }),
-  warn: (message: string, meta?: any) => logger.warn(message, { metadata: meta }),
-  error: (message: string, meta?: any) => logger.error(message, { metadata: meta }),
+  info: (message: string, meta?: LogMetadata): void => logger.info(message, { metadata: meta }),
+  warn: (message: string, meta?: LogMetadata): void => logger.warn(message, { metadata: meta }),
+  error: (message: string, meta?: LogMetadata): void => logger.error(message, { metadata: meta }),
 };
 
-// If we're not in production, log to the console with the format:
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: logFormat,
-    })
-  );
-}
+// Add default export for backward compatibility
+export default logger;

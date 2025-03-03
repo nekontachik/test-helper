@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { AuthService } from '@/lib/services/authService';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),

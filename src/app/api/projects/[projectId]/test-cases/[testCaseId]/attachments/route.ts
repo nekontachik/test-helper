@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createErrorResponse } from '@/types/api';
-import { withAuth } from '@/middleware/auth';
 import { prisma } from '@/lib/prisma';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
 import { SQLQueryBuilder } from '@/lib/sqlQueryBuilder';
 import { randomUUID } from 'crypto';
-import { getServerSession } from 'next-auth';
+import type { Session } from 'next-auth';
+import { protect } from '@/lib/auth/protect';
+import type { UserRole as _UserRole } from '@/types/auth';
 
-// Define the USER_ROLES enum values
-const USER_ROLES = {
+// Define the USER_ROLES enum values but prefix with underscore since it's not used directly
+const _USER_ROLES = {
   ADMIN: 'ADMIN',
   MANAGER: 'PROJECT_MANAGER',
   EDITOR: 'TESTER',
@@ -45,15 +46,13 @@ interface TestCaseAttachmentWithUser extends TestCaseAttachment {
   };
 }
 
-// Define the handler function type to match what withAuth expects
-type HandlerFunction<T = unknown> = (
+// Update the handler function to match the RouteHandler type
+const handler = async (
   req: Request,
-  params: { params: { projectId: string; testCaseId: string } }
-) => Promise<NextResponse<T>>;
-
-const handler: HandlerFunction = async (req, { params }) => {
-  const { testCaseId } = params;
-  const session = await getServerSession();
+  context: { params: Record<string, string>; session: Session }
+): Promise<NextResponse> => {
+  const testCaseId = context.params.testCaseId;
+  const session = context.session;
 
   if (!session?.user) {
     return NextResponse.json(
@@ -150,14 +149,14 @@ const handler: HandlerFunction = async (req, { params }) => {
   }
 };
 
-export const GET = withAuth(handler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.EDITOR, USER_ROLES.USER]
+export const GET = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'USER'] as _UserRole[]
 });
 
-export const POST = withAuth(handler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.EDITOR]
+export const POST = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER'] as _UserRole[]
 });
 
-export const DELETE = withAuth(handler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER]
+export const DELETE = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER'] as _UserRole[]
 });

@@ -27,7 +27,7 @@ export function useComponentPerformance({
 }: PerformanceOptions): void {
   const interactionTracked = useRef(false);
   const renderCount = useRef(0);
-  const mountTime = useRef(performance.now());
+  const _mountTime = useRef(performance.now());
   
   const markNames = useRef<PerformanceMarks>({
     mount: `${componentName}-mount`,
@@ -39,6 +39,8 @@ export function useComponentPerformance({
   // Track mount time
   useEffect(() => {
     const marks = markNames.current;
+    const currentRenderCount = renderCount.current;
+    
     performance.mark(marks.mount);
     
     // Report on unmount
@@ -60,7 +62,7 @@ export function useComponentPerformance({
         // Log the performance data
         console.debug(`Component Performance: ${componentName}`, {
           mountToUnmount: lastMeasure?.duration || 0,
-          renderCount: renderCount.current,
+          renderCount: currentRenderCount,
           hadUserInteraction: interactionTracked.current
         });
         
@@ -84,24 +86,32 @@ export function useComponentPerformance({
   useEffect(() => {
     if (!trackInteractions) return;
     
-    const handleInteraction = () => {
+    const marks = markNames.current;
+    
+    const handleInteraction = (): void => {
       if (!interactionTracked.current) {
         interactionTracked.current = true;
-        performance.mark(markNames.current.interaction);
+        performance.mark(marks.interaction);
         
         // Measure time to first interaction
         performance.measure(
           `${componentName}-time-to-interaction`,
-          markNames.current.mount,
-          markNames.current.interaction
+          marks.mount,
+          marks.interaction
         );
         
-        const measures = performance.getEntriesByName(`${componentName}-time-to-interaction`);
-        const lastMeasure = measures[measures.length - 1];
-        
-        console.debug(`Time to first interaction: ${componentName}`, {
-          timeToInteraction: lastMeasure?.duration || 0
-        });
+        if (reportToAnalytics) {
+          const interactionMeasures = performance.getEntriesByName(
+            `${componentName}-time-to-interaction`,
+            'measure'
+          );
+          
+          const measure = interactionMeasures[0];
+          if (measure) {
+            // Report to analytics
+            console.log(`[Analytics] ${componentName} interaction time:`, measure.duration);
+          }
+        }
       }
     };
     
@@ -112,41 +122,45 @@ export function useComponentPerformance({
       document.removeEventListener('click', handleInteraction, { capture: true });
       document.removeEventListener('keydown', handleInteraction, { capture: true });
       
-      performance.clearMarks(markNames.current.interaction);
+      performance.clearMarks(marks.interaction);
       performance.clearMeasures(`${componentName}-time-to-interaction`);
     };
-  }, [componentName, trackInteractions]);
+  }, [componentName, trackInteractions, reportToAnalytics]);
   
   // Track renders if enabled
   useEffect(() => {
     if (!trackRenders) return;
     
-    renderCount.current++;
-    performance.mark(markNames.current.render + renderCount.current);
+    const marks = markNames.current;
+    const currentRenderCount = renderCount.current;
     
-    if (renderCount.current > 1) {
+    renderCount.current++;
+    const newRenderCount = renderCount.current;
+    performance.mark(marks.render + newRenderCount);
+    
+    if (newRenderCount > 1) {
       // Measure time between renders
       performance.measure(
-        `${componentName}-render-${renderCount.current}`,
-        markNames.current.render + (renderCount.current - 1),
-        markNames.current.render + renderCount.current
+        `${componentName}-render-${newRenderCount}`,
+        marks.render + (newRenderCount - 1),
+        marks.render + newRenderCount
       );
       
-      const measures = performance.getEntriesByName(`${componentName}-render-${renderCount.current}`);
+      const measures = performance.getEntriesByName(`${componentName}-render-${newRenderCount}`);
       const lastMeasure = measures[measures.length - 1];
       
-      if (renderCount.current % 5 === 0) {
+      if (newRenderCount % 5 === 0) {
         console.debug(`Render count: ${componentName}`, {
-          renderCount: renderCount.current,
+          renderCount: newRenderCount,
           lastRenderDuration: lastMeasure?.duration || 0
         });
       }
     }
     
     return () => {
-      performance.clearMarks(markNames.current.render + renderCount.current);
-      if (renderCount.current > 1) {
-        performance.clearMeasures(`${componentName}-render-${renderCount.current}`);
+      performance.clearMarks(marks.render + newRenderCount);
+      if (currentRenderCount > 0) {
+        performance.clearMeasures(`${componentName}-render-${newRenderCount}`);
       }
     };
   }, [componentName, trackRenders]);

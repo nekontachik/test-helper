@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 // Define the token payload interface
 interface TokenPayload {

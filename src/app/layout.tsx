@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Providers } from '@/components/providers';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/clientLogger';
 import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary';
 import { PWAInit } from '@/components/PWAInit';
 import { NotificationProvider } from '@/contexts/NotificationContext';

@@ -8,7 +8,7 @@ out
 **/*.spec.tsx
 **/__tests__/**/*
 **/tests/**/*
-**/test/**/*
+/src/lib/test/**/*
 **/mocks/**/*
 **/fixtures/**/*
 **/cypress/**/*

@@ -1,8 +1,8 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthService } from '@/lib/services/auth.service';
-import type { UserRole } from '@/lib/types/auth';
-import logger from '@/lib/utils/logger';
+import type { UserRole } from '@/types/auth';
+import { logger } from '@/lib/utils/clientLogger';
 
 // Extend Next Auth types with our custom fields
 declare module 'next-auth' {
@@ -51,18 +51,6 @@ export const authOptions: NextAuthOptions = {
             passwordLength: credentials.password.length
           });
           
-          // Force success for test user to bypass potential database issues
-          if (credentials.email === 'test@example.com' && credentials.password === 'password123') {
-            logger.info('Using hardcoded test user authentication');
-            return {
-              id: 'test-user-id',
-              email: 'test@example.com',
-              role: 'ADMIN' as UserRole,
-              name: 'Test User',
-              image: null
-            };
-          }
-          
           const user = await AuthService.validateCredentials(credentials.email, credentials.password);
           
           logger.info('Validation result', { 
@@ -103,22 +91,28 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
-  secret: process.env.NEXTAUTH_SECRET || 'a-very-secure-secret-for-development-only',
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-do-not-use-in-production',
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error'
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Always return a hardcoded absolute URL to avoid any URL construction issues
-      logger.debug('NextAuth redirect call - using hardcoded absolute URL', { 
-        url, 
-        baseUrl,
-        hardcodedUrl: 'http://localhost:3000/dashboard'
-      });
+      // If the URL is relative, prepend the base URL
+      if (url.startsWith('/')) {
+        logger.debug('NextAuth redirect - relative URL', { url, baseUrl });
+        return `${baseUrl}${url}`;
+      }
       
-      // Return a complete, absolute URL to avoid any URL construction
-      return 'http://localhost:3000/dashboard';
+      // If the URL is already absolute and on the same origin, allow it
+      if (url.startsWith(baseUrl)) {
+        logger.debug('NextAuth redirect - same origin URL', { url, baseUrl });
+        return url;
+      }
+      
+      // Default to the dashboard
+      logger.debug('NextAuth redirect - defaulting to dashboard', { url, baseUrl });
+      return `${baseUrl}/dashboard`;
     },
     async session({ session, token }) {
       logger.info('Session callback', { 
@@ -166,6 +160,6 @@ export const authOptions: NextAuthOptions = {
     maxAge: 24 * 60 * 60 // 24 hours
   },
   debug: process.env.NODE_ENV === 'development',
-  // Disable URL validation to prevent URL construction errors
-  useSecureCookies: false
+  // Enable secure cookies in production
+  useSecureCookies: process.env.NODE_ENV === 'production'
 };

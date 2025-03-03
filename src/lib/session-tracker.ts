@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import type { UserActivity } from '@prisma/client';
 
 interface SessionActivity {
   userId: string;
@@ -18,11 +19,10 @@ export async function trackSessionActivity(activity: SessionActivity): Promise<v
     await prisma.userActivity.create({
       data: {
         userId: activity.userId,
-        action: activity.action,
-        path: activity.path,
+        type: activity.action,
         userAgent: activity.userAgent || 'unknown',
-        ip: activity.ip || 'unknown',
-        timestamp: new Date()
+        ipAddress: activity.ip || 'unknown',
+        details: JSON.stringify({ path: activity.path })
       }
     });
   } catch (error) {
@@ -30,11 +30,11 @@ export async function trackSessionActivity(activity: SessionActivity): Promise<v
   }
 }
 
-export async function getSessionHistory(userId: string, limit = 10): Promise<any[]> {
+export async function getSessionHistory(userId: string, limit = 10): Promise<UserActivity[]> {
   try {
     const activities = await prisma.userActivity.findMany({
       where: { userId },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit
     });
     

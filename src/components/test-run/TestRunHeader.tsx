@@ -10,8 +10,8 @@ export function TestRunHeader({
   name,
   status,
   getStatusColor,
-  isLoading,
-  isPolling
+  isLoading: _isLoading,
+  isPolling: _isPolling
 }: TestRunHeaderProps): JSX.Element {
   return (
     <div className="space-y-4">

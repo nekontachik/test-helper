@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import logger from '@/lib/utils/logger';
-import type { CoreUser, UserRole } from '@/lib/types/auth';
+import type { UserRole } from '@/types/auth';
+import type { CoreUser } from '@/lib/types/auth';
 
 export class AuthService {
   static async validateCredentials(email: string, password: string): Promise<CoreUser | null> {

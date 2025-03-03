@@ -98,15 +98,22 @@ export class PasswordPolicyService {
       failedPolicies.push(this.POLICIES.PERSONAL);
     }
 
+    // Create feedback object with proper handling of the optional warning property
+    const feedback = {
+      suggestions: [
+        ...result.feedback.suggestions,
+        ...failedPolicies.map(policy => this.POLICY_MESSAGES[policy as keyof typeof this.POLICIES]),
+      ],
+    } as PasswordStrengthResult['feedback'];
+    
+    // Only add warning property if it exists
+    if (result.feedback.warning) {
+      feedback.warning = result.feedback.warning;
+    }
+
     return {
       score: result.score,
-      feedback: {
-        warning: result.feedback.warning,
-        suggestions: [
-          ...result.feedback.suggestions,
-          ...failedPolicies.map(policy => this.POLICY_MESSAGES[policy as keyof typeof this.POLICIES]),
-        ],
-      },
+      feedback,
       isStrong: failedPolicies.length === 0 && result.score >= this.MIN_SCORE,
       failedPolicies,
     };

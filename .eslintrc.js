@@ -14,7 +14,7 @@ module.exports = {
     '**/*.spec.ts',
     '**/*.spec.tsx',
     '**/tests/**',
-    '**/test/**',
+    '/src/lib/test/**',
     '**/__tests__/**',
     '**/mocks/**',
     '**/fixtures/**',

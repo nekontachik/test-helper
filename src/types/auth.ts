@@ -1,10 +1,10 @@
-import type { Session } from 'next-auth';
+// Import NextAuth types
 import 'next-auth';
 
 // Define user roles
 export enum UserRole {
   ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
+  PROJECT_MANAGER = 'PROJECT_MANAGER',
   EDITOR = 'EDITOR',
   TESTER = 'TESTER',
   VIEWER = 'VIEWER',
@@ -58,10 +58,11 @@ export interface AuthResult {
   sessionId: string;
 }
 
-export interface ExtendedSession extends Session {
+// Custom session type that extends the base Session
+export interface ExtendedSession {
   user: {
     id: string;
-    email: string | null;
+    email: string;
     name: string | null;
     image: string | null;
     role: UserRole;
@@ -72,11 +73,16 @@ export interface ExtendedSession extends Session {
     emailNotificationsEnabled: boolean;
     twoFactorAuthenticated: boolean;
   };
+  expires: string;
 }
 
 // Type guard
-export function isExtendedSession(session: Session): session is ExtendedSession {
-  return 'role' in session.user && 'permissions' in session.user;
+export function isExtendedSession(session: unknown): session is ExtendedSession {
+  if (!session || typeof session !== 'object') return false;
+  const s = session as Record<string, unknown>;
+  return 'user' in s && typeof s.user === 'object' && s.user !== null && 
+         'role' in (s.user as Record<string, unknown>) && 
+         'permissions' in (s.user as Record<string, unknown>);
 }
 
 export interface TokenPayload {
@@ -139,31 +145,15 @@ export enum AuditAction {
   EMAIL_VERIFICATION_FAILED = 'EMAIL_VERIFICATION_FAILED'
 }
 
-// Extend the next-auth session type
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name?: string;
-      role: string;
-      emailVerified?: string | null;
-      twoFactorAuthenticated?: boolean;
-    };
-    expires: string;
-  }
+// Define custom properties for NextAuth
+export interface CustomUser {
+  id: string;
+  role: UserRole;
+  emailVerified: string | null;
+  twoFactorAuthenticated: boolean;
 }
 
-// Extend the JWT type
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    role: string;
-    emailVerified?: string | null;
-    twoFactorAuthenticated?: boolean;
-  }
-}
-
+// Add back the AuthTokens interface
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;

@@ -3,13 +3,13 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Spinner, Box, Center, Text } from '@chakra-ui/react';
+import { Spinner, Center, Text } from '@chakra-ui/react';
 import { useAuthorization } from '@/hooks/useAuthorization';
-import { UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole: UserRole | UserRole[];
+  requiredRole: UserRole;
   fallback?: React.ReactNode;
 }
 
@@ -17,10 +17,10 @@ export function RoleProtectedRoute({
   children, 
   requiredRole,
   fallback 
-}: RoleProtectedRouteProps) {
+}: RoleProtectedRouteProps): JSX.Element | null {
   const { status } = useSession();
   const router = useRouter();
-  const { hasRole } = useAuthorization();
+  const hasRequiredRole = useAuthorization(requiredRole);
   
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -38,7 +38,7 @@ export function RoleProtectedRoute({
   
   if (status === 'authenticated') {
     // Check if user has the required role
-    if (hasRole(requiredRole)) {
+    if (hasRequiredRole) {
       return <>{children}</>;
     }
     
@@ -54,7 +54,7 @@ export function RoleProtectedRoute({
           Access Denied
         </Text>
         <Text>
-          You don't have permission to access this page.
+          You don&apos;t have permission to access this page.
         </Text>
       </Center>
     );

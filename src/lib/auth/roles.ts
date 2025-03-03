@@ -1,14 +1,14 @@
 import { UserRole } from '@/types/auth';
 
 // Valid roles in the system
-export const VALID_ROLES: UserRole[] = [
-  'ADMIN', 
-  'MANAGER', 
-  'EDITOR', 
-  'TESTER', 
-  'VIEWER', 
-  'USER'
-];
+export const VALID_ROLES = [
+  UserRole.ADMIN, 
+  UserRole.PROJECT_MANAGER,
+  UserRole.EDITOR,
+  UserRole.TESTER, 
+  UserRole.VIEWER, 
+  UserRole.USER
+] as const;
 
 /**
  * Validates if a string is a valid UserRole
@@ -17,7 +17,7 @@ export const VALID_ROLES: UserRole[] = [
  */
 export function isValidUserRole(role: string | undefined): role is UserRole {
   if (!role) return false;
-  return VALID_ROLES.includes(role as UserRole);
+  return Object.values(UserRole).includes(role as UserRole);
 }
 
 /**
@@ -28,7 +28,7 @@ export function isValidUserRole(role: string | undefined): role is UserRole {
  */
 export function hasRequiredRole(
   userRole: UserRole | undefined, 
-  requiredRoles: UserRole | UserRole[]
+  requiredRoles: UserRole | UserRole[] | string[]
 ): boolean {
   if (!userRole || !isValidUserRole(userRole)) return false;
   
@@ -46,12 +46,12 @@ export function hasRequiredRole(
  */
 export function getRoleLevel(role: UserRole): number {
   switch (role) {
-    case 'ADMIN': return 100;
-    case 'MANAGER': return 80;
-    case 'EDITOR': return 60;
-    case 'TESTER': return 40;
-    case 'VIEWER': return 20;
-    case 'USER': return 10;
+    case UserRole.ADMIN: return 100;
+    case UserRole.PROJECT_MANAGER: return 80;
+    case UserRole.EDITOR: return 70;
+    case UserRole.TESTER: return 60;
+    case UserRole.VIEWER: return 20;
+    case UserRole.USER: return 10;
     default: return 0;
   }
 }

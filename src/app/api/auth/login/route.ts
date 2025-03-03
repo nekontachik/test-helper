@@ -6,6 +6,13 @@ import { ErrorHandler } from '@/lib/errors/errorHandler';
 import logger from '@/lib/logger';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
+
+// Rate limit configuration for login attempts
+const LOGIN_RATE_LIMIT = {
+  points: 5,        // 5 attempts
+  duration: 300     // in 5 minutes (300 seconds)
+};
 
 // Validation schema for login credentials
 const loginSchema = z.object({
@@ -57,6 +64,42 @@ async function ensureTestUserExists(): Promise<void> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Get client IP for rate limiting
+  const ip = request.headers.get('x-forwarded-for') || 
+             request.ip || 
+             'unknown';
+  
+  // Apply rate limiting
+  const rateLimiter = new RateLimiter();
+  const rateLimitKey = `login:${ip}`;
+  const rateLimitResult = await rateLimiter.checkLimit(rateLimitKey, LOGIN_RATE_LIMIT);
+  
+  // If rate limit exceeded, return 429 Too Many Requests
+  if (!rateLimitResult.success) {
+    logger.warn('Rate limit exceeded for login', { 
+      ip: ip.toString(),
+      limit: rateLimitResult.limit,
+      reset: new Date(rateLimitResult.reset).toISOString()
+    });
+    
+    return NextResponse.json(
+      { 
+        error: 'Too many login attempts', 
+        message: 'Please try again later',
+        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toString()
+        }
+      }
+    );
+  }
+  
   // In development, ensure a test user exists
   if (process.env.NODE_ENV === 'development') {
     await ensureTestUserExists();
@@ -68,7 +111,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const validatedData = loginSchema.parse(body);
     
     // Get client info for security logging
-    const ip = request.headers.get('x-forwarded-for') || request.ip || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
     
     // Attempt login
@@ -78,6 +120,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ip: ip.toString(),
       userAgent
     });
+    
+    // Reset failed attempts on successful login
+    await rateLimiter.resetAttempts(ip.toString(), 'login');
     
     // Log success with minimal info
     logger.info('Login successful', { 
@@ -101,7 +146,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     });
   } catch (error) {
-    logger.error('Login failed', { error });
+    // Record failed attempt for additional tracking
+    await rateLimiter.recordFailedAttempt(ip.toString(), 'login');
+    
+    logger.error('Login failed', { 
+      error,
+      ip: ip.toString()
+    });
     return ErrorHandler.handleApiError(error);
   }
 }

@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createErrorResponse } from '@/types/api';
-import { withAuth } from '@/lib/withAuth';
+import { withAuth as _withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
-import type { UserRole as _UserRole } from '@/types/auth';
+import { UserRole } from '@/types/auth';
 import { getServerSession } from 'next-auth';
 import { testRunNoteSchema } from '@/lib/validation';
 import { randomUUID } from 'crypto';
 import { type Session } from 'next-auth';
+import { protect } from '@/lib/auth/protect';
 
 interface TestRunNote {
   id: string;
@@ -22,7 +23,7 @@ interface TestRunNote {
 async function handler(
   req: NextRequest,
   context: { params: { projectId: string; runId: string } }
-): Promise<Response> {
+): Promise<NextResponse> {
   const { runId } = context.params;
   const session = await getServerSession();
 
@@ -119,32 +120,35 @@ async function handler(
   );
 }
 
-// Define the UserRole enum values
-const USER_ROLES = {
-  ADMIN: 'ADMIN',
-  MANAGER: 'PROJECT_MANAGER',
-  EDITOR: 'TESTER'
-} as const;
+// Define a type for the route handler that's compatible with the protect function
+type CompatibleRouteHandler = (
+  req: NextRequest | Request,
+  context: { params: Record<string, string>; session: Session }
+) => Promise<NextResponse>;
 
-// Modify the handler to work with withAuth
-const routeHandler = (req: NextRequest, _session: Session): Promise<Response> => {
+// Modify the handler to work with protect
+const routeHandler: CompatibleRouteHandler = (
+  req: NextRequest | Request, 
+  _context: { params: Record<string, string>; session: Session }
+): Promise<NextResponse> => {
   // Extract params from the URL
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/');
-  const projectId = pathParts[pathParts.indexOf('projects') + 1];
-  const runId = pathParts[pathParts.indexOf('test-runs') + 1];
+  const projectId = pathParts[pathParts.indexOf('projects') + 1] || '';
+  const runId = pathParts[pathParts.indexOf('test-runs') + 1] || '';
   
-  return handler(req, { params: { projectId, runId } });
+  // Cast req to NextRequest since our handler expects it
+  return handler(req as NextRequest, { params: { projectId, runId } });
 };
 
-export const GET = withAuth(routeHandler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.EDITOR]
+export const GET = protect(routeHandler, {
+  roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
 });
 
-export const POST = withAuth(routeHandler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.EDITOR]
+export const POST = protect(routeHandler, {
+  roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EDITOR]
 });
 
-export const DELETE = withAuth(routeHandler, {
-  allowedRoles: [USER_ROLES.ADMIN, USER_ROLES.MANAGER]
+export const DELETE = protect(routeHandler, {
+  roles: [UserRole.ADMIN, UserRole.MANAGER]
 });

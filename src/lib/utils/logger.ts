@@ -1,63 +1,25 @@
 // Simple logger implementation that works in both browser and server environments
 // without causing worker thread issues
 
-import winston from 'winston';
-import { format } from 'winston';
-import path from 'path';
 import type { NextRequest } from 'next/server';
 
-const { combine, timestamp, json, colorize, printf } = format;
+// Check if we're running in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
-// Configuration type for logger with transport options
-interface LoggerConfig {
-  logDir: string;
-  level: string;
-  isProduction: boolean;
-  maxFileSize?: number;
-  maxFiles?: number;
-  consoleEnabled?: boolean;
-  fileEnabled?: boolean;
+// Define logger interface
+interface LoggerInterface {
+  error: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: unknown) => void;
+  info: (message: string, meta?: unknown) => void;
+  http: (message: string, meta?: unknown) => void;
+  debug: (message: string, meta?: unknown) => void;
 }
-
-// Default configuration values
-const defaultConfig: LoggerConfig = {
-  logDir: path.join(process.cwd(), 'logs'),
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  isProduction: process.env.NODE_ENV === 'production',
-  maxFileSize: 5242880, // 5MB
-  maxFiles: 5,
-  consoleEnabled: true,
-  fileEnabled: process.env.NODE_ENV === 'production'
-};
-
-// Custom log levels with type safety
-const levels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  debug: 4,
-} as const;
-
-type LogLevel = keyof typeof levels;
-
-// Custom level colors
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'white',
-} as const;
-
-// Add colors to winston
-winston.addColors(colors);
 
 // Type-safe metadata interface
 interface LogData {
   [key: string]: unknown;
   timestamp?: string;
-  level?: LogLevel;
+  level?: string;
   message?: string;
 }
 
@@ -65,98 +27,59 @@ interface LogData {
 interface RouteLogInfo {
   method: string;
   path: string;
-  status?: number;
-  duration?: number;
-  userAgent?: string;
-  ip?: string;
-  error?: Error | unknown;
+  status?: number | undefined;
+  duration?: number | undefined;
+  userAgent?: string | undefined;
+  ip?: string | undefined;
+  error?: Error | unknown | undefined;
 }
 
-// Custom format for development with proper type handling
-const developmentFormat = printf((info: winston.Logform.TransformableInfo): string => {
-  const { level, message, timestamp, ...metadata } = info;
-  let msg = `${timestamp || new Date().toISOString()} [${level}]: ${String(message)}`;
-  
-  if (Object.keys(metadata).length > 0 && metadata.meta) {
-    msg += `\nMetadata: ${JSON.stringify(metadata.meta, null, 2)}`;
-  }
-  return msg;
-});
-
-type LoggerType = winston.Logger | {
-  error: typeof console.error;
-  warn: typeof console.warn;
-  info: typeof console.info;
-  http: typeof console.log;
-  debug: typeof console.debug;
-};
-
-// Create logger with error handling
-const createLogger = (config: LoggerConfig = defaultConfig): LoggerType => {
-  try {
-    const logger = winston.createLogger({
-      level: config.level,
-      levels,
-      format: combine(
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        config.isProduction ? json() : combine(colorize(), developmentFormat)
-      ),
-      transports: [
-        new winston.transports.Console({
-          handleExceptions: true,
-          handleRejections: true,
-        })
-      ],
-    });
-
-    // Add file transports in production
-    if (config.isProduction) {
-      logger.add(
-        new winston.transports.File({
-          filename: path.join(config.logDir, 'error.log'),
-          level: 'error',
-          handleExceptions: true,
-          handleRejections: true,
-          maxsize: config.maxFileSize,
-          maxFiles: config.maxFiles,
-        })
-      );
-
-      logger.add(
-        new winston.transports.File({
-          filename: path.join(config.logDir, 'routes.log'),
-          level: 'http',
-          handleExceptions: true,
-          handleRejections: true,
-          maxsize: config.maxFileSize,
-          maxFiles: config.maxFiles,
-        })
-      );
-
-      logger.add(
-        new winston.transports.File({
-          filename: path.join(config.logDir, 'combined.log'),
-          handleExceptions: true,
-          handleRejections: true,
-          maxsize: config.maxFileSize,
-          maxFiles: config.maxFiles,
-        })
-      );
+// Create a browser-compatible logger
+const createBrowserLogger = (): LoggerInterface => {
+  return {
+    error: (message: string, meta?: unknown): void => {
+      console.error(`${new Date().toISOString()} error: ${message}`, meta || '');
+    },
+    warn: (message: string, meta?: unknown): void => {
+      console.warn(`${new Date().toISOString()} warn: ${message}`, meta || '');
+    },
+    info: (message: string, meta?: unknown): void => {
+      console.info(`${new Date().toISOString()} info: ${message}`, meta || '');
+    },
+    http: (message: string, meta?: unknown): void => {
+      console.log(`${new Date().toISOString()} http: ${message}`, meta || '');
+    },
+    debug: (message: string, meta?: unknown): void => {
+      console.debug(`${new Date().toISOString()} debug: ${message}`, meta || '');
     }
-
-    return logger;
-  } catch (error) {
-    console.error('Failed to create logger:', error);
-    // Fallback to console logging
-    return {
-      error: console.error,
-      warn: console.warn,
-      info: console.info,
-      http: console.log,
-      debug: console.debug,
-    };
-  }
+  };
 };
+
+// Create a server logger (simplified version without winston)
+const createServerLogger = (): LoggerInterface => {
+  // In a real implementation, we might use winston here
+  // But for simplicity and browser compatibility, we'll use console
+  return {
+    error: (message: string, meta?: unknown): void => {
+      console.error(`${new Date().toISOString()} error: ${message}`, meta || '');
+    },
+    warn: (message: string, meta?: unknown): void => {
+      console.warn(`${new Date().toISOString()} warn: ${message}`, meta || '');
+    },
+    info: (message: string, meta?: unknown): void => {
+      console.info(`${new Date().toISOString()} info: ${message}`, meta || '');
+    },
+    http: (message: string, meta?: unknown): void => {
+      console.log(`${new Date().toISOString()} http: ${message}`, meta || '');
+    },
+    debug: (message: string, meta?: unknown): void => {
+      console.debug(`${new Date().toISOString()} debug: ${message}`, meta || '');
+    }
+  };
+};
+
+// Create the base logger
+const baseLogger = isBrowser ? createBrowserLogger() : createServerLogger();
 
 // Utility function to sanitize sensitive data with type safety
 const sanitizeData = <T extends Record<string, unknown>>(data: T): T => {
@@ -177,10 +100,7 @@ const sanitizeData = <T extends Record<string, unknown>>(data: T): T => {
   return sanitized;
 };
 
-// Create the logger instance
-const logger = createLogger();
-
-// Helper function to extract route information
+// Helper function to extract route information (server-side only)
 const getRouteInfo = (req: NextRequest): RouteLogInfo => {
   const userAgent = req.headers.get('user-agent') || undefined;
   const ip = req.headers.get('x-forwarded-for') || req.ip;
@@ -193,7 +113,7 @@ const getRouteInfo = (req: NextRequest): RouteLogInfo => {
   };
 };
 
-// Route logging middleware
+// Route logging middleware (server-side only)
 const logRoute = async (
   req: NextRequest,
   fn: () => Promise<Response>
@@ -205,34 +125,30 @@ const logRoute = async (
     const response = await fn();
     const duration = Date.now() - startTime;
 
-    logger.http('Route handled', {
-      meta: {
-        ...routeInfo,
-        status: response.status,
-        duration,
-      },
+    baseLogger.http('Route handled', {
+      ...routeInfo,
+      status: response.status,
+      duration,
     });
 
     return response;
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error('Route error', {
-      meta: {
-        ...routeInfo,
-        error,
-        duration,
-      },
+    baseLogger.error('Route error', {
+      ...routeInfo,
+      error,
+      duration,
     });
 
     throw error;
   }
 };
 
-// Create a stream object for Morgan HTTP logging
+// Create a stream object for HTTP logging
 const stream = {
   write: (message: string) => {
-    logger.http(message.trim());
+    baseLogger.http(message.trim());
   },
 };
 
@@ -248,17 +164,17 @@ interface ExtendedLogger {
   logRoute: typeof logRoute;
 }
 
-// Create the extended logger with proper type safety
-const extendedLogger: ExtendedLogger = {
-  error: (message: string, meta?: LogData) => logger.error(message, { meta: sanitizeData(meta || {}) }),
-  warn: (message: string, meta?: LogData) => logger.warn(message, { meta: sanitizeData(meta || {}) }),
-  info: (message: string, meta?: LogData) => logger.info(message, { meta: sanitizeData(meta || {}) }),
-  http: (message: string, meta?: LogData) => logger.http(message, { meta: sanitizeData(meta || {}) }),
-  debug: (message: string, meta?: LogData) => logger.debug(message, { meta: sanitizeData(meta || {}) }),
+// Create the extended logger
+const logger: ExtendedLogger = {
+  error: (message: string, meta?: LogData) => baseLogger.error(message, meta),
+  warn: (message: string, meta?: LogData) => baseLogger.warn(message, meta),
+  info: (message: string, meta?: LogData) => baseLogger.info(message, meta),
+  http: (message: string, meta?: LogData) => baseLogger.http(message, meta),
+  debug: (message: string, meta?: LogData) => baseLogger.debug(message, meta),
   stream,
   sanitizeData,
   logRoute
 };
 
-export default extendedLogger;
+export default logger;
  

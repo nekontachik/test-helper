@@ -1,0 +1,155 @@
+name: Scheduled Tasks
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backup
+          - performance
+          - cleanup
+
+jobs:
+  database-backup:
+    name: Database Backup
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'backup'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Prisma
+        run: npm install -g prisma
+        
+      - name: Export database schema
+        run: prisma db pull
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          
+      - name: Create backup timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+        
+      - name: Create database backup
+        run: |
+          mkdir -p backups
+          prisma db export --schema=prisma/schema.prisma --file=backups/backup-${{ steps.timestamp.outputs.timestamp }}.tar.gz
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          
+      - name: Upload backup to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl private --follow-symlinks
+        env:
+          AWS_S3_BUCKET: ${{ secrets.BACKUP_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SOURCE_DIR: 'backups'
+          DEST_DIR: 'database-backups'
+          
+  performance-monitoring:
+    name: Performance Monitoring
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'performance'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v9
+        with:
+          urls: |
+            https://your-production-url.vercel.app/
+            https://your-production-url.vercel.app/projects
+            https://your-production-url.vercel.app/test-cases
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          
+      - name: Check API performance
+        run: |
+          npm install -g artillery
+          artillery run tests/performance/api-load-test.yml -o performance-report.json
+          
+      - name: Generate performance report
+        run: artillery report performance-report.json -o performance-report.html
+        
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: performance-report.html
+          
+  cleanup:
+    name: Cleanup Old Data
+    if: github.event_name == 'schedule' || github.event.inputs.task == 'all' || github.event.inputs.task == 'cleanup'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run cleanup script
+        run: node scripts/cleanup-old-data.js
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          
+      - name: Cleanup old logs
+        run: node scripts/cleanup-logs.js --days=30
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          
+  notify:
+    name: Notify
+    needs: [database-backup, performance-monitoring, cleanup]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on success
+        if: ${{ success() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: "Scheduled Tasks Completed"
+          SLACK_MESSAGE: "All scheduled tasks have been completed successfully!"
+          SLACK_COLOR: good
+          
+      - name: Notify on failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: "Scheduled Tasks Failed"
+          SLACK_MESSAGE: "One or more scheduled tasks have failed. Please check the logs."
+          SLACK_COLOR: danger 

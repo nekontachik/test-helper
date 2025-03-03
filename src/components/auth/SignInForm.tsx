@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,10 +15,15 @@ import {
   Heading,
   useToast,
   Link,
-  Flex
+  Flex,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  CloseButton
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,9 +38,22 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function SignInForm(): JSX.Element {
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { login, error: authError, isLoading } = useAuth();
+  
+  // Check for error parameters in URL
+  useEffect(() => {
+    if (searchParams) {
+      const error = searchParams.get('error');
+      if (error === 'SessionExpired') {
+        setSessionError('Your session has expired. Please sign in again.');
+        logger.info('Session expired, user redirected to login');
+      }
+    }
+  }, [searchParams]);
   
   const {
     register,
@@ -82,6 +100,19 @@ export function SignInForm(): JSX.Element {
         <Heading as="h2" size="lg" textAlign="center">
           Sign In
         </Heading>
+        
+        {sessionError && (
+          <Alert status="warning">
+            <AlertIcon />
+            <Box flex="1">
+              <AlertTitle>Session Expired</AlertTitle>
+              <AlertDescription display="block">
+                {sessionError}
+              </AlertDescription>
+            </Box>
+            <CloseButton position="absolute" right="8px" top="8px" onClick={() => setSessionError(null)} />
+          </Alert>
+        )}
         
         {authError && (
           <ErrorMessage

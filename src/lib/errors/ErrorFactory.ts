@@ -18,9 +18,9 @@ export class CustomError extends Error {
 }
 
 export class ValidationError extends CustomError {
-  details?: any;
+  details: Record<string, unknown> | undefined;
   
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(message, 'VALIDATION_ERROR', 400);
     this.details = details;
   }

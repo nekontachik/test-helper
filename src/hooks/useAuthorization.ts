@@ -1,51 +1,29 @@
-import { useAuth } from './useAuth';
+import { useSession } from 'next-auth/react';
 import { UserRole } from '@/types/auth';
-import { hasRequiredRole, hasRoleLevel } from '@/lib/auth/roles';
 
-interface UseAuthorizationReturn {
-  hasRole: (role: UserRole | UserRole[]) => boolean;
-  canAccessProject: (projectId: string) => boolean;
-  canManageTestRuns: boolean;
-  canCreateProjects: boolean;
-  canInviteUsers: boolean;
-  isAdmin: boolean;
-}
+/**
+ * Custom hook to check if the current user has the required role
+ * @param requiredRole The minimum role required to access a feature
+ * @returns Boolean indicating if the user has the required role
+ */
+export const useAuthorization = (requiredRole?: UserRole): boolean => {
+  const { data: session } = useSession();
+  
+  if (!session?.user?.role || !requiredRole) {
+    return false;
+  }
 
-export function useAuthorization(): UseAuthorizationReturn {
-  const { user, isAuthenticated } = useAuth();
-  
-  // Check if user has a specific role or any of the roles in an array
-  const hasRole = (role: UserRole | UserRole[]): boolean => {
-    if (!isAuthenticated || !user?.role) return false;
-    return hasRequiredRole(user.role as UserRole, role);
+  const roleHierarchy: Record<UserRole, number> = {
+    [UserRole.ADMIN]: 50,
+    [UserRole.MANAGER]: 40,
+    [UserRole.EDITOR]: 30,
+    [UserRole.TESTER]: 20,
+    [UserRole.VIEWER]: 10,
+    [UserRole.USER]: 0
   };
-  
-  // Admin can do everything
-  const isAdmin = hasRole('ADMIN');
-  
-  // Project access check
-  const canAccessProject = (projectId: string): boolean => {
-    if (!isAuthenticated || !user) return false;
-    
-    // Admins can access all projects
-    if (isAdmin) return true;
-    
-    // In a real app, you would check if the user is a member of the project
-    // This is just a placeholder implementation
-    return hasRole(['MANAGER', 'EDITOR', 'TESTER']);
-  };
-  
-  // Permission checks based on roles
-  const canManageTestRuns = isAdmin || hasRole(['MANAGER', 'EDITOR']);
-  const canCreateProjects = isAdmin || hasRole('MANAGER');
-  const canInviteUsers = isAdmin || hasRole('MANAGER');
-  
-  return {
-    hasRole,
-    canAccessProject,
-    canManageTestRuns,
-    canCreateProjects,
-    canInviteUsers,
-    isAdmin
-  };
-} 
+
+  const userRoleValue = roleHierarchy[session.user.role as UserRole] || 0;
+  const requiredRoleValue = roleHierarchy[requiredRole];
+
+  return userRoleValue >= requiredRoleValue;
+}; 

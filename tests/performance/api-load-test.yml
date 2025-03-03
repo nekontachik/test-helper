@@ -1,0 +1,174 @@
+config:
+  target: "https://your-production-url.vercel.app/api"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 20
+      name: "Ramp up load"
+    - duration: 300
+      arrivalRate: 20
+      name: "Sustained load"
+  environments:
+    production:
+      target: "https://your-production-url.vercel.app/api"
+      phases:
+        - duration: 60
+          arrivalRate: 5
+          name: "Warm up"
+        - duration: 120
+          arrivalRate: 10
+          rampTo: 20
+          name: "Ramp up load"
+        - duration: 300
+          arrivalRate: 20
+          name: "Sustained load"
+    staging:
+      target: "https://staging-url.vercel.app/api"
+      phases:
+        - duration: 30
+          arrivalRate: 2
+          name: "Warm up"
+        - duration: 60
+          arrivalRate: 5
+          rampTo: 10
+          name: "Ramp up load"
+        - duration: 120
+          arrivalRate: 10
+          name: "Sustained load"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  plugins:
+    metrics-by-endpoint: {}
+    expect: {}
+  processor: "./processor.js"
+
+scenarios:
+  - name: "Project API endpoints"
+    weight: 3
+    flow:
+      - get:
+          url: "/projects"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - get:
+          url: "/projects/1"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - think: 1
+      - post:
+          url: "/projects"
+          json:
+            name: "Performance Test Project {{ $randomString(10) }}"
+            description: "Created during performance testing"
+            status: "active"
+          capture:
+            - json: "$.id"
+              as: "projectId"
+          expect:
+            - statusCode: 201
+      - think: 1
+      - put:
+          url: "/projects/{{ projectId }}"
+          json:
+            name: "Updated Project {{ $randomString(5) }}"
+            description: "Updated during performance testing"
+            status: "active"
+          expect:
+            - statusCode: 200
+
+  - name: "Test Case API endpoints"
+    weight: 4
+    flow:
+      - get:
+          url: "/projects/1/test-cases"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - get:
+          url: "/projects/1/test-cases/1"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - think: 1
+      - post:
+          url: "/projects/1/test-cases"
+          json:
+            title: "Performance Test Case {{ $randomString(10) }}"
+            description: "Created during performance testing"
+            steps: "Step 1: Do something\nStep 2: Verify something"
+            expected_result: "Expected result"
+            priority: "medium"
+            status: "active"
+          capture:
+            - json: "$.id"
+              as: "testCaseId"
+          expect:
+            - statusCode: 201
+      - think: 1
+      - put:
+          url: "/projects/1/test-cases/{{ testCaseId }}"
+          json:
+            title: "Updated Test Case {{ $randomString(5) }}"
+            description: "Updated during performance testing"
+            steps: "Step 1: Do something else\nStep 2: Verify something else"
+            expected_result: "Updated expected result"
+            priority: "high"
+            status: "active"
+          expect:
+            - statusCode: 200
+
+  - name: "Test Run API endpoints"
+    weight: 2
+    flow:
+      - get:
+          url: "/projects/1/test-runs"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - get:
+          url: "/projects/1/test-runs/1"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+      - think: 1
+      - post:
+          url: "/projects/1/test-runs"
+          json:
+            name: "Performance Test Run {{ $randomString(10) }}"
+            description: "Created during performance testing"
+            test_case_ids: [1, 2, 3]
+          capture:
+            - json: "$.id"
+              as: "testRunId"
+          expect:
+            - statusCode: 201
+      - think: 1
+      - put:
+          url: "/projects/1/test-runs/{{ testRunId }}/complete"
+          json:
+            results: [
+              {
+                test_case_id: 1,
+                status: "passed",
+                notes: "Test passed successfully"
+              },
+              {
+                test_case_id: 2,
+                status: "failed",
+                notes: "Test failed due to unexpected behavior"
+              },
+              {
+                test_case_id: 3,
+                status: "skipped",
+                notes: "Test skipped due to dependency failure"
+              }
+            ]
+          expect:
+            - statusCode: 200 

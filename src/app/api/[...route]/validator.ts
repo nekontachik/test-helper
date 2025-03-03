@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface ValidationOptions<T, Q = unknown, P = unknown> {
   body?: z.ZodType<T>;

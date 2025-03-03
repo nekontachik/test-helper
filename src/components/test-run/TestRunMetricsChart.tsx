@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Box, Text, Flex, Progress, Stat, StatLabel, StatNumber, StatHelpText } from '@chakra-ui/react';
+import { Box, Flex, Progress, Stat, StatLabel, StatNumber, StatHelpText } from '@chakra-ui/react';
 import { formatDuration } from '@/utils/formatters';
 
 interface TestRunMetricsChartProps {

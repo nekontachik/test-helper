@@ -3,18 +3,24 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, Text, useToast } from '@chakra-ui/react';
 
-export function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+// Define a type for the BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+export function PWAInstallPrompt(): JSX.Element | null {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     // Listen for the beforeinstallprompt event
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', (e: Event) => {
       // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
       // Stash the event so it can be triggered later
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       // Show the install button
       setShowPrompt(true);
     });
@@ -38,7 +44,7 @@ export function PWAInstallPrompt() {
     });
   }, [toast]);
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = async (): Promise<void> => {
     if (!deferredPrompt) return;
     
     // Show the install prompt

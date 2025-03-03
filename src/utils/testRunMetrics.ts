@@ -1,4 +1,17 @@
-import { TestRun, TestCaseResultStatus, TestResult } from '@/types';
+import { TestCaseResultStatus } from '@/types';
+
+// Define the interfaces needed for this file
+interface TestResult {
+  status: TestCaseResultStatus;
+  // Add other properties as needed
+}
+
+interface TestRun {
+  results?: TestResult[];
+  startTime?: string | Date;
+  endTime?: string | Date;
+  // Add other properties as needed
+}
 
 /**
  * Calculates the pass rate for a test run
@@ -17,8 +30,17 @@ export function calculatePassRate(results?: TestResult[]): number {
 
 /**
  * Calculates various metrics for a test run
+ * @param testRun The test run to calculate metrics for
+ * @returns Object containing various test metrics
  */
-export function calculateTestRunMetrics(testRun?: TestRun) {
+export function calculateTestRunMetrics(testRun?: TestRun): {
+  passRate: number;
+  passedCount: number;
+  failedCount: number;
+  skippedCount: number;
+  totalCount: number;
+  duration: number;
+} {
   if (!testRun?.results) {
     return {
       passRate: 0,
@@ -31,15 +53,15 @@ export function calculateTestRunMetrics(testRun?: TestRun) {
   }
   
   const passedCount = testRun.results.filter(
-    result => result.status === TestCaseResultStatus.PASSED
+    (result: TestResult) => result.status === TestCaseResultStatus.PASSED
   ).length;
   
   const failedCount = testRun.results.filter(
-    result => result.status === TestCaseResultStatus.FAILED
+    (result: TestResult) => result.status === TestCaseResultStatus.FAILED
   ).length;
   
   const skippedCount = testRun.results.filter(
-    result => result.status === TestCaseResultStatus.SKIPPED
+    (result: TestResult) => result.status === TestCaseResultStatus.SKIPPED
   ).length;
   
   const totalCount = testRun.results.length;

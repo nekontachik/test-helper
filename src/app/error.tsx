@@ -2,7 +2,7 @@
 
 import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useEffect } from 'react';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export default function Error({
   error,

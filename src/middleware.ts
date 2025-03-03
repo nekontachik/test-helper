@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { authMiddleware } from '@/lib/auth/middleware';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/utils/clientLogger';
 
 /**
  * Main middleware entry point
+ * @param request The incoming request
+ * @returns The response from the middleware chain
  */
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   try {
     // Apply auth middleware
-    return authMiddleware(request);
+    return await authMiddleware(request);
   } catch (error) {
     // Catch any unexpected errors
     logger.error('Middleware error:', error);

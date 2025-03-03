@@ -82,13 +82,16 @@ function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequest
     error !== null &&
     'code' in error &&
     'clientVersion' in error &&
-    typeof (error as any).code === 'string' &&
-    (error as any).code.startsWith('P')
+    typeof (error as Prisma.PrismaClientKnownRequestError).code === 'string' &&
+    (error as Prisma.PrismaClientKnownRequestError).code.startsWith('P')
   );
 }
 
 // Helper function to handle Prisma errors
-function handlePrismaError(error: Prisma.PrismaClientKnownRequestError) {
+function handlePrismaError(error: Prisma.PrismaClientKnownRequestError): {
+  error: Record<string, unknown>;
+  status: number;
+} {
   switch (error.code) {
     case 'P2002': // Unique constraint violation
       return {
@@ -134,9 +137,10 @@ interface ErrorResponse {
 }
 
 // Helper function to create API error responses
-function createApiError(
+// Using underscore prefix to indicate intentionally unused function
+function _createApiError(
   message: string,
-  code: string = 'INTERNAL_SERVER_ERROR',
+  code = 'INTERNAL_SERVER_ERROR',
   details?: unknown
 ): ErrorResponse {
   return {

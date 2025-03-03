@@ -37,22 +37,22 @@ export const ROUTES = {
     },
     '/projects/(.*)': { 
       requireAuth: true, 
-      roles: ['EDITOR', 'MANAGER', 'ADMIN'],
+      roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN, UserRole.TESTER],
       requireVerified: true 
     },
     '/test-cases/(.*)': { 
       requireAuth: true, 
-      roles: ['EDITOR', 'MANAGER', 'ADMIN'],
+      roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN, UserRole.TESTER],
       requireVerified: true 
     },
     '/reports/(.*)': { 
       requireAuth: true, 
-      roles: ['MANAGER', 'ADMIN'],
+      roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN],
       requireVerified: true 
     },
     '/admin/(.*)': { 
       requireAuth: true, 
-      roles: ['ADMIN'],
+      roles: [UserRole.ADMIN],
       requireVerified: true,
       require2FA: true 
     },
@@ -62,21 +62,21 @@ export const ROUTES = {
   api: {
     '/api/projects/(.*)': {
       requireAuth: true,
-      roles: ['EDITOR', 'MANAGER', 'ADMIN'],
+      roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN, UserRole.TESTER],
       requireVerified: true,
       rateLimit: { points: 100, duration: 60 },
       auditActions: true
     },
     '/api/test-cases/(.*)': {
       requireAuth: true,
-      roles: ['EDITOR', 'MANAGER', 'ADMIN'],
+      roles: [UserRole.PROJECT_MANAGER, UserRole.ADMIN, UserRole.TESTER],
       requireVerified: true,
       rateLimit: { points: 100, duration: 60 },
       auditActions: true
     },
     '/api/admin/(.*)': {
       requireAuth: true,
-      roles: ['ADMIN'],
+      roles: [UserRole.ADMIN],
       requireVerified: true,
       require2FA: true,
       rateLimit: { points: 50, duration: 60 },

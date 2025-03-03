@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { testRunSchema } from '@/lib/validation';
 import { TestRunStatus } from '@/types';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { createEndpoint } from '@/lib/api/createEndpoint';
 
 export async function GET(

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { ZodError } from 'zod';
 
 // Standard API response type

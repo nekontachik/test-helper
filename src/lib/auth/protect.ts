@@ -7,6 +7,7 @@ import { AuditService } from '@/lib/audit/auditService';
 import { logger } from '@/lib/logger';
 import { handleApiError, AuthError, PermissionError } from '@/lib/api/errorHandler';
 import type { UserRole } from '@/types/auth';
+import { AuditLogType } from '@/types/audit';
 import type { NextRequest } from 'next/server';
 import type { Session } from 'next-auth';
 
@@ -27,7 +28,8 @@ export interface ProtectOptions {
   auditAction?: string;
 }
 
-type RouteHandler<T = any> = (
+// Define a more specific type for RouteHandler
+type RouteHandler<T> = (
   req: NextRequest | Request,
   context: {
     params: Record<string, string>;
@@ -41,10 +43,10 @@ type RouteHandler<T = any> = (
  * @param options - Protection options
  * @returns Protected route handler
  */
-export function protect<T = any>(
+export function protect<T>(
   handler: RouteHandler<T>,
   options: ProtectOptions = {}
-): RouteHandler<T> {
+): (req: NextRequest | Request, context: { params: Record<string, string> }) => Promise<NextResponse> {
   return async (req: NextRequest | Request, context: { params: Record<string, string> }) => {
     try {
       // Get session
@@ -89,12 +91,14 @@ export function protect<T = any>(
         
         try {
           await rateLimiter.checkLimit(ip, options.rateLimit);
-        } catch (error) {
+        } catch {
           return NextResponse.json(
             { error: 'Rate limit exceeded' },
             { 
               status: 429,
-              headers: { 'Retry-After': '60' }
+              headers: {
+                'Retry-After': String(options.rateLimit?.duration || 60)
+              }
             }
           );
         }
@@ -104,20 +108,18 @@ export function protect<T = any>(
       if (options.audit) {
         await AuditService.log({
           userId: session.user.id,
-          type: 'SYSTEM',
+          type: AuditLogType.SYSTEM,
           action: options.auditAction || 'API_REQUEST',
           metadata: {
             path: req.url,
             method: req.method,
-            ip: req.headers.get('x-forwarded-for') || undefined,
-            userAgent: req.headers.get('user-agent') || undefined,
           },
           status: 'SUCCESS'
         });
       }
       
       // Call handler with session
-      return handler(req, { ...context, session });
+      return await handler(req, { ...context, session });
     } catch (error) {
       return handleApiError(error);
     }

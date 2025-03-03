@@ -27,7 +27,10 @@ export function TestRunPerformanceTracker({
   usePerformanceMonitoring();
 
   useEffect(() => {
-    const handleInteraction = () => {
+    // Capture the current value of the ref at the start of the effect
+    const startTimeValue = startTime.current;
+    
+    const handleInteraction = (): void => {
       if (!firstInteractionTime.current) {
         firstInteractionTime.current = performance.now();
       }
@@ -43,9 +46,9 @@ export function TestRunPerformanceTracker({
       const endTime = performance.now();
       const metrics: PerformanceMetrics = {
         componentName,
-        renderTime: endTime - startTime.current,
+        renderTime: endTime - startTimeValue,
         interactionTime: firstInteractionTime.current 
-          ? firstInteractionTime.current - startTime.current 
+          ? firstInteractionTime.current - startTimeValue 
           : null
       };
 

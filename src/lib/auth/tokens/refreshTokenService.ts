@@ -22,13 +22,28 @@ export class RefreshTokenService {
   private static readonly EXPIRES_IN = '7d';  // Refresh tokens last longer than access tokens
 
   /**
-   * Generate a new refresh token
+   * Generate a new refresh token with database persistence
    */
   static async generateRefreshToken(userId: string, sessionId: string): Promise<string> {
     try {
       const jti = uuidv4();
       
-      // Create JWT without database storage for now
+      // Calculate expiration date
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+      
+      // Store the token in the database
+      await prisma.refreshToken.create({
+        data: {
+          id: jti,
+          userId,
+          sessionId,
+          expiresAt,
+          isRevoked: false
+        }
+      });
+      
+      // Create JWT with the token ID
       const payload: RefreshTokenPayload = { jti, userId, sessionId };
       return sign(payload, this.SECRET, { expiresIn: this.EXPIRES_IN });
     } catch (error) {
@@ -38,9 +53,9 @@ export class RefreshTokenService {
   }
 
   /**
-   * Verify a refresh token and issue a new access token
+   * Verify a refresh token, invalidate it, and issue a new token pair
    */
-  static async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+  static async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string, refreshToken: string }> {
     // Initialize payload outside try/catch to fix scope issues
     let payload: RefreshTokenPayload | undefined;
     
@@ -71,6 +86,26 @@ export class RefreshTokenService {
         throw new SecurityError('Invalid refresh token format');
       }
       
+      // Check if token exists and is not revoked in the database
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { id: payload.jti }
+      });
+      
+      if (!storedToken) {
+        logger.warn('Refresh token not found in database', { jti: payload.jti });
+        throw new SecurityError('Invalid refresh token');
+      }
+      
+      if (storedToken.isRevoked) {
+        logger.warn('Revoked refresh token used', { jti: payload.jti, userId: payload.userId });
+        throw new SecurityError('Refresh token has been revoked');
+      }
+      
+      if (storedToken.expiresAt < new Date()) {
+        logger.warn('Expired refresh token used (DB check)', { jti: payload.jti });
+        throw new SecurityError('Refresh token has expired');
+      }
+      
       // Fetch user data to get email and role
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
@@ -86,6 +121,12 @@ export class RefreshTokenService {
         throw new SecurityError('User not found');
       }
       
+      // Revoke the current token (token rotation)
+      await prisma.refreshToken.update({
+        where: { id: payload.jti },
+        data: { isRevoked: true }
+      });
+      
       // Generate a new access token
       const accessToken = await TokenService.generateToken(
         user.id,
@@ -94,13 +135,76 @@ export class RefreshTokenService {
         payload.sessionId
       );
       
-      return { accessToken };
+      // Generate a new refresh token
+      const newRefreshToken = await this.generateRefreshToken(user.id, payload.sessionId);
+      
+      // Log the token rotation
+      logger.info('Refresh token rotated', { 
+        userId: user.id,
+        oldTokenId: payload.jti,
+        sessionId: payload.sessionId
+      });
+      
+      return { 
+        accessToken,
+        refreshToken: newRefreshToken
+      };
     } catch (error) {
       if (error instanceof SecurityError) {
         throw error;
       }
       logger.error('Access token refresh failed', { error });
       throw new SecurityError('Failed to refresh access token');
+    }
+  }
+  
+  /**
+   * Revoke all refresh tokens for a user or session
+   */
+  static async revokeTokens(options: { userId?: string, sessionId?: string }): Promise<void> {
+    try {
+      if (!options.userId && !options.sessionId) {
+        throw new Error('Either userId or sessionId must be provided');
+      }
+      
+      const where: { userId?: string, sessionId?: string } = {};
+      if (options.userId) where.userId = options.userId;
+      if (options.sessionId) where.sessionId = options.sessionId;
+      
+      await prisma.refreshToken.updateMany({
+        where,
+        data: { isRevoked: true }
+      });
+      
+      logger.info('Refresh tokens revoked', { 
+        userId: options.userId,
+        sessionId: options.sessionId
+      });
+    } catch (error) {
+      logger.error('Failed to revoke refresh tokens', { error, ...options });
+      throw new SecurityError('Failed to revoke refresh tokens');
+    }
+  }
+  
+  /**
+   * Clean up expired tokens (can be run as a scheduled job)
+   */
+  static async cleanupExpiredTokens(): Promise<number> {
+    try {
+      const result = await prisma.refreshToken.deleteMany({
+        where: {
+          OR: [
+            { expiresAt: { lt: new Date() } },
+            { isRevoked: true, updatedAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } // 30 days old revoked tokens
+          ]
+        }
+      });
+      
+      logger.info(`Cleaned up ${result.count} expired refresh tokens`);
+      return result.count;
+    } catch (error) {
+      logger.error('Failed to clean up expired tokens', { error });
+      return 0;
     }
   }
 } 

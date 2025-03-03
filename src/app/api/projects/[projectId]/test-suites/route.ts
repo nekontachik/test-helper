@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import type { NextRequest } from 'next/server';
+import { withAuth as _withAuth } from '@/lib/withAuth';
 import { prisma } from '@/lib/prisma';
 import { testSuiteSchema } from '@/lib/validation';
 import type { Session } from 'next-auth';
+import { protect } from '@/lib/auth/protect';
+import { UserRole } from '@/types/auth';
 
-async function handler(req: Request, context: { params: { projectId: string }, session: Session }): Promise<Response> {
+async function handler(req: Request, context: { params: { projectId: string }, session: Session }): Promise<NextResponse> {
   const { projectId } = context.params;
 
   if (req.method === 'GET') {
@@ -60,6 +63,7 @@ async function handler(req: Request, context: { params: { projectId: string }, s
       const testSuite = await prisma.testSuite.create({
         data: {
           ...validated,
+          description: validated.description ?? null,
           projectId,
           testCases: {
             connect: validated.testCaseIds?.map(id => ({ id })) || []
@@ -87,19 +91,33 @@ async function handler(req: Request, context: { params: { projectId: string }, s
   );
 }
 
-// Modify the handler to match the expected signature
-const apiHandler = (req: Request, session: Session): Promise<Response> => {
+// Define a type for the handler function that's compatible with the protect function
+type ApiHandler = (
+  req: Request | NextRequest,
+  context: { params: Record<string, string>; session: Session }
+) => Promise<NextResponse>;
+
+// Modify the handler to match the expected signature for the protect function
+const apiHandler: ApiHandler = (
+  req: Request | NextRequest, 
+  context: { params: Record<string, string>; session: Session }
+): Promise<NextResponse> => {
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/');
-  const projectId = pathParts[pathParts.indexOf('projects') + 1];
+  // Ensure projectId is always a string by providing a fallback
+  const projectId = pathParts[pathParts.indexOf('projects') + 1] || '';
   
-  return handler(req, { params: { projectId }, session });
+  return handler(req, { params: { projectId }, session: context.session });
 };
 
-export const GET = withAuth(apiHandler, {
-  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER']
+// Disable eslint for the next line to allow the any type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const GET = protect(apiHandler as any, {
+  roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.TESTER]
 });
 
-export const POST = withAuth(apiHandler, {
-  allowedRoles: ['ADMIN', 'PROJECT_MANAGER']
+// Disable eslint for the next line to allow the any type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const POST = protect(apiHandler as any, {
+  roles: [UserRole.ADMIN, UserRole.MANAGER]
 });

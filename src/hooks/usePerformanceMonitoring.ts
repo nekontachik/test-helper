@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { reportWebVitals } from '@/lib/performance';
-import { logger } from '@/lib/logger';
 
 // Add missing type definitions
 interface LayoutShift extends PerformanceEntry {
@@ -31,7 +30,7 @@ export function usePerformanceMonitoring(reportHandler?: (metric: WebVitalsMetri
       list.getEntries().forEach((entry) => {
         // Extract the appropriate value based on entry type
         let value = 0;
-        let delta = undefined;
+        let delta = 0; // Initialize with 0 instead of undefined
         
         if (entry.entryType === 'layout-shift') {
           // For CLS
@@ -50,7 +49,7 @@ export function usePerformanceMonitoring(reportHandler?: (metric: WebVitalsMetri
         }
         
         const metric: WebVitalsMetric = {
-          id: entry.id || entry.name,
+          id: entry.name, // Use name as fallback for id
           name: entry.name,
           label: entry.entryType,
           value,

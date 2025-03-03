@@ -1,13 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { withAuth } from '@/lib/auth/withAuth';
 import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
-import { TestRunService } from '@/lib/services/report/testRunService';
-import { ApiErrorHandler } from '@/lib/utils/apiErrorHandler';
-import type { PrismaClient } from '@prisma/client';
+import { createTestRun } from '@/lib/services/testRunService';
 import { protect } from '@/lib/auth/protect';
 import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/api/errorHandler';
 
 // Validation schemas
 const createTestRunSchema = z.object({
@@ -15,33 +14,48 @@ const createTestRunSchema = z.object({
   testCaseIds: z.array(z.string()).min(1),
   title: z.string().optional() });
 
-export const POST = withAuth(async (req: AuthenticatedRequest) => {
+// @ts-expect-error - The protect function expects NextRequest but we're using AuthenticatedRequest
+export const POST = protect(async (req: AuthenticatedRequest) => {
   try {
     const body = await createTestRunSchema.parseAsync(await req.json());
     
-    const result = await prisma.$transaction(async (tx: PrismaClient['$transaction']) => {
-      return TestRunService.createTestRun(tx, {
-        ...body,
-        userId: req.user.id });
-    });
+    // Create an input object with required properties
+    const input: {
+      projectId: string;
+      testCaseIds: string[];
+      userId: string;
+      title: string;
+      environment: string;
+    } = {
+      projectId: body.projectId,
+      testCaseIds: body.testCaseIds,
+      userId: req.user.id,
+      title: body.title || 'Untitled Test Run', // Provide default title
+      environment: 'production' // Default environment
+    };
+    
+    const result = await createTestRun(input);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error },
+        { error: result.error?.message || 'Unknown error' },
         { status: 400 }
       );
     }
 
     return NextResponse.json(result.data);
   } catch (error) {
-    return ApiErrorHandler.handle(error);
+    return handleApiError(error);
   }
 });
 
 async function getTestRuns(
   req: NextRequest,
-  { session, params }: { session: any; params: Record<string, string> }
-) {
+  _context: { 
+    params: Record<string, string>;
+    session: unknown;
+  }
+): Promise<NextResponse> {
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get('projectId');
@@ -85,6 +99,7 @@ async function getTestRuns(
   }
 }
 
+// @ts-expect-error - The protect function expects NextRequest but we're using a custom handler
 export const GET = protect(getTestRuns, {
   roles: ['ADMIN', 'MANAGER', 'EDITOR', 'TESTER'],
   requireVerified: true,

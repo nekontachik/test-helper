@@ -6,19 +6,68 @@ import { isValidUserRole, hasRequiredRole } from '@/lib/auth/roles';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { SecurityService } from '@/lib/security/securityService';
 import { AuditService } from '@/lib/audit/auditService';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/utils/clientLogger';
 import type { UserRole } from '@/types/auth';
+import { AuditLogType } from '@/types/audit';
 
 // Token interface with proper typing
 interface AuthToken {
   sub: string;
   email: string;
-  role?: string;
-  emailVerified?: boolean;
+  role?: UserRole;
+  emailVerified?: string | null;
   twoFactorAuthenticated?: boolean;
   exp?: number;
   iat?: number;
   jti?: string;
+}
+
+// Define route configuration types
+interface BaseRouteConfig {
+  requireAuth: boolean;
+}
+
+interface PublicRouteConfig extends BaseRouteConfig {
+  isPublic: boolean;
+}
+
+interface ApiRouteConfig extends BaseRouteConfig {
+  isApi: boolean;
+  roles?: UserRole[];
+  requireVerified?: boolean;
+  require2FA?: boolean;
+  rateLimit?: {
+    points: number;
+    duration: number;
+  };
+  auditActions?: boolean;
+}
+
+interface WebRouteConfig extends BaseRouteConfig {
+  isWeb: boolean;
+  roles?: UserRole[];
+  requireVerified?: boolean;
+  require2FA?: boolean;
+}
+
+type RouteConfig = PublicRouteConfig | ApiRouteConfig | WebRouteConfig;
+
+// Cache for route pattern matching
+const routePatternCache = new Map<string, { pattern: string, config: RouteConfig }>();
+
+/**
+ * Check if a token is expired
+ * @param token - The authentication token to check
+ * @returns boolean indicating if the token is expired
+ */
+function isTokenExpired(token: AuthToken): boolean {
+  if (!token.exp) return false;
+  
+  // Get current time in seconds (JWT exp is in seconds)
+  const currentTime = Math.floor(Date.now() / 1000);
+  
+  // Token is expired if current time is greater than expiration time
+  return currentTime > token.exp;
 }
 
 /**
@@ -26,32 +75,67 @@ interface AuthToken {
  * @param pathname - URL path to check
  * @returns Route configuration or undefined
  */
-function getRouteConfig(pathname: string) {
-  // Check public routes first
-  for (const [pattern, config] of Object.entries(ROUTES.public)) {
+function getRouteConfig(pathname: string): RouteConfig {
+  // Check cache first
+  if (routePatternCache.has(pathname)) {
+    const cached = routePatternCache.get(pathname);
+    return cached!.config;
+  }
+  
+  // Check public routes
+  for (const [pattern, routeConfig] of Object.entries(ROUTES.public)) {
     if (new RegExp(`^${pattern}$`).test(pathname)) {
-      return { ...config, isPublic: true };
+      const config = { 
+        ...routeConfig,
+        requireAuth: false, 
+        isPublic: true 
+      } as RouteConfig;
+      
+      // Cache the result
+      routePatternCache.set(pathname, { pattern, config });
+      return config;
     }
   }
   
   // Check API routes
   if (pathname.startsWith('/api/')) {
-    for (const [pattern, config] of Object.entries(ROUTES.api)) {
+    for (const [pattern, routeConfig] of Object.entries(ROUTES.api)) {
       if (new RegExp(`^${pattern}$`).test(pathname)) {
-        return { ...config, isApi: true };
+        const config = { 
+          ...routeConfig,
+          requireAuth: true, 
+          isApi: true 
+        } as ApiRouteConfig;
+        
+        // Cache the result
+        routePatternCache.set(pathname, { pattern, config });
+        return config;
       }
     }
   }
   
   // Check web routes
-  for (const [pattern, config] of Object.entries(ROUTES.web)) {
+  for (const [pattern, routeConfig] of Object.entries(ROUTES.web)) {
     if (new RegExp(`^${pattern}$`).test(pathname)) {
-      return { ...config, isWeb: true };
+      const config = { 
+        ...routeConfig,
+        requireAuth: true, 
+        isWeb: true 
+      } as WebRouteConfig;
+      
+      // Cache the result
+      routePatternCache.set(pathname, { pattern, config });
+      return config;
     }
   }
   
   // Default to requiring authentication
-  return { requireAuth: true, isWeb: true };
+  const defaultConfig = pathname.startsWith('/api/') 
+    ? { requireAuth: true, isApi: true } as ApiRouteConfig
+    : { requireAuth: true, isWeb: true } as WebRouteConfig;
+  
+  routePatternCache.set(pathname, { pattern: '', config: defaultConfig });
+  return defaultConfig;
 }
 
 /**
@@ -84,7 +168,7 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     const response = NextResponse.next();
     const headers = SecurityService.getSecurityHeaders();
     Object.entries(headers).forEach(([key, value]) => {
-      response.headers.set(key, value);
+      response.headers.set(key, value as string);
     });
     
     // Allow public routes
@@ -95,8 +179,13 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     // Get and validate token
     const token = await getToken({ req: request }) as AuthToken | null;
     
-    // Handle unauthenticated users
+    // Handle missing token
     if (!token?.sub) {
+      logger.warn('Authentication required but no token found', { 
+        path: pathname,
+        method: request.method
+      });
+      
       // For API routes, return 401
       if (pathname.startsWith('/api/')) {
         return NextResponse.json(
@@ -108,6 +197,30 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       // For web routes, redirect to login
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('callbackUrl', encodeURIComponent(request.url));
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    // Handle expired token
+    if (isTokenExpired(token)) {
+      logger.warn('Token expired', { 
+        userId: token.sub,
+        path: pathname,
+        method: request.method,
+        expiredAt: new Date(token.exp! * 1000).toISOString()
+      });
+      
+      // For API routes, return 401 with specific message
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Session expired', code: 'token_expired' },
+          { status: 401 }
+        );
+      }
+      
+      // For web routes, redirect to login with expired session message
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', encodeURIComponent(request.url));
+      loginUrl.searchParams.set('error', 'SessionExpired');
       return NextResponse.redirect(loginUrl);
     }
     
@@ -125,8 +238,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
     
-    // Check role-based access
-    if (routeConfig.roles && token.role) {
+    // Check role-based access for API routes
+    if ('isApi' in routeConfig && routeConfig.roles && token.role) {
       const hasRole = hasRequiredRole(token.role as UserRole, routeConfig.roles);
       
       if (!hasRole) {
@@ -148,8 +261,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       }
     }
     
-    // Check email verification
-    if (routeConfig.requireVerified && !token.emailVerified) {
+    // Check email verification for API routes
+    if ('isApi' in routeConfig && routeConfig.requireVerified && (!token.emailVerified || token.emailVerified === null)) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json(
           { error: 'Email verification required' },
@@ -160,8 +273,8 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       return NextResponse.redirect(new URL('/auth/verify', request.url));
     }
     
-    // Check 2FA
-    if (routeConfig.require2FA && !token.twoFactorAuthenticated) {
+    // Check 2FA for API routes
+    if ('isApi' in routeConfig && routeConfig.require2FA && !token.twoFactorAuthenticated) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json(
           { error: '2FA verification required' },
@@ -173,13 +286,13 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
     }
     
     // Apply rate limiting for API routes
-    if (pathname.startsWith('/api/') && routeConfig.rateLimit) {
+    if ('isApi' in routeConfig && routeConfig.rateLimit) {
       const rateLimiter = new RateLimiter();
       const ip = request.headers.get('x-forwarded-for') || 'unknown';
       
       try {
         await rateLimiter.checkLimit(ip, routeConfig.rateLimit);
-      } catch (error) {
+      } catch {
         logger.warn('Rate limit exceeded', { ip, path: pathname });
         
         return NextResponse.json(
@@ -192,21 +305,17 @@ export async function authMiddleware(request: NextRequest): Promise<NextResponse
       }
     }
     
-    // Log request for auditing if needed
-    if (pathname.startsWith('/api/') && routeConfig.auditActions) {
-      await AuditService.log({
-        userId: token.sub,
-        type: 'SYSTEM',
-        action: 'API_REQUEST',
-        metadata: {
-          path: pathname,
-          method: request.method,
-          ip: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined,
-        },
-        status: 'SUCCESS'
-      });
-    }
+    // Log API request for auditing
+    await AuditService.log({
+      userId: token.sub,
+      type: AuditLogType.SYSTEM,
+      action: 'API_REQUEST',
+      metadata: {
+        path: pathname,
+        method: request.method,
+      },
+      status: 'SUCCESS'
+    });
     
     return response;
   } catch (error) {

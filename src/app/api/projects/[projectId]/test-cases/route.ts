@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { type ApiResponse } from '@/types/api';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { createEndpoint } from '@/lib/api/createEndpoint';
 
 // Validation schemas

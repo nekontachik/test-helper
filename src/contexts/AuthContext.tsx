@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/clientLogger';
+import type { UserRole } from '@/types/auth';
 
 // Define user type
 export interface User {
@@ -10,7 +11,7 @@ export interface User {
   email: string | null;
   name: string | null;
   image: string | null;
-  role?: string;
+  role?: UserRole;
   twoFactorEnabled?: boolean;
   emailVerified?: Date | null;
   twoFactorAuthenticated?: boolean;

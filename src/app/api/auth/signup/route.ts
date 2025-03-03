@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/utils/hashPassword';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest): Promise<ApiResponse<unknown>> {
   try {

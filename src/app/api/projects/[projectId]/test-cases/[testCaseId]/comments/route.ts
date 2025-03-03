@@ -1,20 +1,23 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { withAuth } from '@/lib/withAuth';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { commentSchema } from '@/lib/validation';
 import { randomUUID } from 'crypto';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
 import { SQLQueryBuilder } from '@/lib/sqlQueryBuilder';
 import { type Session } from 'next-auth';
-import { type UserRole } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
+import { protect } from '@/lib/auth/protect';
 
 // Define UserRoles as an object with proper typing
-const UserRoles: Record<string, UserRole> = {
+const _UserRoles = {
   ADMIN: 'ADMIN',
   MANAGER: 'PROJECT_MANAGER',
   EDITOR: 'TESTER',
   USER: 'USER'
-};
+} as const;
+
+// Create a type from the values and use it
+type _AppUserRole = typeof _UserRoles[keyof typeof _UserRoles];
 
 interface TestCaseComment {
   id: string;
@@ -28,13 +31,12 @@ interface TestCaseComment {
 }
 
 async function handler(
-  req: NextRequest,
-  session: Session
-): Promise<Response> {
-  // Extract testCaseId from URL
-  const url = new URL(req.url);
-  const pathParts = url.pathname.split('/');
-  const testCaseId = pathParts[pathParts.length - 2]; // Get the testCaseId from the URL path
+  req: Request,
+  context: { params: Record<string, string>; session: Session }
+): Promise<NextResponse> {
+  // Extract testCaseId from context
+  const { testCaseId } = context.params;
+  const session = context.session;
 
   if (!session?.user) {
     return NextResponse.json(
@@ -132,10 +134,10 @@ async function handler(
   }
 }
 
-export const GET = withAuth(handler, {
-  allowedRoles: [UserRoles.ADMIN, UserRoles.MANAGER, UserRoles.EDITOR, UserRoles.USER] 
+export const GET = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'USER'] as UserRole[]
 });
 
-export const POST = withAuth(handler, {
-  allowedRoles: [UserRoles.ADMIN, UserRoles.MANAGER, UserRoles.EDITOR] 
+export const POST = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER'] as UserRole[]
 });

@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/middleware/auth';
 import { prisma } from '@/lib/prisma';
 import { PrismaErrorHandler } from '@/lib/prismaErrorHandler';
+import { protect } from '@/lib/auth/protect';
+import type { Session } from 'next-auth';
+import type { UserRole } from '@/types/auth';
 
 async function handler(
   req: Request,
-  { params }: { params: { projectId: string; testCaseId: string } }
+  context: { params: Record<string, string>; session: Session }
 ): Promise<NextResponse> {
-  const { testCaseId } = params;
+  const testCaseId = context.params.testCaseId;
+  
+  if (!testCaseId) {
+    return NextResponse.json({ error: 'Test case ID is required' }, { status: 400 });
+  }
 
   try {
     if (req.method === 'GET') {
@@ -64,10 +70,10 @@ async function handler(
   }
 }
 
-export const GET = withAuth(handler, {
-  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'USER']
+export const GET = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'USER'] as UserRole[]
 });
 
-export const POST = withAuth(handler, {
-  allowedRoles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER']
+export const POST = protect(handler, {
+  roles: ['ADMIN', 'PROJECT_MANAGER', 'TESTER'] as UserRole[]
 });

@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
 // Helper function to check admin role
-async function isAdmin(req: NextRequest) {
+async function isAdmin(req: NextRequest): Promise<boolean> {
   const token = await getToken({ req });
   return token?.role === 'admin';
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Check if user is admin
     if (!await isAdmin(req)) {

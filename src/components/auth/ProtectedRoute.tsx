@@ -3,13 +3,13 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Spinner, Box, Center } from '@chakra-ui/react';
+import { Spinner, Center } from '@chakra-ui/react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children }: ProtectedRouteProps): JSX.Element | null {
   const { status } = useSession();
   const router = useRouter();
   

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/services/auth.service';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { sign } from 'jsonwebtoken';
 

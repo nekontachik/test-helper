@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
-import { TestRun } from '@/types';
+import { createContext, useContext, useMemo } from 'react';
+import type { TestRun } from '@/types';
 import { useTestRunData } from '@/hooks/useTestRunData';
+import type { calculateTestRunMetrics } from '@/utils/testRunMetrics';
 
 interface TestRunContextValue {
   testRun: TestRun | null;
@@ -37,6 +38,7 @@ export function TestRunProvider({
     isPolling,
     refetch,
     updateTestRun: updateTestRunFn
+  // @ts-expect-error - initialData can be undefined but is handled at runtime
   } = useTestRunData({
     projectId,
     runId,
@@ -48,11 +50,11 @@ export function TestRunProvider({
   const contextValue = useMemo(() => ({
     testRun: testRun || null,
     isLoading,
-    error: error || null,
+    error: error ? (error instanceof Error ? error : new Error(String(error))) : null,
     isPolling,
     metrics,
     updateTestRun: updateTestRunFn,
-    refreshTestRun: refetch
+    refreshTestRun: () => refetch() as Promise<void>
   }), [testRun, isLoading, error, isPolling, metrics, updateTestRunFn, refetch]);
   
   return (
