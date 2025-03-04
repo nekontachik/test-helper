@@ -1,23 +1,22 @@
 // Re-export everything from central types
 export * from '@/types/auth';
 
-export const UserRole = {
-  ADMIN: 'ADMIN',
-  PROJECT_MANAGER: 'PROJECT_MANAGER',
-  TESTER: 'TESTER',
-  VIEWER: 'VIEWER',
-  USER: 'USER'
-} as const;
+// Import UserRole as a value, not just a type
+import { UserRole } from '@/types/auth';
+import { isValidUserRole } from '@/lib/utils/typeGuards';
 
-export type UserRole = typeof UserRole[keyof typeof UserRole];
+// Use UserRole enum values instead of string literals
+export const UserRoleValues = {
+  ADMIN: UserRole.ADMIN,
+  PROJECT_MANAGER: UserRole.PROJECT_MANAGER,
+  TESTER: UserRole.TESTER,
+  VIEWER: UserRole.VIEWER,
+  USER: UserRole.USER
+} as const;
 
 export function validateUserRole(role: unknown): UserRole {
   if (isValidUserRole(role)) return role;
-  return UserRole.USER; // Default fallback
-}
-
-export function isValidUserRole(role: unknown): role is UserRole {
-  return typeof role === 'string' && Object.values(UserRole).includes(role as UserRole);
+  return UserRole.USER; // Use enum value instead of string literal
 }
 
 // Remove the module augmentation since it's causing conflicts

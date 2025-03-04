@@ -1,6 +1,6 @@
 import { getSession } from 'next-auth/react';
 import type { TestCaseStatus, TestCasePriority, TestCase, TestRun, PaginatedResponse } from '@/types';
-import { AppError, ApiError } from '@/lib/errors';
+import { ApiError } from '@/lib/errors';
 
 interface RequestConfig {
   retries?: number;
@@ -17,13 +17,13 @@ const DEFAULT_CONFIG: RequestConfig = {
 };
 
 // Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: unknown; timestamp: number }>();
 
 const apiClient = {
   async request<T>(
     method: string,
     url: string,
-    data?: any,
+    data?: unknown,
     config: RequestConfig = DEFAULT_CONFIG
   ): Promise<T> {
     const cacheKey = `${method}:${url}:${JSON.stringify(data)}`;
@@ -32,7 +32,7 @@ const apiClient = {
     if (config.cache && method === 'GET') {
       const cached = cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < (config.cacheTime || DEFAULT_CONFIG.cacheTime!)) {
-        return cached.data;
+        return cached.data as T;
       }
     }
 
@@ -93,16 +93,16 @@ const apiClient = {
     throw lastError || new Error('Request failed');
   },
 
-  async get<T>(url: string, params?: Record<string, any>, config?: RequestConfig): Promise<T> {
-    const queryString = params ? `?${new URLSearchParams(params).toString()}` : '';
+  async get<T>(url: string, params?: Record<string, string | number | boolean | null>, config?: RequestConfig): Promise<T> {
+    const queryString = params ? `?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}` : '';
     return this.request<T>('GET', `${url}${queryString}`, undefined, config);
   },
 
-  async post<T>(url: string, data: any, config?: RequestConfig): Promise<T> {
+  async post<T>(url: string, data: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>('POST', url, data, config);
   },
 
-  async put<T>(url: string, data: any, config?: RequestConfig): Promise<T> {
+  async put<T>(url: string, data: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>('PUT', url, data, config);
   },
 

@@ -1,156 +1,74 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { MIDDLEWARE_CONFIG } from './config';
-import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
-import { SecurityService } from '@/lib/security/securityService';
-import { AuditService } from '@/lib/audit/auditService';
-import type { UserRole } from '@/types/auth';
-import { AuditAction, AuditLogType } from '@/types/audit';
-import type { JWT } from 'next-auth/jwt';
-import { logger } from '@/lib/utils/logger';
+import type { NextRequest } from 'next/server';
+import logger from '@/lib/logger';
+import { createErrorResponse, ErrorType } from '@/lib/utils/errorResponse';
+import { 
+  AuthMiddleware, 
+  RateLimitMiddleware, 
+  SecurityMiddleware, 
+  AuditMiddleware
+} from './modules';
 
 /**
- * Main request handler middleware
- * 
- * Handles authentication, authorization, rate limiting, and request auditing.
+ * Middleware handler for all requests
  */
-
-interface AuthToken extends Omit<JWT, 'role'> {
-  sub: string;
-  role: UserRole;
-}
-
-interface RequestMetadata {
-  path: string;
-  method: string;
-  ip?: string;
-  userAgent?: string;
-}
-
-class RequestHandler {
-  private static isValidUserRole(role: string): role is UserRole {
-    return ['ADMIN', 'PROJECT_MANAGER', 'TESTER', 'VIEWER', 'USER'].includes(role);
-  }
-
-  private static isPublicPath(pathname: string): boolean {
-    return MIDDLEWARE_CONFIG.auth.publicPaths.some(
-      path => new RegExp(`^${path}$`).test(pathname)
-    );
-  }
-
-  private static isStaticFile(pathname: string): boolean {
-    return Boolean(pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/));
-  }
-
-  private static getRequiredRoles(pathname: string): UserRole[] | undefined {
-    const match = Object.entries(MIDDLEWARE_CONFIG.roleAccess).find(
-      ([pattern]) => new RegExp(`^${pattern}$`).test(pathname)
-    );
-    return match?.[1];
-  }
-
-  private static async logRequest(token: AuthToken, metadata: RequestMetadata): Promise<void> {
-    await AuditService.log({
-      userId: token.sub,
-      type: AuditLogType.SYSTEM,
-      action: AuditAction.API_REQUEST,
-      metadata: {
-        path: metadata.path,
-        method: metadata.method,
-        ip: metadata.ip,
-        userAgent: metadata.userAgent,
-      },
-      status: 'SUCCESS' // Add the required status field
-    });
-  }
-
-  static async handleRequest(request: Request): Promise<Response> {
+export class MiddlewareHandler {
+  /**
+   * Process a request through middleware
+   */
+  public static async process(request: NextRequest): Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    
     try {
-      const { pathname } = new URL(request.url);
+      // Check for rate limiting first
+      const rateLimitResponse = await RateLimitMiddleware.applyRateLimit(request, pathname);
+      if (rateLimitResponse) return rateLimitResponse;
 
-      // Skip middleware for static files
-      if (this.isStaticFile(pathname)) {
+      // Validate authentication
+      const { token, response: authResponse } = await AuthMiddleware.validateAuthentication(request, pathname);
+      if (authResponse) return authResponse;
+
+      // Skip further processing for public paths
+      if (AuthMiddleware.isPublicPath(pathname)) {
         return NextResponse.next();
       }
 
-      // Initialize response with security headers
-      const response = NextResponse.next();
-      const headers = SecurityService.getSecurityHeaders();
-      Object.entries(headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
+      // At this point, token should be valid for protected paths
+      if (token) {
+        // Validate authorization
+        const authorizationResponse = AuthMiddleware.validateAuthorization(token, pathname, request);
+        if (authorizationResponse) return authorizationResponse;
 
-      // Check if path is public
-      if (this.isPublicPath(pathname)) {
+        // Apply security headers
+        const response = NextResponse.next();
+        await SecurityMiddleware.applySecurityHeaders(response);
+        
+        // Log request
+        await AuditMiddleware.logRequest(token, {
+          path: pathname,
+          method: request.method,
+          ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
+        });
+
         return response;
       }
 
-      // Get and validate user token
-      // @ts-expect-error - getToken expects a different request type
-      const token = await getToken({ req: request }) as AuthToken | null;
-      if (!token?.sub) {
-        const signInUrl = new URL('/auth/signin', request.url);
-        signInUrl.searchParams.set('callbackUrl', pathname);
-        return NextResponse.redirect(signInUrl);
-      }
-
-      // Validate user role
-      if (!token.role || !this.isValidUserRole(token.role)) {
-        logger.warn('Invalid user role', { userId: token.sub, role: token.role });
-        return NextResponse.json(
-          { error: 'Invalid user role' },
-          { status: 403 }
-        );
-      }
-
-      // Check role-based access
-      const requiredRoles = this.getRequiredRoles(pathname);
-      if (requiredRoles && !requiredRoles.includes(token.role as UserRole)) {
-        logger.warn('Unauthorized access attempt', {
-          userId: token.sub,
-          role: token.role,
-          path: pathname,
-        });
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-      }
-
-      // Apply rate limiting for API routes
-      if (pathname.startsWith('/api/')) {
-        const rateLimiter = new RateLimiter();
-        const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-        
-        try {
-          const config = pathname.startsWith('/api/admin')
-            ? MIDDLEWARE_CONFIG.rateLimit.admin
-            : pathname.startsWith('/api/auth')
-            ? MIDDLEWARE_CONFIG.rateLimit.auth
-            : MIDDLEWARE_CONFIG.rateLimit.api;
-
-          await rateLimiter.checkLimit(ip, config);
-        } catch {
-          logger.warn('Rate limit exceeded', { ip, path: pathname });
-          return NextResponse.json(
-            { error: 'Rate limit exceeded' },
-            { status: 429 }
-          );
-        }
-      }
-
-      // Log request
-      await this.logRequest(token, {
-        path: pathname,
-        method: request.method,
-        ip: request.headers.get('x-forwarded-for') || undefined,
-        userAgent: request.headers.get('user-agent') || undefined,
-      });
-
-      return response;
+      // This should not happen, but just in case
+      return NextResponse.next();
     } catch (error) {
-      logger.error('Middleware error', { error });
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
+      logger.error('Middleware error:', {
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined,
+        path: pathname,
+      });
+      
+      return createErrorResponse({
+        status: 500,
+        type: ErrorType.SERVER_ERROR,
+        message: 'Internal server error'
+      });
     }
   }
 }
@@ -158,8 +76,8 @@ class RequestHandler {
 /**
  * Middleware handler function
  */
-export async function middlewareHandler(request: Request): Promise<Response> {
-  return RequestHandler.handleRequest(request);
+export async function middlewareHandler(request: NextRequest): Promise<Response> {
+  return MiddlewareHandler.process(request);
 }
 
 /**
@@ -172,7 +90,7 @@ export async function middlewareHandler(request: Request): Promise<Response> {
  * 
  * ```typescript
  * // middleware.ts with custom config
- * export default function middleware(request: Request) {
+ * export default function middleware(request: NextRequest) {
  *   // Custom logic here
  *   return middlewareHandler(request);
  * }

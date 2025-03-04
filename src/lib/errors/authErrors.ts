@@ -2,17 +2,70 @@
  * Custom error classes for authentication-related errors
  */
 
-export class AuthenticationError extends Error {
-  constructor(message = 'Authentication failed') {
-    super(message);
-    this.name = 'AuthenticationError';
+import { BaseError } from './BaseError';
+
+export class AuthenticationError extends BaseError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, {
+      code: 'AUTHENTICATION_ERROR',
+      status: 401,
+      details
+    });
   }
 }
 
-export class AuthorizationError extends Error {
-  constructor(message = 'Not authorized to access this resource') {
-    super(message);
-    this.name = 'AuthorizationError';
+export class InvalidCredentialsError extends AuthenticationError {
+  constructor(details?: Record<string, unknown>) {
+    super('Invalid email or password', details);
+  }
+}
+
+export class AccountLockedError extends AuthenticationError {
+  constructor(details?: Record<string, unknown>) {
+    super('Account is locked due to too many failed attempts', {
+      ...details,
+      lockReason: 'FAILED_ATTEMPTS'
+    });
+  }
+}
+
+export class AccountDisabledError extends AuthenticationError {
+  constructor(details?: Record<string, unknown>) {
+    super('Account has been disabled', details);
+  }
+}
+
+export class EmailNotVerifiedError extends AuthenticationError {
+  constructor(details?: Record<string, unknown>) {
+    super('Email address has not been verified', details);
+  }
+}
+
+export class TokenExpiredError extends AuthenticationError {
+  constructor(tokenType: string, details?: Record<string, unknown>) {
+    super(`${tokenType} token has expired`, details);
+  }
+}
+
+export class InvalidTokenError extends AuthenticationError {
+  constructor(tokenType: string, details?: Record<string, unknown>) {
+    super(`Invalid ${tokenType} token`, details);
+  }
+}
+
+export class AuthorizationError extends BaseError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, {
+      code: 'AUTHORIZATION_ERROR',
+      status: 403,
+      details
+    });
+  }
+}
+
+export class InsufficientPermissionsError extends AuthorizationError {
+  constructor(requiredRole: string, currentRole: string, details?: Record<string, unknown>) {
+    super(`Insufficient permissions. Required: ${requiredRole}, Current: ${currentRole}`, details);
   }
 }
 
@@ -20,13 +73,6 @@ export class SessionExpiredError extends Error {
   constructor(message = 'Your session has expired. Please sign in again.') {
     super(message);
     this.name = 'SessionExpiredError';
-  }
-}
-
-export class InvalidCredentialsError extends Error {
-  constructor(message = 'Invalid email or password') {
-    super(message);
-    this.name = 'InvalidCredentialsError';
   }
 }
 

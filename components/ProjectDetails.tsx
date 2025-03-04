@@ -3,21 +3,21 @@ import { Box, Heading, Text, VStack, Button, Flex } from '@chakra-ui/react';
 import type { Project, TestRun } from '@/types';
 import Link from 'next/link';
 import { TestRunList } from './TestRunList';
-import { useTestRuns } from '@/hooks/useTestRuns';
+import { useTestRuns } from '@/hooks/testRuns';
 
 interface ProjectDetailsProps {
   project: Project;
 }
 
-export default function ProjectDetails({ project }: ProjectDetailsProps) {
+export default function ProjectDetails({ project }: ProjectDetailsProps): React.ReactElement {
   const { data: testRuns, isLoading, error } = useTestRuns(project.id);
 
-  const handleTestRunClick = (testRun: TestRun) => {
+  const handleTestRunClick = (testRun: TestRun): void => {
     // Handle test run click, e.g., navigate to test run details
     console.log('Clicked test run:', testRun);
   };
 
-  const formatDate = (date: string | Date | undefined) => {
+  const formatDate = (date: string | Date | undefined): string => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString();
   };

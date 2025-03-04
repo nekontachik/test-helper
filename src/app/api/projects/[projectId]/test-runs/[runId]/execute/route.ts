@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/authOptions';
 import { TestResultStatus } from '@/types/testRun';
 import logger from '@/lib/logger';
+import { isError } from '@/lib/utils/typeGuards';
 
 const executeTestCaseSchema = z.object({
   testCaseId: z.string().uuid(),
@@ -82,7 +83,7 @@ export async function POST(
           executedById: session.user.id,
           executedAt: new Date(),
           // Handle evidence properly
-          evidence: validatedData.evidence || null
+          evidence: validatedData.evidence ? JSON.stringify(validatedData.evidence) : ''
         }
       });
 
@@ -124,7 +125,10 @@ export async function POST(
   } catch (error) {
     logger.error('Error executing test case:', error);
     return NextResponse.json(
-      { error: 'Failed to execute test case', details: (error as Error).message },
+      { 
+        error: 'Failed to execute test case', 
+        details: isError(error) ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

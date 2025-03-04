@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ExecuteTestRun } from '@/components/test-run/ExecuteTestRun';
 import type { TestCase} from '@/types';
 import { TestRun, TestCaseStatus, TestCasePriority, TestCaseResultStatus } from '@/types';
-import { useUpdateTestRun } from '@/hooks/useTestRuns';
+import { useUpdateTestRun } from '@/hooks/testRuns';
 import { ChakraProvider } from '@chakra-ui/react';
 
 // Mock the next/navigation module

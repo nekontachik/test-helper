@@ -6,7 +6,7 @@ interface ProjectCardProps {
   onClick?: (project: Project) => void
 }
 
-export function ProjectCard({ project, onClick }: ProjectCardProps) {
+export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element {
   return (
     <Box
       p={5}

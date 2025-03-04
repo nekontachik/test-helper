@@ -176,5 +176,7 @@ const logger: ExtendedLogger = {
   logRoute
 };
 
+// Export both as named and default export for backward compatibility
+export { logger };
 export default logger;
  

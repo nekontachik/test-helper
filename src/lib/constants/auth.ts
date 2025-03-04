@@ -1,27 +1,29 @@
 import { UserRole } from '@/types/auth';
+import { isValidUserRole } from '@/lib/utils/typeGuards';
 
 export const USER_ROLES = {
   USER: UserRole.USER,
   EDITOR: UserRole.EDITOR,
-  MANAGER: UserRole.MANAGER,
+  TESTER: UserRole.TESTER,
+  VIEWER: UserRole.VIEWER,
+  PROJECT_MANAGER: UserRole.PROJECT_MANAGER,
   ADMIN: UserRole.ADMIN,
 } as const;
 
-export const VALID_ROLES = Object.values(USER_ROLES);
+export const VALID_ROLES: readonly UserRole[] = Object.values(USER_ROLES);
 
-export function isValidRole(role: string): role is UserRole {
-  return Object.values(UserRole).includes(role as UserRole);
-}
+export { isValidUserRole as isValidRole };
 
-export const DEFAULT_ROLE = USER_ROLES.USER;
+export const DEFAULT_ROLE: UserRole = UserRole.USER;
 
 // Role hierarchy for permission checks
 export const ROLE_HIERARCHY = {
   [UserRole.USER]: 0,
   [UserRole.VIEWER]: 1,
   [UserRole.EDITOR]: 2,
-  [UserRole.MANAGER]: 3,
-  [UserRole.ADMIN]: 4,
+  [UserRole.TESTER]: 3,
+  [UserRole.PROJECT_MANAGER]: 4,
+  [UserRole.ADMIN]: 5,
 } as const;
 
 // Role permissions mapping
@@ -35,7 +37,7 @@ export const ROLE_PERMISSIONS = {
     'update:testCases',
     'execute:testRuns'
   ],
-  [UserRole.MANAGER]: [
+  [UserRole.PROJECT_MANAGER]: [
     'read:projects',
     'create:projects',
     'update:projects',

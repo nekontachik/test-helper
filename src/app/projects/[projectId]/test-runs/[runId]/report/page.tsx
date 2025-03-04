@@ -15,18 +15,53 @@ import {
 import { TestRunReport } from '@/components/test-runs/TestRunReport';
 import { TestRunDetailsSkeleton } from '@/components/ui/skeletons/TestRunDetailsSkeleton';
 
+// Define a proper type for the report data
+interface TestRunReportData {
+  id: string;
+  name: string;
+  description?: string;
+  projectId: string;
+  runId: string;
+  status: string;
+  createdBy: { 
+    name: string;
+  };
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  executionTime?: number;
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+    blocked: number;
+    notExecuted: number;
+    passRate: number;
+    completionRate: number;
+  };
+  testCases: Array<{
+    id: string;
+    title: string;
+    priority: string;
+    status: string;
+    notes?: string;
+    executedAt?: string;
+  }>;
+}
+
 export default function TestRunReportPage({
   params
 }: {
   params: { projectId: string; runId: string }
-}) {
-  const [report, setReport] = useState<any>(null);
+}): JSX.Element {
+  const [report, setReport] = useState<TestRunReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const toast = useToast();
 
   useEffect(() => {
-    const fetchReport = async () => {
+    const fetchReport = async (): Promise<void> => {
       try {
         setIsLoading(true);
         const response = await fetch(`/api/projects/${params.projectId}/test-runs/${params.runId}/report`);
@@ -66,7 +101,7 @@ export default function TestRunReportPage({
       <Container maxW="container.xl" py={8}>
         <VStack spacing={4} align="center">
           <Heading size="lg">Report Not Found</Heading>
-          <Text>The test run report you're looking for doesn't exist.</Text>
+          <Text>The test run report you&apos;re looking for doesn&apos;t exist.</Text>
           <Button 
             colorScheme="blue" 
             onClick={() => router.push(`/projects/${params.projectId}/test-runs`)}

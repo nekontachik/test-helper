@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { BaseError } from '@/lib/errors/BaseError';
-import type { Project, TestCase, TestRun } from '@prisma/client';
+import type { Project, TestCase, TestRun, Prisma } from '@prisma/client';
 
 interface ProjectData {
   name: string;
@@ -19,23 +19,17 @@ interface ProjectWithRelations extends Project {
  * Get a project by ID
  */
 export async function getProject(projectId: string): Promise<ProjectWithRelations> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
-      code: 'UNAUTHORIZED',
-      status: 401
-    });
-  }
-
   const project = await prisma.project.findUnique({
-    where: { 
-      id: projectId,
-      userId: session.user.id 
-    },
+    where: { id: projectId },
     include: {
-      testCases: true,
-      testRuns: true,
-    },
+      testCases: {
+        where: { deleted: false },
+        orderBy: { updatedAt: 'desc' }
+      },
+      testRuns: {
+        orderBy: { createdAt: 'desc' }
+      }
+    }
   });
 
   if (!project) {
@@ -53,36 +47,50 @@ export async function getProject(projectId: string): Promise<ProjectWithRelation
  */
 export async function updateProject(projectId: string, data: ProjectData): Promise<Project> {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
+  
+  if (!session) {
+    throw new BaseError('Unauthorized', {
       code: 'UNAUTHORIZED',
       status: 401
     });
   }
-
-  // Verify project exists and belongs to user
-  const existingProject = await prisma.project.findUnique({
-    where: { 
-      id: projectId,
-      userId: session.user.id 
-    },
+  
+  const project = await prisma.project.findUnique({
+    where: { id: projectId }
   });
-
-  if (!existingProject) {
+  
+  if (!project) {
     throw new BaseError('Project not found', {
       code: 'NOT_FOUND',
       status: 404
     });
   }
-
+  
+  if (project.userId !== session.user.id) {
+    throw new BaseError('Forbidden', {
+      code: 'FORBIDDEN',
+      status: 403
+    });
+  }
+  
+  // Create a properly typed update object for Prisma
+  const updateData: Prisma.ProjectUpdateInput = {
+    name: data.name,
+    updatedAt: new Date()
+  };
+  
+  // Only add optional fields if they are defined
+  if (data.description !== undefined) {
+    updateData.description = data.description || null;
+  }
+  
+  if (data.status !== undefined) {
+    updateData.status = data.status;
+  }
+  
   return prisma.project.update({
     where: { id: projectId },
-    data: {
-      name: data.name,
-      description: data.description,
-      status: data.status,
-      updatedAt: new Date(),
-    },
+    data: updateData
   });
 }
 
@@ -91,45 +99,47 @@ export async function updateProject(projectId: string, data: ProjectData): Promi
  */
 export async function deleteProject(projectId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
+  
+  if (!session) {
+    throw new BaseError('Unauthorized', {
       code: 'UNAUTHORIZED',
       status: 401
     });
   }
-
+  
   const project = await prisma.project.findUnique({
-    where: { 
-      id: projectId,
-      userId: session.user.id 
-    },
+    where: { id: projectId }
   });
-
+  
   if (!project) {
     throw new BaseError('Project not found', {
       code: 'NOT_FOUND',
       status: 404
     });
   }
-
-  // Use transaction to delete related records
+  
+  if (project.userId !== session.user.id) {
+    throw new BaseError('Forbidden', {
+      code: 'FORBIDDEN',
+      status: 403
+    });
+  }
+  
   await prisma.$transaction([
-    // Delete test results
-    prisma.testResult.deleteMany({
-      where: { testCase: { projectId } },
-    }),
-    // Delete test cases
+    // Delete all test cases
     prisma.testCase.deleteMany({
-      where: { projectId },
+      where: { projectId }
     }),
-    // Delete test runs
+    
+    // Delete all test runs
     prisma.testRun.deleteMany({
-      where: { projectId },
+      where: { projectId }
     }),
-    // Finally delete the project
+    
+    // Delete the project
     prisma.project.delete({
-      where: { id: projectId },
-    }),
+      where: { id: projectId }
+    })
   ]);
 }
 
@@ -138,32 +148,29 @@ export async function deleteProject(projectId: string): Promise<void> {
  */
 export async function createProject(data: ProjectData): Promise<Project> {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new BaseError('Not authenticated', {
+  
+  if (!session) {
+    throw new BaseError('Unauthorized', {
       code: 'UNAUTHORIZED',
       status: 401
     });
   }
-
-  // Check if user has reached project limit
-  const projectCount = await prisma.project.count({
-    where: { userId: session.user.id },
-  });
-
-  if (projectCount >= 50) {
-    throw new BaseError('Project limit reached', {
-      code: 'VALIDATION_ERROR',
-      status: 409,
-      details: { limit: 50 }
-    });
+  
+  // Create a properly typed create object for Prisma
+  const createData: Prisma.ProjectCreateInput = {
+    name: data.name,
+    status: data.status || 'ACTIVE',
+    user: {
+      connect: { id: session.user.id }
+    }
+  };
+  
+  // Only add description if it's defined
+  if (data.description !== undefined) {
+    createData.description = data.description || null;
   }
-
+  
   return prisma.project.create({
-    data: {
-      name: data.name,
-      description: data.description,
-      status: data.status || 'ACTIVE',
-      userId: session.user.id,
-    },
+    data: createData
   });
 } 

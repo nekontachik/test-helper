@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTestRuns, useCreateTestRun, useUpdateTestRun } from '@/hooks/useTestRuns';
+import { useTestRuns, useCreateTestRun, useUpdateTestRun } from '@/hooks/testRuns';
 import apiClient from '@/lib/apiClient';
 import { TestRunStatus } from '@/types';
 
@@ -48,12 +48,15 @@ describe('useCreateTestRun', () => {
     (apiClient.createTestRun as jest.Mock).mockResolvedValue(mockCreatedTestRun);
 
     function CreateTestRunComponent() {
-      const createTestRun = useCreateTestRun('project1');
+      const createTestRun = useCreateTestRun({ showToasts: true });
       React.useEffect(() => {
         createTestRun.mutate({
-          name: 'New Test Run',
-          testCaseIds: ['1', '2'],
-          status: TestRunStatus.PENDING,
+          projectId: 'project1',
+          testRun: {
+            name: 'New Test Run',
+            testCaseIds: ['1', '2'],
+            status: TestRunStatus.PENDING,
+          },
         });
       }, []);
 

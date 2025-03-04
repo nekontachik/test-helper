@@ -18,8 +18,9 @@ import {
   Badge,
   Divider
 } from '@chakra-ui/react';
-import { TestCase } from '@/types/testCase';
-import { TestResultStatus, TestResultFormData } from '@/types/testRun';
+import type { TestCase } from '@/types';
+import { TestResultStatus } from '@/types/testRun';
+import type { TestResultFormData } from '@/types/testRun';
 
 interface TestCaseExecutionFormProps {
   testCase: TestCase;
@@ -35,19 +36,19 @@ export function TestCaseExecutionForm({
   testRunId,
   onComplete,
   isLast
-}: TestCaseExecutionFormProps) {
+}: TestCaseExecutionFormProps): JSX.Element {
   const [status, setStatus] = useState<TestResultStatus>(TestResultStatus.NOT_EXECUTED);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     try {
       setIsSubmitting(true);
       
       const formData: TestResultFormData = {
         status,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || ''
       };
       
       const response = await fetch(`/api/projects/${projectId}/test-runs/${testRunId}/execute`, {
@@ -105,12 +106,18 @@ export function TestCaseExecutionForm({
           
           <Box>
             <Text fontWeight="bold" mb={2}>Steps:</Text>
-            <Text whiteSpace="pre-line">{testCase.steps}</Text>
+            <Text whiteSpace="pre-line">
+              {typeof testCase.steps === 'string' 
+                ? testCase.steps
+                : Array.isArray(testCase.steps) 
+                  ? (testCase.steps as string[]).map((step: string, index: number) => `${index + 1}. ${step}`).join('\n')
+                  : 'No steps provided'}
+            </Text>
           </Box>
           
           <Box>
             <Text fontWeight="bold" mb={2}>Expected Result:</Text>
-            <Text>{testCase.expectedResult}</Text>
+            <Text>{testCase.expectedResult || 'No expected result provided'}</Text>
           </Box>
           
           <Divider my={2} />

@@ -1,9 +1,10 @@
 import NextAuth from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '../config';
 
-// Create the NextAuth handler
+/**
+ * NextAuth handler for authentication routes
+ * This handles all authentication-related API routes under /api/auth/*
+ */
 const handler = NextAuth(authOptions);
 
-// Export the handlers
-export const GET = handler;
-export const POST = handler;
+export { handler as GET, handler as POST };

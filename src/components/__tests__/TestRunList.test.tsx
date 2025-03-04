@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import TestRunList from '../TestRunList'; // Change to default import if necessary
-import { useTestRuns } from '@/hooks/useTestRuns';
+import { useTestRuns } from '@/hooks/testRuns';
 import { TestRunStatus } from '@/types';
 
-jest.mock('@/hooks/useTestRuns');
+jest.mock('@/hooks/testRuns');
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));

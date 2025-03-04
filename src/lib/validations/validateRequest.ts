@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ApiError } from '@/lib/api/errorHandler';
+import { ValidationError } from '@/lib/errors/ErrorFactory';
 
 export async function validateRequest<T extends z.ZodType>(
   request: Request,
@@ -11,7 +11,7 @@ export async function validateRequest<T extends z.ZodType>(
 ): Promise<z.infer<T>> {
   // Validate HTTP method if specified
   if (options.method && request.method !== options.method) {
-    throw new ApiError(`Method ${request.method} not allowed`, 405);
+    throw new ValidationError(`Method ${request.method} not allowed`);
   }
 
   try {
@@ -24,8 +24,8 @@ export async function validateRequest<T extends z.ZodType>(
     return await schema.parseAsync(body);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new ApiError('Validation failed', 400, 'VALIDATION_ERROR', error.errors);
+      throw new ValidationError('Validation failed', { errors: error.errors });
     }
-    throw new ApiError('Invalid request body', 400);
+    throw new ValidationError('Invalid request body');
   }
 } 

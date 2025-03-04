@@ -1,6 +1,6 @@
 import { Box, Skeleton, Stack, VStack } from "@chakra-ui/react";
 
-export function TestRunListSkeleton() {
+export function TestRunListSkeleton(): JSX.Element {
   return (
     <VStack spacing={4} width="100%" align="stretch">
       <Skeleton height="40px" width="200px" />

@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/utils/clientLogger';
 import type { UserRole } from '@/types/auth';
+import { sanitizeInternalUrl } from '@/lib/utils/url';
+import { signIn } from 'next-auth/react';
 
 // Define user type
 export interface User {
@@ -22,7 +24,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, callbackUrl?: string | null) => Promise<boolean>;
   logout: () => Promise<void>;
   error: string | null;
 }
@@ -83,40 +85,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Login function
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, callbackUrl?: string | null): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      logger.debug('Attempting login', { email });
-      
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
+
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+        // Only pass callbackUrl if it exists and is valid
+        ...(callbackUrl && { callbackUrl: sanitizeInternalUrl(callbackUrl) })
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.user) {
-        setUser(data.user);
-        logger.debug('Login successful', { userId: data.user.id });
-        return true;
-      } else {
-        setError(data.error || 'Login failed');
-        logger.warn('Login failed', { 
-          status: response.status,
-          error: data.error 
-        });
+      if (result?.error) {
+        setError(result.error);
         return false;
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      if (result?.ok) {
+        // Use the safe URL for redirection
+        const redirectUrl = callbackUrl ? sanitizeInternalUrl(callbackUrl) : '/dashboard';
+        router.push(redirectUrl);
+        router.refresh();
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unexpected error occurred';
       setError(errorMessage);
-      logger.error('Login error', { error: errorMessage });
+      logger.error('Login error:', { error });
       return false;
     } finally {
       setIsLoading(false);

@@ -43,8 +43,8 @@ export class ActivityService {
           userId,
           type: type.toString(),
           action: type.toString(),
-          ipAddress: options.ip,
-          userAgent: options.userAgent,
+          ipAddress: options.ip || null,
+          userAgent: options.userAgent || null,
           metadata: options.metadata ? JSON.stringify(options.metadata) : null,
         },
       });

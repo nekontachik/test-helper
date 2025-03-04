@@ -1,4 +1,4 @@
-import { TestRun, TestRunSummary } from '@/types/testRun';
+import type { TestRun, TestRunSummary } from '@/types/testRun';
 import { redis } from '@/lib/redis';
 
 const CACHE_TTL = 60 * 5; // 5 minutes in seconds

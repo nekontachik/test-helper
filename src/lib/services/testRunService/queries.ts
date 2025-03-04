@@ -57,15 +57,29 @@ export async function createTestRun(data: {
   testCaseIds: string[];
 }): Promise<TestRun> {
   try {
-    return await prisma.testRun.create({
-      data: {
-        name: data.name,
-        status: data.status,
-        projectId: data.projectId,
-        createdById: data.createdById,
-        testCaseIds: data.testCaseIds,
-        ...(data.description ? { description: data.description } : {})
+    return await prisma.$transaction(async (tx) => {
+      const testRun = await tx.testRun.create({
+        data: {
+          name: data.name,
+          status: data.status,
+          projectId: data.projectId,
+          userId: data.createdById,
+          ...(data.description ? { description: data.description } : {})
+        }
+      });
+
+      if (data.testCaseIds.length > 0) {
+        await tx.testRunCase.createMany({
+          data: data.testCaseIds.map(testCaseId => ({
+            testRunId: testRun.id,
+            testCaseId,
+            status: 'PENDING',
+            userId: data.createdById
+          }))
+        });
       }
+
+      return testRun;
     });
   } catch (error) {
     throw ErrorFactory.create('DATABASE_ERROR', 'Failed to create test run', { cause: error });

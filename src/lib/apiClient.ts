@@ -1,9 +1,15 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import { ApiError } from './errors/ApiError';
+import type { Session } from 'next-auth';
 import { getSession } from 'next-auth/react';
 import { requestQueue } from './queue/requestQueue';
 import type { Project, ProjectFormData, TestCase, TestRun, TestReport, PaginatedResponse, TestCaseFormData, TestRunFormData, TestReportFormData, TestCaseStatus, TestCasePriority, TestCaseVersion, TestSuite, TestSuiteFormData, TestCaseResult } from '@/types';
+
+type CustomSession = Session & {
+  accessToken?: string;
+  refreshToken?: string;
+};
 
 interface CustomConfig extends InternalAxiosRequestConfig {
   skipAuth?: boolean;
@@ -43,7 +49,7 @@ api.interceptors.request.use(async (config: CustomConfig) => {
   // Skip auth if specified
   if (config.skipAuth) return config;
 
-  const session = await getSession();
+  const session = await getSession() as CustomSession;
   if (session?.accessToken) {
     config.headers.Authorization = `Bearer ${session.accessToken}`;
   }
@@ -72,7 +78,7 @@ api.interceptors.response.use(
       config._retry = true;
       try {
         // Refresh token logic here
-        const session = await getSession();
+        const session = await getSession() as CustomSession;
         if (session?.refreshToken) {
           // Implement your token refresh logic
           return api(config);
@@ -189,8 +195,8 @@ const apiClient = {
     return this.request<T>('PUT', url, data, config);
   },
 
-  async delete<T>(url: string, config?: RequestConfig): Promise<T> {
-    return this.request<T>('DELETE', url, undefined, config);
+  async delete<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T> {
+    return this.request<T>('DELETE', url, data, config);
   },
 
   clearCache() {
@@ -273,8 +279,8 @@ const apiClient = {
     return this.post<TestRun>(`/projects/${projectId}/test-runs`, data);
   },
 
-  async updateTestRun(projectId: string, runId: string, data: Partial<TestRun>): Promise<TestRun> {
-    return this.put<TestRun>(`/projects/${projectId}/test-runs/${runId}`, data);
+  async updateTestRun(projectId: string, runId: string, data: { status: string; testCaseResults: unknown[] }): Promise<void> {
+    return this.put(`/projects/${projectId}/test-runs/${runId}`, data);
   },
 
   async createTestReport(projectId: string, data: TestReportFormData): Promise<TestReport> {
@@ -318,6 +324,10 @@ const apiClient = {
 
   async deleteTestRun(projectId: string, runId: string): Promise<void> {
     return this.delete(`/projects/${projectId}/test-runs/${runId}`);
+  },
+
+  async bulkDeleteTestRuns(projectId: string, runIds: string[]): Promise<void> {
+    return this.delete(`/projects/${projectId}/test-runs/bulk`, { runIds });
   },
 
   async getTestSuite(projectId: string, suiteId: string): Promise<TestSuite> {

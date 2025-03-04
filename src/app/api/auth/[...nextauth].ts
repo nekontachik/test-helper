@@ -5,16 +5,26 @@ import GitHubProvider from 'next-auth/providers/github';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { compare } from 'bcryptjs';
-import type { UserRole, AccountStatus, Permission, AuthUser } from '@/types/auth';
+import type { UserRole, AccountStatus, Permission } from '@/types/auth';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
 import type { NextAuthOptions } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import type { Prisma } from '@prisma/client';
 
-// Define custom user type that includes our additional properties
-interface CustomUser extends Omit<AuthUser, 'permissions'> {
+// Define custom user type for our application
+interface CustomUser {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
   permissions: Permission[];
+  status: AccountStatus;
+  emailNotificationsEnabled: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorAuthenticated: boolean;
+  emailVerified: Date | null;
 }
 
 // Define user select fields for consistent querying
@@ -101,7 +111,7 @@ export const authOptions: NextAuthOptions = {
 
         const headers = req.headers as Record<string, string | undefined>;
         const ip = headers['x-forwarded-for'] || 'unknown';
-        const userAgent = headers['user-agent'];
+        const userAgent = headers['user-agent'] || '';
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
@@ -198,7 +208,7 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }): Promise<JWT> {
       if (user) {
-        const customUser = user as CustomUser;
+        const customUser = user as unknown as CustomUser;
         return {
           ...token,
           id: customUser.id,
@@ -209,8 +219,10 @@ export const authOptions: NextAuthOptions = {
           status: customUser.status,
           emailNotificationsEnabled: customUser.emailNotificationsEnabled,
           twoFactorEnabled: customUser.twoFactorEnabled,
-          twoFactorAuthenticated: customUser.twoFactorAuthenticated,
-          emailVerified: customUser.emailVerified
+          twoFactorAuthenticated: customUser.twoFactorAuthenticated || false,
+          emailVerified: customUser.emailVerified instanceof Date ? 
+            customUser.emailVerified.toISOString() : 
+            customUser.emailVerified
         };
       }
       return token;
@@ -244,7 +256,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   // Security options
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || '',
   debug: process.env.NODE_ENV === 'development'
 };
 

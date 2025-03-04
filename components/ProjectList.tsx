@@ -1,4 +1,3 @@
-import { useProjects } from '@/hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 import { Box, Flex, VStack } from '@chakra-ui/react';
 import { Skeleton } from '@/components/Skeleton';
@@ -8,7 +7,7 @@ interface ProjectListProps {
   projects: Project[];
 }
 
-export default function ProjectList({ projects }: ProjectListProps) {
+export default function ProjectList({ projects }: ProjectListProps): JSX.Element {
   if (!projects?.length) {
     return (
       <Box textAlign="center" py={8}>
@@ -36,7 +35,7 @@ export default function ProjectList({ projects }: ProjectListProps) {
 }
 
 // Loading state component
-export function ProjectListSkeleton() {
+export function ProjectListSkeleton(): JSX.Element {
   return (
     <Flex flexWrap="wrap" gap={6}>
       {[1, 2, 3].map((i) => (

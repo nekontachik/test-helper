@@ -1,5 +1,5 @@
 import type { ServiceResponse } from '../utils/serviceResponse';
-import { ErrorHandler } from '../errors/ErrorHandler';
+import { ErrorHandler } from '../errors/errorHandler';
 
 interface ServiceErrorOptions {
   context?: string;
@@ -19,25 +19,27 @@ export class ServiceErrorHandler {
     operation: () => Promise<T>,
     options: ServiceErrorOptions = {}
   ): Promise<ServiceResponse<T>> {
-    const context = options.context || 'Service';
-    
     try {
       const result = await operation();
-      return { success: true, data: result };
+      return {
+        success: true,
+        data: result
+      };
     } catch (error) {
-      return this.handleError(error, context);
+      return this.handleError(error, options.context);
     }
   }
 
-  static handleError(error: unknown, _context = 'Service'): ServiceResponse<never> {
-    const appError = ErrorHandler.createErrorResponse(error);
+  static handleError(error: unknown, context = 'Service'): ServiceResponse<never> {
+    // Log the error
+    console.error(`Error in ${context}:`, error);
+    
+    // Create a standardized error response
+    const errorResponse = ErrorHandler.createErrorResponse(error);
+    
     return {
       success: false,
-      error: {
-        code: appError.code,
-        message: appError.message,
-        details: appError.details
-      }
+      error: errorResponse
     };
   }
 
@@ -47,7 +49,7 @@ export class ServiceErrorHandler {
     try {
       return await operation();
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError(error, 'Transaction');
     }
   }
 } 

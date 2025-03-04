@@ -1,97 +1,52 @@
 'use client';
 
-import React, { Component } from 'react';
-import type { ErrorInfo, ReactNode } from 'react';
-import { Box, Heading, Text, Button, Code, Stack } from '@chakra-ui/react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/utils/logger';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  error?: Error;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    };
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
-    return {
-      hasError: true,
-      error,
-      errorInfo: null
-    };
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    logger.error('Uncaught error:', { error, errorInfo });
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // You can log the error to an error reporting service
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo
-    });
-  }
-
-  render(): ReactNode {
+  public render(): ReactNode {
     if (this.state.hasError) {
-      return (
-        <Box textAlign="center" p={8} maxW="800px" mx="auto">
-          <Heading as="h2" size="xl" mb={4} color="red.500">
-            Something went wrong
-          </Heading>
-          <Text fontSize="lg" mb={6}>
-            An error occurred in the application. Please try refreshing the page.
-          </Text>
-          
-          <Stack spacing={4} mb={8}>
-            {this.state.error && (
-              <Box p={4} bg="red.50" borderRadius="md" textAlign="left">
-                <Text fontWeight="bold" mb={2}>Error:</Text>
-                <Code p={2} colorScheme="red" display="block" whiteSpace="pre-wrap">
-                  {this.state.error.toString()}
-                </Code>
-              </Box>
-            )}
-            
-            {this.state.errorInfo && (
-              <Box p={4} bg="gray.50" borderRadius="md" textAlign="left">
-                <Text fontWeight="bold" mb={2}>Component Stack:</Text>
-                <Code p={2} colorScheme="gray" display="block" whiteSpace="pre-wrap" fontSize="sm" overflowX="auto">
-                  {this.state.errorInfo.componentStack}
-                </Code>
-              </Box>
-            )}
-          </Stack>
-          
-          <Button
-            colorScheme="blue"
-            onClick={() => window.location.reload()}
-            mr={4}
-          >
-            Refresh Page
-          </Button>
+      return this.props.fallback || (
+        <Alert variant="destructive">
+          <AlertTitle>Something went wrong</AlertTitle>
+          <AlertDescription>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </AlertDescription>
           <Button
             variant="outline"
-            onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+            onClick={() => this.setState({ hasError: false })}
+            className="mt-4"
           >
-            Try Again
+            Try again
           </Button>
-        </Box>
+        </Alert>
       );
     }
 
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

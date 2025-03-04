@@ -12,8 +12,17 @@ import {
   Checkbox,
 } from '@chakra-ui/react';
 import { useTestCases } from '@/hooks/useTestCases';
-import { useCreateTestRun } from '@/hooks/useTestRuns';
+import { useCreateTestRun } from '@/hooks/testRuns';
 import type { TestCase, TestRunFormData } from '@/types';
+
+// Type assertion helper for PaginatedResponse
+interface PaginatedItems<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
 
 const CreateTestRun: React.FC = (): React.ReactElement => {
   const params = useParams();
@@ -24,8 +33,8 @@ const CreateTestRun: React.FC = (): React.ReactElement => {
     handleSubmit,
     formState: { errors },
   } = useForm<TestRunFormData>();
-  const { testCases, isLoading, error } = useTestCases({ projectId });
-  const createTestRun = useCreateTestRun(projectId);
+  const { testCases, loading: isLoading, error } = useTestCases({ projectId });
+  const createTestRun = useCreateTestRun({ showToasts: true });
   const [selectedTestCases, setSelectedTestCases] = useState<string[]>([]);
 
   // Move useMemo outside of conditional rendering to avoid React hooks rules violation
@@ -33,7 +42,9 @@ const CreateTestRun: React.FC = (): React.ReactElement => {
     () => {
       if (!testCases) return [];
       
-      return testCases.map((tc: TestCase) => ({
+      // Type assertion to access items property
+      const testCasesData = testCases as unknown as PaginatedItems<TestCase>;
+      return testCasesData.items.map((tc: TestCase) => ({
         id: tc.id,
         title: tc.title,
         description: tc.description || '',
@@ -49,25 +60,23 @@ const CreateTestRun: React.FC = (): React.ReactElement => {
     [testCases]
   );
 
-  if (isLoading) return <div>Loading test cases...</div>;
-  if (error) return <div>Error loading test cases: {error.message}</div>;
-
   const onSubmit = async (data: TestRunFormData): Promise<void> => {
     try {
+      // Create a new test run with the selected test cases
       await createTestRun.mutateAsync({
-        name: data.name,
-        testCases: selectedTestCases
-          .map((id) => {
-            const testCase = testCases.find(
-              (tc: TestCase) => tc.id === id
-            );
-            return testCase ? { ...testCase } : null;
-          })
-          .filter((tc): tc is TestCase => tc !== null),
+        projectId,
+        testRun: {
+          name: data.name,
+          projectId,
+          testCaseIds: selectedTestCases,
+          status: data.status || 'pending',
+        },
       });
-      router.push(`/projects/${projectId}/test-runs`);
+
+      // Redirect to the project page after successful creation
+      router.push(`/projects/${projectId}`);
     } catch (error) {
-      console.error('Error creating test run:', error);
+      console.error('Failed to create test run:', error);
     }
   };
 
@@ -79,40 +88,45 @@ const CreateTestRun: React.FC = (): React.ReactElement => {
     );
   };
 
+  if (isLoading) {
+    return <div>Loading test cases...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading test cases: {error.message}</div>;
+  }
+
   return (
-    <Box maxWidth="600px" margin="auto" padding={4}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={4} align="stretch">
-          <FormControl isInvalid={!!errors.name}>
-            <FormLabel htmlFor="name">Test Run Name</FormLabel>
-            <Input
-              id="name"
-              {...register('name', { required: 'Test run name is required' })}
-            />
-            {errors.name && <Text color="red.500">{errors.name.message}</Text>}
+    <Box p={4}>
+      <VStack spacing={4} align="stretch">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <FormControl isRequired mb={4}>
+            <FormLabel>Test Run Name</FormLabel>
+            <Input {...register('name', { required: true })} />
+            {errors.name && <Text color="red">Name is required</Text>}
           </FormControl>
 
-          <Text fontWeight="bold">Select Test Cases:</Text>
-          {testCases &&
-            testCases.map((testCase: TestCase) => (
-              <Checkbox
-                key={testCase.id}
-                isChecked={selectedTestCases.includes(testCase.id)}
-                onChange={() => handleTestCaseSelection(testCase.id)}
-              >
-                {testCase.title}
-              </Checkbox>
-            ))}
+          <Box mb={4}>
+            <Text fontWeight="bold">Select Test Cases:</Text>
+            {testCases && 
+              // Type assertion to access items property
+              (testCases as unknown as PaginatedItems<TestCase>).items.map((testCase: TestCase) => (
+                <Checkbox
+                  key={testCase.id}
+                  isChecked={selectedTestCases.includes(testCase.id)}
+                  onChange={() => handleTestCaseSelection(testCase.id)}
+                  mb={2}
+                >
+                  {testCase.title}
+                </Checkbox>
+              ))}
+          </Box>
 
-          <Button
-            type="submit"
-            colorScheme="blue"
-            isLoading={createTestRun.isPending}
-          >
+          <Button type="submit" colorScheme="blue">
             Create Test Run
           </Button>
-        </VStack>
-      </form>
+        </form>
+      </VStack>
     </Box>
   );
 };

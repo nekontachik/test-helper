@@ -16,7 +16,7 @@ import {
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import type { UserRole } from '@/types/rbac';
-import { ErrorBoundary } from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 import { memo } from 'react';
 
 // Define session type for better type safety

@@ -12,13 +12,7 @@ export enum UserRole {
 }
 
 // Define account status type
-export enum AccountStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  PENDING = 'PENDING',
-  DELETED = 'DELETED'
-}
+export type AccountStatus = 'ACTIVE' | 'LOCKED' | 'DISABLED' | 'PENDING';
 
 export type AuthStatus = 'authenticated' | 'unauthenticated' | 'loading';
 

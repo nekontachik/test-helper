@@ -1,3 +1,5 @@
+'use client';
+
 export const PASSWORD_RULES = {
   minLength: 8,
   maxLength: 100,
@@ -7,59 +9,67 @@ export const PASSWORD_RULES = {
   minSymbols: 1,
 } as const;
 
+export type PasswordStrength = 'weak' | 'medium' | 'strong' | 'very-strong';
+
+export interface PasswordCheck {
+  hasMinLength: boolean;
+  hasUpperCase: boolean;
+  hasLowerCase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+}
+
 export interface PasswordValidationResult {
   isValid: boolean;
   errors: string[];
-  strength: 'weak' | 'medium' | 'strong';
+  strength: PasswordStrength;
+  checks: PasswordCheck;
+}
+
+export function checkPasswordStrength(password: string): PasswordCheck {
+  return {
+    hasMinLength: password.length >= PASSWORD_RULES.minLength,
+    hasUpperCase: (password.match(/[A-Z]/g) || []).length >= PASSWORD_RULES.minUppercase,
+    hasLowerCase: (password.match(/[a-z]/g) || []).length >= PASSWORD_RULES.minLowercase,
+    hasNumber: (password.match(/[0-9]/g) || []).length >= PASSWORD_RULES.minNumbers,
+    hasSpecialChar: (password.match(/[^A-Za-z0-9]/g) || []).length >= PASSWORD_RULES.minSymbols,
+  };
 }
 
 export function validatePassword(password: string): PasswordValidationResult {
   const errors: string[] = [];
-  let strengthScore = 0;
+  const checks = checkPasswordStrength(password);
 
   // Check length
-  if (password.length < PASSWORD_RULES.minLength) {
+  if (!checks.hasMinLength) {
     errors.push(`Password must be at least ${PASSWORD_RULES.minLength} characters long`);
   }
   if (password.length > PASSWORD_RULES.maxLength) {
     errors.push(`Password must be less than ${PASSWORD_RULES.maxLength} characters`);
   }
 
-  // Check lowercase letters
-  const lowercaseCount = (password.match(/[a-z]/g) || []).length;
-  if (lowercaseCount < PASSWORD_RULES.minLowercase) {
+  // Check other requirements
+  if (!checks.hasLowerCase) {
     errors.push('Password must contain at least one lowercase letter');
   }
-  strengthScore += Math.min(2, lowercaseCount);
-
-  // Check uppercase letters
-  const uppercaseCount = (password.match(/[A-Z]/g) || []).length;
-  if (uppercaseCount < PASSWORD_RULES.minUppercase) {
+  if (!checks.hasUpperCase) {
     errors.push('Password must contain at least one uppercase letter');
   }
-  strengthScore += Math.min(2, uppercaseCount);
-
-  // Check numbers
-  const numbersCount = (password.match(/[0-9]/g) || []).length;
-  if (numbersCount < PASSWORD_RULES.minNumbers) {
+  if (!checks.hasNumber) {
     errors.push('Password must contain at least one number');
   }
-  strengthScore += Math.min(2, numbersCount);
-
-  // Check symbols
-  const symbolsCount = (password.match(/[^A-Za-z0-9]/g) || []).length;
-  if (symbolsCount < PASSWORD_RULES.minSymbols) {
+  if (!checks.hasSpecialChar) {
     errors.push('Password must contain at least one special character');
   }
-  strengthScore += Math.min(2, symbolsCount);
 
-  // Add length score
-  strengthScore += Math.min(2, Math.floor(password.length / 8));
+  const passedChecks = Object.values(checks).filter(Boolean).length;
+  let strength: PasswordStrength = 'weak';
 
-  let strength: PasswordValidationResult['strength'] = 'weak';
-  if (strengthScore >= 8) {
+  if (passedChecks === 5) {
+    strength = 'very-strong';
+  } else if (passedChecks === 4) {
     strength = 'strong';
-  } else if (strengthScore >= 5) {
+  } else if (passedChecks === 3) {
     strength = 'medium';
   }
 
@@ -67,7 +77,23 @@ export function validatePassword(password: string): PasswordValidationResult {
     isValid: errors.length === 0,
     errors,
     strength,
+    checks,
   };
+}
+
+export function getStrengthColor(strength: PasswordStrength): string {
+  switch (strength) {
+    case 'very-strong':
+      return 'bg-emerald-500';
+    case 'strong':
+      return 'bg-green-500';
+    case 'medium':
+      return 'bg-yellow-500';
+    case 'weak':
+      return 'bg-red-500';
+    default:
+      return 'bg-gray-200';
+  }
 }
 
 export function getPasswordStrengthColor(strength: PasswordValidationResult['strength']): string {
@@ -81,4 +107,13 @@ export function getPasswordStrengthColor(strength: PasswordValidationResult['str
     default:
       return 'bg-gray-300';
   }
+}
+
+export function getPasswordStrength(checks: PasswordCheck): PasswordStrength {
+  const passedChecks = Object.values(checks).filter(Boolean).length;
+  
+  if (passedChecks <= 2) return 'weak';
+  if (passedChecks === 3) return 'medium';
+  if (passedChecks === 4) return 'strong';
+  return 'very-strong';
 } 

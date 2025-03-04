@@ -1,0 +1,32 @@
+export const AUTH_CONSTANTS = {
+  SESSION: {
+    DEFAULT_DURATION_HOURS: 24,
+    EXTENDED_DURATION_HOURS: 168, // 7 days
+    REMEMBER_ME_DURATION_HOURS: 720, // 30 days
+  },
+  
+  TOKENS: {
+    ACCESS_TOKEN_EXPIRY: '15m',
+    REFRESH_TOKEN_EXPIRY: '7d',
+    EMAIL_VERIFICATION_EXPIRY: '24h',
+    PASSWORD_RESET_EXPIRY: '1h',
+    INVITATION_EXPIRY: '7d',
+  },
+  
+  SECURITY: {
+    PASSWORD_MIN_LENGTH: 8,
+    PASSWORD_HASH_ROUNDS: 12,
+    MAX_LOGIN_ATTEMPTS: 5,
+    ACCOUNT_LOCKOUT_DURATION_MINUTES: 30,
+    RATE_LIMIT: {
+      LOGIN_POINTS: 5,
+      LOGIN_DURATION: 60 * 15, // 15 minutes
+    },
+  },
+  
+  COOKIES: {
+    SESSION_COOKIE_NAME: 'next-auth.session-token',
+    REFRESH_COOKIE_NAME: 'next-auth.refresh-token',
+    CSRF_COOKIE_NAME: 'next-auth.csrf-token',
+  }
+}; 

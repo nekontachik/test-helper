@@ -98,6 +98,16 @@ export interface TestCaseResult {
   updatedAt: string; // Add this line
 }
 
+export interface TestResult {
+  id: string;
+  testCase: TestCase;
+  status: TestCaseResultStatus;
+  notes?: string;
+  screenshot?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TestReport {
   id: string;
   name: string;
@@ -165,6 +175,15 @@ export interface TestReportFormData {
 // ... other type definitions
 
 export type TestSuiteUpdateData = Pick<TestSuite, 'name' | 'description'>;
+
+// Add global declarations
+declare global {
+  interface Window {
+    customRenderers?: {
+      [key: string]: (props: { item: unknown; index: number }) => JSX.Element;
+    };
+  }
+}
 
 
 

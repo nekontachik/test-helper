@@ -65,6 +65,7 @@ model User {
   testRunCases        TestRunCase[]
   testCaseResults     TestCaseResult[]
   syncConflicts       SyncConflict[] @relation("UserSyncConflicts")
+  notifications       Notification[]
 
   @@index([email])
   @@index([resetToken])
