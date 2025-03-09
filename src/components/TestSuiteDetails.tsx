@@ -4,7 +4,7 @@ import type { TestSuite } from '@/types';
 import NextLink from 'next/link';
 import { useTestCases } from '@/hooks/useTestCases';
 import { Loading } from '@/components/ui/loading';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface TestSuiteDetailsProps {
   testSuite: TestSuite;

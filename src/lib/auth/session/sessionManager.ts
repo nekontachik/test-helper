@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { UAParser } from 'ua-parser-js';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { SessionError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
 

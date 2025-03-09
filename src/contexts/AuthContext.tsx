@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/utils/clientLogger';
+import { logger } from '@/lib/logger';
 import type { UserRole } from '@/types/auth';
 import { sanitizeInternalUrl } from '@/lib/utils/url';
 import { signIn } from 'next-auth/react';
@@ -90,34 +90,91 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
 
-      const result = await signIn('credentials', {
+      console.log('AuthContext login called with:', { 
+        email, 
+        passwordLength: password?.length || 0,
+        hasCallbackUrl: !!callbackUrl 
+      });
+
+      // Basic sign-in without callback URL
+      const signInOptions: {
+        redirect: boolean;
+        email: string;
+        password: string;
+        callbackUrl?: string;
+      } = {
         redirect: false,
         email,
         password,
-        // Only pass callbackUrl if it exists and is valid
-        ...(callbackUrl && { callbackUrl: sanitizeInternalUrl(callbackUrl) })
+      };
+
+      // Process callback URL once and reuse the sanitized version
+      let safeCallbackUrl: string | undefined;
+      
+      // Only add callbackUrl if it's a valid string
+      if (callbackUrl && typeof callbackUrl === 'string' && callbackUrl.trim()) {
+        try {
+          // Try to sanitize the URL first
+          safeCallbackUrl = sanitizeInternalUrl(callbackUrl);
+          signInOptions.callbackUrl = safeCallbackUrl;
+          console.log('Using sanitized callback URL:', safeCallbackUrl);
+        } catch (error) {
+          // If URL sanitization fails, log the error but continue with default URL
+          console.warn('Invalid callback URL, using default', { 
+            callbackUrl, 
+            error: error instanceof Error ? error.message : String(error) 
+          });
+          logger.warn('Invalid callback URL, using default', { 
+            callbackUrl,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          // Don't set callbackUrl in signInOptions if sanitization fails
+        }
+      }
+
+      console.log('Preparing signIn options:', {
+        email,
+        passwordProvided: !!password,
+        passwordLength: password?.length || 0,
+        callbackUrl: signInOptions.callbackUrl || 'none'
+      });
+
+      const result = await signIn('credentials', signInOptions);
+      console.log('SignIn response details:', {
+        hasError: !!result?.error,
+        isOk: result?.ok,
+        url: result?.url,
+        status: result?.status
       });
 
       if (result?.error) {
+        console.error('Sign-in error from NextAuth:', result.error);
         setError(result.error);
         return false;
       }
 
       if (result?.ok) {
-        // Use the safe URL for redirection
-        const redirectUrl = callbackUrl ? sanitizeInternalUrl(callbackUrl) : '/dashboard';
+        // Use the already sanitized URL or default to dashboard
+        const redirectUrl = safeCallbackUrl || '/dashboard';
+        
+        console.log('Login successful, redirecting to:', redirectUrl);
         router.push(redirectUrl);
         router.refresh();
         return true;
       }
 
+      console.warn('Sign-in result not ok but no error provided');
+      setError('Authentication failed');
       return false;
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'An unexpected error occurred';
+      console.error('Login error caught:', error);
       setError(errorMessage);
-      logger.error('Login error:', { error });
+      logger.error('Login error:', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
       return false;
     } finally {
       setIsLoading(false);
@@ -128,6 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      setError(null); // Clear any previous errors
       
       const response = await fetch('/api/auth/signout', {
         method: 'POST',
@@ -142,12 +200,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         router.push('/auth/signin');
         logger.debug('Logout successful');
       } else {
-        logger.warn('Logout failed', { status: response.status });
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        const errorMessage = errorData.message || `Logout failed with status: ${response.status}`;
+        setError(errorMessage);
+        logger.warn('Logout failed', { 
+          status: response.status, 
+          error: errorMessage 
+        });
       }
     } catch (err) {
-      logger.error('Logout error', { 
-        error: err instanceof Error ? err.message : String(err) 
-      });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(errorMessage);
+      logger.error('Logout error', { error: errorMessage });
     } finally {
       setIsLoading(false);
     }

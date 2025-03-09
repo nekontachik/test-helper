@@ -1,8 +1,9 @@
 import React from 'react';
 import { Box, Flex, Button, Text } from '@chakra-ui/react';
-import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { UserRole } from '@/types/auth';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,7 +11,8 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
-  const { data: session } = useSession();
+  const { user, logout } = useSupabaseAuth();
+  const userRole = user?.user_metadata?.role as UserRole;
 
   return (
     <>
@@ -26,20 +28,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           </Flex>
 
           <Box>
-            {session?.user ? (
+            {user ? (
               <>
                 <Text mr={4}>
-                  Welcome, {session.user.name} {session.user.role && `(${session.user.role})`}
+                  Welcome, {user.user_metadata?.name || user.email} {userRole && `(${userRole})`}
                 </Text>
                 <Link href="/projects" passHref>
                   <Button as="a" variant="ghost" mr={3}>Projects</Button>
                 </Link>
-                {session.user.role === 'ADMIN' && (
+                {userRole === UserRole.ADMIN && (
                   <Link href="/admin" passHref>
                     <Button as="a" variant="ghost" mr={3}>Admin</Button>
                   </Link>
                 )}
-                <Button onClick={() => signOut()}>Sign out</Button>
+                <Button onClick={() => logout()}>Sign out</Button>
               </>
             ) : (
               <>

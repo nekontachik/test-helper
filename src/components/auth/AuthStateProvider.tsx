@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Spinner, Center, Box } from '@chakra-ui/react';
-import { useAuth } from '@/contexts/AuthContext';
-import { logger } from '@/lib/utils/clientLogger';
+import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 // Define public paths that don't require authentication
 const PUBLIC_PATHS = [

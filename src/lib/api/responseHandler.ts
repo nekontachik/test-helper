@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { ApiSuccessResponse } from '@/types/api';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface ResponseOptions {
   status?: number;

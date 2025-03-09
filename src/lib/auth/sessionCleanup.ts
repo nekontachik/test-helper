@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import type { SessionCleanupConfig, SessionWhereInput } from '@/types/session';
 
 const DEFAULT_CONFIG: SessionCleanupConfig = {

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import type { UserRole } from '@/types/auth';
 import type { CoreUser } from '@/lib/types/auth';
 

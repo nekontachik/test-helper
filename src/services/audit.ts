@@ -1,6 +1,6 @@
 import type { AuditLogData} from '@/types/audit';
 import { AuditLogType } from '@/types/audit';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * AuditLogger Service

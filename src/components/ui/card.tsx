@@ -1,30 +1,68 @@
-'use client';
+import * as React from "react"
 
-import { Box } from '@chakra-ui/react';
-import type { BoxProps } from '@chakra-ui/react';
-import type { ReactNode } from 'react';
-import React from 'react';
+import { cn } from "@/lib/utils"
 
-type CardProps = BoxProps & {
-  children: ReactNode;
-};
-
-export function Card({ children, ...props }: CardProps): React.ReactElement {
-  return <Box borderWidth="1px" borderRadius="lg" overflow="hidden" {...props}>{children}</Box>;
+function Card({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-type CardSectionProps = BoxProps & {
-  children: ReactNode;
-};
-
-export function CardHeader({ children, ...props }: CardSectionProps): React.ReactElement {
-  return <Box borderBottomWidth="1px" p={4} {...props}>{children}</Box>;
+function CardHeader({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn("flex flex-col gap-1.5 px-6", className)}
+      {...props}
+    />
+  )
 }
 
-export function CardContent({ children, ...props }: CardSectionProps): React.ReactElement {
-  return <Box p={4} {...props}>{children}</Box>;
+function CardTitle({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  )
 }
 
-export function CardFooter({ children, ...props }: CardSectionProps): React.ReactElement {
-  return <Box borderTopWidth="1px" p={4} {...props}>{children}</Box>;
-} 
+function CardDescription({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">): JSX.Element {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6", className)}
+      {...props}
+    />
+  )
+}
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }

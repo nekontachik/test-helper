@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import { validateRequest } from '@/lib/validations/validateRequest';
 import { ResponseHandler } from './responseHandler';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface EndpointConfig<T extends z.ZodType> {
   method: string;

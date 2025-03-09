@@ -1,21 +1,5 @@
-import { useSession } from 'next-auth/react';
-import { UserRole } from '@/types/rbac';
-import type { Session } from 'next-auth';
-
-interface ExtendedUser {
-  id: string;
-  email: string | null;
-  name: string | null;
-  image: string | null;
-  role: UserRole;
-  twoFactorEnabled: boolean;
-  twoFactorAuthenticated: boolean;
-  emailVerified: Date | null;
-}
-
-interface ExtendedSession extends Session {
-  user: ExtendedUser;
-}
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { UserRole } from '@/types/auth';
 
 interface UseRoleReturn {
   hasRole: (roles: UserRole | UserRole[]) => boolean;
@@ -30,20 +14,24 @@ interface UseRoleReturn {
  * @returns Object with role checking functions and current role
  */
 export function useRole(): UseRoleReturn {
-  const { data: session } = useSession() as { data: ExtendedSession | null };
+  const { user } = useSupabaseAuth();
+  
+  // Get user role from Supabase user metadata
+  // Default to USER role if not specified
+  const userRole = user?.user_metadata?.role as UserRole || UserRole.USER;
   
   const hasRole = (roles: UserRole | UserRole[]): boolean => {
-    if (!session?.user?.role) return false;
+    if (!user || !userRole) return false;
     
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
-    return allowedRoles.includes(session.user.role);
+    return allowedRoles.includes(userRole);
   };
 
   return {
     hasRole,
-    isAdmin: () => session?.user?.role === UserRole.ADMIN,
-    isProjectManager: () => session?.user?.role === UserRole.MANAGER,
-    isTester: () => session?.user?.role === UserRole.EDITOR,
-    role: session?.user?.role,
+    isAdmin: () => userRole === UserRole.ADMIN,
+    isProjectManager: () => userRole === UserRole.PROJECT_MANAGER,
+    isTester: () => userRole === UserRole.EDITOR,
+    role: userRole,
   };
 }

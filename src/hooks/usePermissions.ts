@@ -1,6 +1,7 @@
-import { useSession } from 'next-auth/react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { hasPermission } from '@/lib/auth/rbac/permissions';
 import type { ActionType, ResourceType, Permission, Role } from '@/lib/auth/rbac/types';
+import { UserRole } from '@/types/auth';
 
 interface PermissionsHook {
   can: (action: ActionType, resource: ResourceType, conditions?: Permission['conditions']) => boolean;
@@ -10,15 +11,17 @@ interface PermissionsHook {
 }
 
 export function usePermissions(): PermissionsHook {
-  const { data: session } = useSession();
-  const userRole = session?.user?.role as Role | undefined;
+  const { user } = useSupabaseAuth();
+  // Get user role from Supabase user metadata
+  // Default to USER role if not specified
+  const userRole = (user?.user_metadata?.role as Role) || UserRole.USER;
 
   const can = (
     action: ActionType,
     resource: ResourceType,
     conditions?: Permission['conditions']
   ): boolean => {
-    if (!userRole) return false;
+    if (!user || !userRole) return false;
     return hasPermission(userRole, action, resource, conditions);
   };
 

@@ -1,36 +1,48 @@
 import React from 'react';
-import { Box, Heading, Text, Badge, Flex } from '@chakra-ui/react';
 import type { Project } from '@/types';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Flex } from '@/components/ui/flex';
 
 interface ProjectCardProps {
   project: Project;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = React.memo(({ project }) => {
-  const getStatusColor = (status: Project['status']): string => {
+  const getStatusVariant = (status: Project['status']): "success" | "info" | "inactive" | "default" => {
     switch (status) {
       case 'ACTIVE':
-        return 'green';
+        return 'success';
       case 'COMPLETED':
-        return 'blue';
+        return 'info';
       case 'ARCHIVED':
-        return 'red';
+        return 'inactive';
       default:
-        return 'gray';
+        return 'default';
     }
   };
 
   return (
-    <Box borderWidth="1px" borderRadius="lg" p={4}>
-      <Flex justifyContent="space-between" alignItems="center">
-        <Heading size="md">{project.name}</Heading>
-        <Badge colorScheme={getStatusColor(project.status)}>{project.status}</Badge>
-      </Flex>
-      <Text mt={2}>{project.description}</Text>
-      <Text mt={2} fontSize="sm" color="gray.500">
-        Created: {new Date(project.createdAt).toLocaleDateString()}
-      </Text>
-    </Box>
+    <Card className="h-full hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2">
+        <Flex justify="between" align="center">
+          <Heading size="lg">{project.name}</Heading>
+          <Badge variant={getStatusVariant(project.status)}>
+            {project.status}
+          </Badge>
+        </Flex>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <Text>{project.description}</Text>
+      </CardContent>
+      <CardFooter>
+        <Text size="sm" color="muted">
+          Created: {new Date(project.createdAt).toLocaleDateString()}
+        </Text>
+      </CardFooter>
+    </Card>
   );
 });
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { verify, type JwtPayload } from 'jsonwebtoken';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 // Define the token payload interface
 interface TokenPayload extends JwtPayload {

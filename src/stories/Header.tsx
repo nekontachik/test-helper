@@ -8,27 +8,17 @@ type User = {
 };
 
 export interface HeaderProps {
-  user?: User;
-  onLogin?: () => void;
-  onLogout?: () => void;
-  onCreateAccount?: () => void;
+  user: User | undefined;
+  onLogin: () => void;
+  onLogout: () => void;
+  onCreateAccount: () => void;
 }
 
-export const Header = ({
-  user,
-  onLogin,
-  onLogout,
-  onCreateAccount,
-}: HeaderProps): JSX.Element => (
+export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps): JSX.Element => (
   <header>
     <div className="storybook-header">
       <div>
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 32 32"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <g fill="none" fillRule="evenodd">
             <path
               d="M10 0h12a10 10 0 0110 10v12a10 10 0 01-10 10H10A10 10 0 010 22V10A10 10 0 0110 0z"
@@ -44,24 +34,38 @@ export const Header = ({
             />
           </g>
         </svg>
-        <h1>Acme</h1>
+        <h1 className="storybook-header-title">Acme</h1>
       </div>
-      <div>
+      <div className="storybook-header-actions">
         {user ? (
           <>
-            <span className="welcome">
+            <span className="storybook-header-welcome" aria-live="polite">
               Welcome, <b>{user.name}</b>!
             </span>
-            <Button size="small" onClick={onLogout} label="Sign out" />
+            <Button 
+              size="small" 
+              onClick={onLogout} 
+              label="Log out" 
+              backgroundColor="#f8f9fa"
+              aria-label="Log out of your account"
+            />
           </>
         ) : (
           <>
-            <Button size="small" onClick={onLogin} label="Sign in" />
-            <Button
-              primary
-              size="small"
-              onClick={onCreateAccount}
-              label="Sign up"
+            <Button 
+              size="small" 
+              onClick={onLogin} 
+              label="Log in" 
+              backgroundColor="#f8f9fa"
+              aria-label="Log in to your account"
+            />
+            <Button 
+              primary 
+              size="small" 
+              onClick={onCreateAccount} 
+              label="Sign up" 
+              backgroundColor="#4F46E5"
+              aria-label="Create a new account"
             />
           </>
         )}

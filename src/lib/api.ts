@@ -1,4 +1,4 @@
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import type { 
   TestCase, 

@@ -1,26 +1,11 @@
-import { RegisterForm } from '@/components/auth/RegisterForm';
-import { getServerSession } from 'next-auth/next';
-import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { SignUpForm } from '@/components/auth/SignUpForm';
+import type { Metadata } from 'next';
 
-// Set to true to bypass authentication in development
-const DEV_MODE = true;
+export const metadata: Metadata = {
+  title: 'Create Account',
+  description: 'Create a new account to get started',
+};
 
-export default async function RegisterPage(): Promise<JSX.Element> {
-  // In development mode, bypass authentication and redirect to dashboard
-  if (DEV_MODE) {
-    redirect('/dashboard');
-  }
-
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    redirect('/dashboard');
-  }
-
-  return (
-    <div className="container max-w-lg py-8">
-      <RegisterForm />
-    </div>
-  );
+export default function RegisterPage(): JSX.Element {
+  return <SignUpForm />;
 }

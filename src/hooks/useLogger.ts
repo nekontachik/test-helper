@@ -1,8 +1,8 @@
-import { logInfo, logError } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface LoggerInterface {
   logInfo: (message: string) => void;
-  logError: (message: string) => void;
+  logError: (message: string, error?: unknown) => void;
 }
 
 /**
@@ -11,7 +11,11 @@ interface LoggerInterface {
  */
 export function useLogger(componentName: string): LoggerInterface {
   return {
-    logInfo: (message: string) => logInfo(componentName, message),
-    logError: (message: string) => logError(componentName, message)
+    logInfo: (message: string) => {
+      logger.info(`[${componentName}] ${message}`);
+    },
+    logError: (message: string, error?: unknown) => {
+      logger.error(`[${componentName}] ${message}`, { error });
+    }
   };
 }

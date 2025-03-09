@@ -1,6 +1,6 @@
 import { useToast } from '@chakra-ui/react';
 import { getErrorMessage } from '@/lib/errors/errorMessages';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 export function useError(): {
   handleError: (error: Error, context?: string) => void;

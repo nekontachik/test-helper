@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { AuthLoading } from './AuthLoading';
 
 interface AuthRedirectProps {
@@ -14,19 +14,19 @@ export function AuthRedirect({
   redirectTo, 
   redirectIfFound = false 
 }: AuthRedirectProps): JSX.Element {
-  const { data: session, status } = useSession();
+  const { user, isLoading } = useSupabaseAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (isLoading) return;
 
     if (
-      (redirectIfFound && session) ||
-      (!redirectIfFound && !session)
+      (redirectIfFound && user) ||
+      (!redirectIfFound && !user)
     ) {
       router.push(redirectTo);
     }
-  }, [session, status, redirectTo, redirectIfFound, router]);
+  }, [user, isLoading, redirectTo, redirectIfFound, router]);
 
   return <AuthLoading message="Redirecting..." />;
 }

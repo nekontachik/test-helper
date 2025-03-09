@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
-import { AppError } from './types';
-import { logger } from '@/lib/utils/logger';
+import { AppError, type ErrorCode } from './types';
+import { logger } from '@/lib/logger';
 import type { ServiceResponse } from '../utils/serviceResponse';
 import { ErrorTracker } from '../monitoring/ErrorTracker';
 import { ErrorRecovery } from './ErrorRecovery';
 import { getErrorMessage, getErrorSeverity } from './errorMessages';
-import { ErrorFactory } from './ErrorFactory';
-import type { ErrorCode } from './errorTypes';
 
 type ErrorTuple = readonly [ErrorCode, string, number];
 
@@ -92,17 +90,31 @@ export class ErrorHandler {
     if (error instanceof AppError) return error;
     
     if (error instanceof ZodError) {
-      return ErrorFactory.validation('Validation failed', { errors: error.errors });
+      return new AppError('Validation failed', {
+        code: 'VALIDATION_ERROR',
+        status: 400,
+        details: { errors: error.errors },
+        severity: 'warning'
+      });
     }
     
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       const [code, message, status] = this.getErrorTuple(error.code);
-      return ErrorFactory.create(code, message, { meta: error.meta, status });
+      return new AppError(message, {
+        code,
+        status,
+        details: { meta: error.meta },
+        severity: 'error'
+      });
     }
     
-    return ErrorFactory.create(
-      'INTERNAL_ERROR' as ErrorCode,
-      error instanceof Error ? error.message : 'Unknown error'
+    return new AppError(
+      error instanceof Error ? error.message : 'Unknown error',
+      {
+        code: 'INTERNAL_ERROR',
+        status: 500,
+        severity: 'error'
+      }
     );
   }
 

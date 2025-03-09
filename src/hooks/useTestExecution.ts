@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TestResultStatus } from '@/types/testRun';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface ExecuteTestRunInput {
   projectId: string;

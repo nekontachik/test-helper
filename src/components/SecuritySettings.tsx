@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { AuthCard } from './AuthCard';
 import type { User } from '@/types/auth';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface SecuritySettingsProps {
   user: User;

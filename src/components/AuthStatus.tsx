@@ -13,24 +13,10 @@ import {
   useColorMode,
   useToast
 } from '@chakra-ui/react';
-import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import type { UserRole } from '@/types/rbac';
-import ErrorBoundary from './ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 import { memo } from 'react';
-
-// Define session type for better type safety
-interface ExtendedSession {
-  user: {
-    id: string;
-    email: string;
-    name?: string | null;
-    role: UserRole;
-    image?: string | null;
-    emailVerified?: boolean;
-    twoFactorEnabled?: boolean;
-  };
-}
+import { useAuth } from '@/hooks/useAuth';
 
 interface AuthStatusProps {
   className?: string;
@@ -42,10 +28,7 @@ interface AuthStatusProps {
  * @returns JSX.Element
  */
 export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProps): JSX.Element {
-  const { data: session, status } = useSession() as { 
-    data: ExtendedSession | null, 
-    status: 'loading' | 'authenticated' | 'unauthenticated' 
-  };
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const { colorMode: _colorMode } = useColorMode();
   const toast = useToast();
@@ -53,7 +36,7 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
   // Handle sign out with proper error handling
   const handleSignOut = async (): Promise<void> => {
     try {
-      await signOut({ redirect: false });
+      await logout();
       router.push('/auth/signin');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -74,7 +57,7 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
   const handleSignInClick = (): void => router.push('/auth/signin');
 
   // Show loading state
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <Box display="flex" alignItems="center" className={className}>
         <Spinner size="sm" mr={2} />
@@ -84,7 +67,7 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
   }
 
   // Show sign in button for unauthenticated users
-  if (!session) {
+  if (!user) {
     return (
       <Button 
         onClick={handleSignInClick}
@@ -110,24 +93,24 @@ export const AuthStatus = memo(function AuthStatus({ className }: AuthStatusProp
         >
           <Avatar 
             size="sm" 
-            src={session.user.image || undefined} 
-            name={session.user.name || session.user.email} 
+            src={user.image || ''}
+            name={user.name || user.email || ''} 
             mr={2}
           />
           <Text display={{ base: 'none', md: 'block' }}>
-            {session.user.name || session.user.email}
+            {user.name || user.email}
           </Text>
         </MenuButton>
         <MenuList>
           <MenuItem onClick={handleProfileClick}>
             Profile
           </MenuItem>
-          {session.user.role === 'ADMIN' && (
+          {user.role === 'ADMIN' && (
             <MenuItem onClick={handleAdminClick}>
               Admin Panel
             </MenuItem>
           )}
-          {!session.user.emailVerified && (
+          {!user.emailVerified && (
             <MenuItem onClick={handleVerifyClick}>
               Verify Email
             </MenuItem>

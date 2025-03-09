@@ -1,26 +1,33 @@
 import { renderHook } from '@testing-library/react';
+import * as loggerModule from '@/lib/logger';
 import { useLogger } from '@/hooks/useLogger';
-import * as loggerModule from '@/lib/utils/logger';
 
-jest.mock('@/lib/utils/logger', () => ({
-  logInfo: jest.fn(),
-  logError: jest.fn(),
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+  }
 }));
 
 describe('useLogger', () => {
-  it('should return logging functions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should log info messages with component name', () => {
     const { result } = renderHook(() => useLogger('TestComponent'));
+    
+    result.current.logInfo('Test message');
+    
+    expect(loggerModule.logger.info).toHaveBeenCalledWith('[TestComponent] Test message');
+  });
 
-    result.current.logInfo('Test info');
-    result.current.logError('Test error');
-
-    expect(loggerModule.logInfo).toHaveBeenCalledWith(
-      'TestComponent',
-      'Test info'
-    );
-    expect(loggerModule.logError).toHaveBeenCalledWith(
-      'TestComponent',
-      'Test error'
-    );
+  it('should log error messages with component name', () => {
+    const { result } = renderHook(() => useLogger('TestComponent'));
+    const testError = new Error('Test error');
+    
+    result.current.logError('Error occurred', testError);
+    
+    expect(loggerModule.logger.error).toHaveBeenCalledWith('[TestComponent] Error occurred', { error: testError });
   });
 }); 

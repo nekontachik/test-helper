@@ -12,7 +12,7 @@ import {
   AuthorizationError,
   RateLimitError 
 } from '@/lib/errors';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import type { Session } from 'next-auth';
 
 interface ErrorResponse {

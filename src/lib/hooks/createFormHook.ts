@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-hot-toast';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface FormHookConfig<T extends z.ZodType> {
   schema: T;

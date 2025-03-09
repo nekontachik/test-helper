@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useToast } from '@chakra-ui/react';
 import { LoadingScreen } from './LoadingScreen';
@@ -10,6 +9,7 @@ import { Action, Resource } from "@/lib/auth/rbac/types";
 import type { UserRole } from "@/types/auth";
 import { isPublicPage, DEFAULT_LOGIN_REDIRECT } from "@/lib/auth/redirects";
 import { AUTH_ERRORS } from '@/lib/utils/error';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 /**
  * AuthGuard is a component that handles authentication and authorization checks.
@@ -47,7 +47,7 @@ export function AuthGuard({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: _session, status } = useSession();
+  const { user, isLoading } = useSupabaseAuth();
   const { can } = usePermissions();
   const toast = useToast();
 
@@ -66,19 +66,19 @@ export function AuthGuard({
 
   // Permission checking
   const checkAccess = React.useCallback(async () => {
-    if (status === 'loading') return;
+    if (isLoading) return;
 
     try {
       const callbackUrl = searchParams?.get('callbackUrl');
       const isPublic = isPublicPage(pathname || '');
 
-      if (status === 'unauthenticated' && !isPublic) {
+      if (!user && !isPublic) {
         showError(AUTH_ERRORS.SESSION_REQUIRED);
         router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname || '')}`);
         return;
       }
 
-      if (status === 'authenticated') {
+      if (user) {
         if (isPublic) {
           router.push(callbackUrl || DEFAULT_LOGIN_REDIRECT);
           return;
@@ -96,7 +96,7 @@ export function AuthGuard({
       console.error('AuthGuard error:', error);
       showError(AUTH_ERRORS.UNKNOWN);
     }
-  }, [status, router, pathname, searchParams, requiredRole, can, showError]);
+  }, [isLoading, user, router, pathname, searchParams, requiredRole, can, showError]);
 
   // Effect for access checking
   React.useEffect(() => {
@@ -104,11 +104,11 @@ export function AuthGuard({
   }, [checkAccess]);
 
   // Render states
-  if (status === 'loading') {
+  if (isLoading) {
     return <LoadingScreen message={loadingMessage} />;
   }
 
-  if (status === 'unauthenticated') {
+  if (!user) {
     return null;
   }
 
@@ -117,7 +117,7 @@ export function AuthGuard({
 
 /**
  * State Management:
- * - Tracks authentication status via useSession
+ * - Tracks authentication status via useSupabaseAuth
  * - Manages permission checks through usePermissions
  * - Handles loading and error states
  */

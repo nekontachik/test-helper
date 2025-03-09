@@ -1,83 +1,74 @@
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import type { UserRole } from '@/types/auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
-interface User {
+// Define user type to match the old AuthContext User type
+export interface User {
   id: string;
-  email: string;
-  name?: string | undefined;
-  role?: string | undefined;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  role?: UserRole;
+  twoFactorEnabled?: boolean;
+  emailVerified?: Date | null;
+  twoFactorAuthenticated?: boolean;
 }
 
-// Define the extended session user type from NextAuth
-interface ExtendedUser {
-  id: string;
-  email: string;
-  name?: string | undefined;
-  role?: string | undefined;
-  [key: string]: unknown;
-}
-
-interface AuthHook {
+// Define auth context state to match the old AuthContextType
+interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string, callbackUrl?: string | null) => Promise<boolean>;
+  logout: () => Promise<void>;
   error: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
 }
 
-export function useAuth(): AuthHook {
-  const { data: session, status } = useSession();
+/**
+ * Compatibility layer for the old useAuth hook
+ * This uses useSupabaseAuth under the hood but provides the same interface as the old useAuth
+ */
+export function useAuth(): AuthContextType {
+  const { 
+    user: supabaseUser, 
+    isLoading, 
+    isAuthenticated,
+    login: supabaseLogin,
+    logout: supabaseLogout,
+    error 
+  } = useSupabaseAuth();
+  
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  
-  const isAuthenticated = status === 'authenticated';
-  const isLoading = status === 'loading';
-  
-  // Map NextAuth session to our User type
-  const user: User | null = session?.user ? {
-    id: session.user.id as string,
-    email: session.user.email as string,
-    name: session.user.name,
-    role: (session.user as ExtendedUser)?.role
+
+  // Convert Supabase user to the format expected by the old code
+  const user = supabaseUser ? {
+    id: supabaseUser.id,
+    email: supabaseUser.email || null,
+    name: supabaseUser.user_metadata?.name || null,
+    image: supabaseUser.user_metadata?.avatar_url || null,
+    role: supabaseUser.user_metadata?.role,
+    twoFactorEnabled: supabaseUser.user_metadata?.twoFactorEnabled || false,
+    emailVerified: supabaseUser.email_confirmed_at ? new Date(supabaseUser.email_confirmed_at) : null,
+    twoFactorAuthenticated: supabaseUser.user_metadata?.twoFactorAuthenticated || false
   } : null;
-  
-  // Login function using NextAuth
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setError(null);
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-      
-      if (result?.error) {
-        setError('Invalid email or password');
-        return false;
-      }
-      
-      return true;
-    } catch {
-      setError('An unexpected error occurred');
-      return false;
+
+  // Wrapper for login to match the old signature
+  const login = async (email: string, password: string, callbackUrl?: string | null): Promise<boolean> => {
+    const result = await supabaseLogin(email, password);
+    
+    if (result.success && callbackUrl) {
+      router.push(callbackUrl);
     }
+    
+    return result.success;
   };
-  
-  // Logout function using NextAuth
-  const logout = async (): Promise<boolean> => {
-    await signOut({ redirect: false });
-    router.push('/auth/login');
-    return true;
-  };
-  
+
   return {
     user,
-    isAuthenticated,
     isLoading,
-    error,
+    isAuthenticated,
     login,
-    logout,
+    logout: supabaseLogout,
+    error
   };
 }

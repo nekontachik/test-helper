@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { z } from 'zod';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 export function createValidationMiddleware<T extends z.ZodType>(schema: T) {
   return async function validationMiddleware(

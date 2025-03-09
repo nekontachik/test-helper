@@ -21,9 +21,9 @@ import {
   FiLogOut,
   FiList
 } from 'react-icons/fi';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useLayout } from '@/contexts/LayoutContext';
-import { useRouter } from 'next/router';
+import { usePathname } from 'next/navigation';
 
 interface NavItemProps {
   icon: typeof FiHome;
@@ -39,7 +39,7 @@ const NavItem = ({ icon, children, href, isActive, isCollapsed }: NavItemProps):
   const activeColor = useColorModeValue('blue.500', 'blue.200');
   
   return (
-    <Tooltip label={children} placement="right" hasArrow openDelay={500}>
+    <Tooltip label={children} placement="right" hasArrow openDelay={500} isDisabled={!isCollapsed}>
       <Link href={href} passHref style={{ textDecoration: 'none', width: '100%' }}>
         <Flex
           align="center"
@@ -49,7 +49,7 @@ const NavItem = ({ icon, children, href, isActive, isCollapsed }: NavItemProps):
           role="group"
           transition="all 0.2s"
           bg={isActive ? activeBg : 'transparent'}
-          color={isActive ? activeColor : undefined}
+          color={isActive ? activeColor : 'inherit'}
           _hover={{
             bg: hoverBg,
             color: activeColor,
@@ -74,16 +74,18 @@ const NavItem = ({ icon, children, href, isActive, isCollapsed }: NavItemProps):
 
 export const Sidebar = (): JSX.Element => {
   const { logout } = useAuth();
-  const { isSidebarOpen } = useLayout();
-  const router = useRouter();
+  const { isSidebarOpen, isMobile: _isMobile } = useLayout();
+  const pathname = usePathname() || '';
   
   const handleLogout = async (): Promise<void> => {
     await logout();
   };
   
   const isActive = useCallback((path: string) => {
-    return router.pathname.startsWith(path);
-  }, [router.pathname]);
+    return pathname.startsWith(path);
+  }, [pathname]);
+  
+  const isCollapsed = !isSidebarOpen;
   
   return (
     <Box
@@ -93,25 +95,24 @@ export const Sidebar = (): JSX.Element => {
       top="60px" // Height of navbar
       bottom={0}
       w={isSidebarOpen ? { base: 'full', md: '240px' } : '60px'}
-      bg="chakra-body-bg"
+      bg={useColorModeValue('white', 'gray.900')}
       borderRight="1px"
-      borderColor="chakra-border-color"
+      borderColor={useColorModeValue('gray.200', 'gray.700')}
       transition="all 0.2s"
       transform={{
         base: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
         md: 'translateX(0)',
       }}
       zIndex="sticky"
+      display={{ base: isSidebarOpen ? 'block' : 'none', md: 'block' }}
+      aria-label="Main Navigation"
     >
-      <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-        <Text fontSize="2xl" fontWeight="bold">Test Manager</Text>
-      </Flex>
       <VStack spacing={1} align="stretch" py={4}>
         <NavItem
           icon={FiHome}
-          href="/"
-          isActive={isActive('/')}
-          isCollapsed={!isSidebarOpen}
+          href="/dashboard"
+          isActive={isActive('/dashboard')}
+          isCollapsed={isCollapsed}
         >
           Dashboard
         </NavItem>
@@ -119,7 +120,7 @@ export const Sidebar = (): JSX.Element => {
           icon={FiFolder}
           href="/projects"
           isActive={isActive('/projects')}
-          isCollapsed={!isSidebarOpen}
+          isCollapsed={isCollapsed}
         >
           Projects
         </NavItem>
@@ -127,7 +128,7 @@ export const Sidebar = (): JSX.Element => {
           icon={FiList}
           href="/test-cases"
           isActive={isActive('/test-cases')}
-          isCollapsed={!isSidebarOpen}
+          isCollapsed={isCollapsed}
         >
           Test Cases
         </NavItem>
@@ -135,7 +136,7 @@ export const Sidebar = (): JSX.Element => {
           icon={FiPlay}
           href="/test-runs"
           isActive={isActive('/test-runs')}
-          isCollapsed={!isSidebarOpen}
+          isCollapsed={isCollapsed}
         >
           Test Runs
         </NavItem>
@@ -143,7 +144,7 @@ export const Sidebar = (): JSX.Element => {
           icon={FiBarChart2}
           href="/reports"
           isActive={isActive('/reports')}
-          isCollapsed={!isSidebarOpen}
+          isCollapsed={isCollapsed}
         >
           Reports
         </NavItem>
@@ -153,7 +154,7 @@ export const Sidebar = (): JSX.Element => {
             icon={FiSettings}
             href="/settings"
             isActive={isActive('/settings')}
-            isCollapsed={!isSidebarOpen}
+            isCollapsed={isCollapsed}
           >
             Settings
           </NavItem>
@@ -173,11 +174,13 @@ export const Sidebar = (): JSX.Element => {
             }}
           >
             <Icon
-              mr="4"
+              mr={isCollapsed ? 0 : 4}
               fontSize="16"
               as={FiLogOut}
             />
-            <Text>Logout</Text>
+            <Collapse in={!isCollapsed} animateOpacity>
+              <Text>Logout</Text>
+            </Collapse>
           </Flex>
         </Box>
       </VStack>

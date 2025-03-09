@@ -17,7 +17,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { PasswordInput } from '@/components/ui/password-input';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { PASSWORD_RULES } from '@/lib/utils/password';
 
 const resetSchema = z.object({

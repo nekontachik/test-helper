@@ -17,7 +17,7 @@ import {
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { PasswordInput } from '@/components/ui/password-input';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { PASSWORD_RULES } from '@/lib/utils/password';
 

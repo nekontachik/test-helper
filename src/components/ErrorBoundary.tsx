@@ -3,7 +3,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;

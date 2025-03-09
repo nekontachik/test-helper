@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Redis } from '@upstash/redis';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 interface LockoutInfo {
   isLocked: boolean;

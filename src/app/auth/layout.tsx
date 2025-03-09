@@ -1,28 +1,22 @@
-import { Box } from '@chakra-ui/react';
+import { Container, Box } from '@chakra-ui/react';
+import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Authentication',
+  description: 'Sign in or create an account',
+};
 
 export default function AuthLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }): JSX.Element {
   return (
-    <Box 
-      minH="100vh" 
-      display="flex" 
-      alignItems="center" 
-      justifyContent="center"
-      bg="gray.50"
-    >
-      <Box 
-        w="full" 
-        maxW="md" 
-        p={8} 
-        bg="white" 
-        rounded="lg" 
-        shadow="md"
-      >
+    <Box minH="100vh" py={10} px={4} bg="gray.50">
+      <Container maxW="lg">
         {children}
-      </Box>
+      </Container>
     </Box>
   );
 } 

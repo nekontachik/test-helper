@@ -1,9 +1,9 @@
 import { SessionManager } from '../sessionManager';
 import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 jest.mock('@/lib/prisma');
-jest.mock('@/lib/utils/logger');
+jest.mock('@/lib/logger');
 
 describe('SessionManager', () => {
   beforeEach(() => {

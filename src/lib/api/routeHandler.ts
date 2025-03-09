@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 export function createRouteHandler<T extends z.ZodType>({ 
   schema, 

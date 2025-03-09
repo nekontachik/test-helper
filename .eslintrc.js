@@ -1,9 +1,5 @@
 module.exports = {
-  extends: [
-    'next/core-web-vitals',
-    'plugin:@typescript-eslint/recommended',
-    'prettier'
-  ],
+  extends: ['next/core-web-vitals', 'plugin:@typescript-eslint/recommended', 'prettier', 'plugin:storybook/recommended'],
   plugins: ['@typescript-eslint'],
   ignorePatterns: [
     'node_modules',

@@ -26,7 +26,7 @@ import {
   ChevronDownIcon,
 } from '@chakra-ui/icons';
 import { FiMoon, FiSun } from 'react-icons/fi';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Header(): JSX.Element {
   const { isOpen, onToggle } = useDisclosure();

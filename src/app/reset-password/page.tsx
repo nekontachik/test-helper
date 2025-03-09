@@ -18,7 +18,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 const resetPasswordSchema = z.object({
   password: z.string()

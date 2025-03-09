@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import { ErrorFactory } from '@/lib/errors/ErrorFactory';
 import type { ErrorCode } from '@/lib/errors/types';
 import { sendEmail } from '@/lib/utils/emailService';

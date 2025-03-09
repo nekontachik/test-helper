@@ -5,7 +5,7 @@ import type { ButtonProps } from '@chakra-ui/react';
 import { Button } from '@chakra-ui/react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * SignOutButton Component

@@ -1,66 +1,75 @@
-import { normalizeError, formatErrorResponse, logError } from '@/lib/utils/errorUtils';
-import { TestRunError } from '@/lib/errors/specific/testErrors';
-import { BaseError } from '@/lib/errors/BaseError';
-import { logger } from '@/lib/utils/logger';
+import { formatError, handleApiError } from '@/lib/utils/errorUtils';
+import { ApiError } from '@/lib/errors/types';
+import { logger } from '@/lib/logger';
 
-jest.mock('@/lib/utils/logger');
+jest.mock('@/lib/logger');
 
 describe('errorUtils', () => {
-  describe('normalizeError', () => {
-    it('should return BaseError instance unchanged', () => {
-      const error = new TestRunError('Test error');
-      const result = normalizeError(error);
-      expect(result).toBe(error);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('formatError', () => {
+    it('should format Error objects', () => {
+      const error = new Error('Test error');
+      const result = formatError(error);
+      
+      expect(result).toEqual({
+        message: 'Test error',
+        stack: error.stack,
+      });
     });
 
-    it('should convert Error to BaseError', () => {
-      const error = new Error('Standard error');
-      const result = normalizeError(error);
-      expect(result).toBeInstanceOf(BaseError);
-      expect(result.message).toBe('Standard error');
+    it('should format string errors', () => {
+      const result = formatError('Test error');
+      
+      expect(result).toEqual({
+        message: 'Test error',
+      });
     });
 
-    it('should convert string to BaseError', () => {
-      const result = normalizeError('Error message');
-      expect(result).toBeInstanceOf(BaseError);
-      expect(result.message).toBe('Error message');
+    it('should format unknown errors', () => {
+      const result = formatError({ custom: 'error' });
+      
+      expect(result).toEqual({
+        message: 'Unknown error',
+        data: { custom: 'error' },
+      });
     });
   });
 
-  describe('formatErrorResponse', () => {
-    it('should format error response correctly', () => {
-      const error = new TestRunError('Test failed', {
-        status: 400,
-        details: { reason: 'Invalid input' }
-      });
+  describe('handleApiError', () => {
+    it('should log and return formatted API errors', () => {
+      const apiError: ApiError = {
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid input',
+        details: { field: 'email' },
+      };
 
-      const response = formatErrorResponse(error);
-      expect(response).toEqual({
+      const result = handleApiError(apiError);
+      
+      expect(logger.error).toHaveBeenCalledWith('API Error:', expect.objectContaining({
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid input',
+      }));
+      
+      expect(result).toEqual({
         success: false,
-        error: {
-          code: 'TEST_RUN_ERROR',
-          message: 'Test failed',
-          details: { reason: 'Invalid input' }
-        }
+        error: apiError,
       });
     });
-  });
 
-  describe('logError', () => {
-    it('should log error with context', () => {
-      const error = new TestRunError('Test failed');
-      const context = { userId: '123' };
-
-      logError(error, context);
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error occurred:',
-        expect.objectContaining({
-          code: 'TEST_RUN_ERROR',
-          message: 'Test failed',
-          context: { userId: '123' }
-        })
-      );
+    it('should handle and format Error objects', () => {
+      const error = new Error('Test error');
+      const result = handleApiError(error);
+      
+      expect(logger.error).toHaveBeenCalled();
+      expect(result).toEqual({
+        success: false,
+        error: expect.objectContaining({
+          message: 'Test error',
+        }),
+      });
     });
   });
 }); 

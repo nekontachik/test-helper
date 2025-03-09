@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
 
 export class ApiError extends Error {

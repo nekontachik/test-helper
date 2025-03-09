@@ -4,7 +4,7 @@ import { UserRole } from '@/types/auth';
 import { isRecord, hasProperty } from '@/lib/utils/isValidType';
 import { getToken } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Simple interface for authenticated user

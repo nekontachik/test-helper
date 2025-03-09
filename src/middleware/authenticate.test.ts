@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { middlewareHandler } from './handler';
 import { MIDDLEWARE_CONFIG } from './config';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 jest.mock('next-auth/jwt');
-jest.mock('@/lib/utils/logger');
+jest.mock('@/lib/logger');
 jest.mock('./config', () => ({
   MIDDLEWARE_CONFIG: {
     auth: {

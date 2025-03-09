@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { Box } from '@chakra-ui/react';
-import { logger } from '@/lib/utils/logger';
+import { logger } from '@/lib/logger';
 
 // Set to true to bypass authentication in development
 const DEV_MODE = true;
