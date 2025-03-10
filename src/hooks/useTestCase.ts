@@ -1,9 +1,11 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
 import type { TestCase, TestCaseFormData } from '@/types';
 import { createMutation } from '@/lib/hooks/createMutationHook';
 import { ROUTES } from '@/lib/routes';
-import { ApiError } from '@/lib/api/errorHandler';
+import { createApiError } from '@/lib/client/errorHandler';
 
 interface QueryResult<T> {
   data?: T;
@@ -50,7 +52,7 @@ export const useCreateTestCase = createMutation<TestCase, TestCaseInput>({
     
     if (!response.ok) {
       const error = await response.json();
-      throw new ApiError(error.message, response.status);
+      throw createApiError(error.code || 'SERVER_ERROR', error.message, response.status);
     }
     
     return response.json();

@@ -2,6 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import default theme only */
+@import '../styles/default-theme.css';
+
+/* Ensure visibility of all elements by default */
+html, body, #__next, main, div, span, a, button, input, textarea, select, form, label, p, h1, h2, h3, h4, h5, h6 {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color-scheme: light dark;
+}
+
+/* Prevent FOUC (Flash of Unstyled Content) */
+html.js-enabled {
+  visibility: visible;
+}
+
+/* Default styles for all elements */
+* {
+  transition: none !important; /* Disable transitions during initial load */
+}
+
+/* Re-enable transitions after page load */
+html.js-enabled * {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Force light theme by default */
+html:not(.dark):not([data-theme="dark"]) {
+  --background: #ffffff !important;
+  --foreground: #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Force dark theme when enabled */
+html.dark, html[data-theme="dark"] {
+  --background: #1e293b !important;
+  --foreground: #f8fafc !important;
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Consistent styling for UI components */
+.chakra-ui-light button, .chakra-ui-dark button {
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+/* Ensure consistent styling between Chakra and Shadcn */
+.chakra-ui-light [data-theme="light"] button,
+.chakra-ui-dark [data-theme="dark"] button {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 1px solid var(--border);
+}
+
+/* Consistent styling for sidebar */
+aside {
+  transition: all 0.2s ease-in-out;
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.dark aside, html[data-theme="dark"] aside {
+  background-color: #1e293b !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Consistent styling for nav items */
+aside a {
+  text-decoration: none !important;
+}
+
+aside .chakra-collapse {
+  overflow: hidden;
+}
+
+/* Header styling */
+header, .chakra-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.dark header, html[data-theme="dark"] header, 
+html.dark .chakra-header, html[data-theme="dark"] .chakra-header {
+  background-color: #1e293b !important;
+  border-bottom: 2px solid #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -10,7 +103,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -22,7 +115,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
     --foreground-rgb: 0, 0, 0;
     --background-rgb: 249, 250, 251;
@@ -39,7 +132,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -51,13 +144,13 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
 @layer base {
   * {
-    @apply border-0;
+    @apply border-border;
   }
   
   body {
@@ -73,19 +166,67 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .authenticated-main {
   transition: margin-left 0.2s ease-in-out;
+  padding-top: 60px; /* Height of navbar */
+  margin-left: 0;
 }
 
-/* Form input styling */
+@media (min-width: 768px) {
+  .authenticated-main {
+    margin-left: 240px; /* Width of sidebar */
+  }
+}
+
+/* Sidebar specific styles */
+.light-sidebar, .dark-sidebar {
+  width: 240px !important;
+  min-height: calc(100vh - 60px) !important;
+  overflow-y: auto !important;
+  display: block !important;
+}
+
+.light-sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.dark-sidebar {
+  background-color: #1e293b !important;
+  border-right: 2px solid #38bdf8 !important;
+}
+
+/* Header specific styles */
+header, .chakra-header {
+  height: 60px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+/* Form input styling - enhanced for better visibility */
 input, textarea, select {
   background-color: white !important;
   color: black !important;
   -webkit-text-fill-color: black !important;
   opacity: 1 !important;
-  border: 1px solid #d1d5db !important;
+  border: 2px solid #666666 !important;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid #0055cc !important;
+  outline-offset: 2px !important;
+  border-color: #0055cc !important;
 }
 
 /* Dark mode overrides */
@@ -95,10 +236,114 @@ input, textarea, select {
   background-color: white !important;
   color: black !important;
   -webkit-text-fill-color: black !important;
+  border-color: #888888 !important;
 }
 
 /* Page-specific styles */
 .signin-page input {
   background-color: white !important;
   color: black !important;
+  border: 2px solid #666666 !important;
+}
+
+/* Accessibility improvements */
+:focus-visible {
+  outline: 2px solid #0055cc;
+  outline-offset: 2px;
+}
+
+/* Skip to content link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background-color: #0055cc;
+  color: white;
+  z-index: 9999;
+  border: 2px solid black;
+  outline: none;
+  font-weight: bold;
+}
+
+/* Button styling - enhanced for better visibility */
+button, .button {
+  border: 1px solid #666666;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+button:hover, .button:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Card styling - enhanced for better visibility */
+.card {
+  border: 1px solid #666666;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling - enhanced for better visibility */
+table {
+  border-collapse: collapse;
+  border: 2px solid #666666;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #666666;
+  padding: 0.75rem;
+}
+
+th {
+  background-color: #e0e0e0;
+  color: #333333;
+  font-weight: bold;
+}
+
+/* Nav item styles */
+.nav-item, .active-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem 0.5rem !important;
+  border-radius: 0.375rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.nav-item:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.active-nav-item {
+  background-color: #f1f5f9 !important;
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+}
+
+html.dark .nav-item:hover, html[data-theme="dark"] .nav-item:hover {
+  background-color: #334155 !important;
+}
+
+html.dark .active-nav-item, html[data-theme="dark"] .active-nav-item {
+  background-color: #334155 !important;
+  color: #38bdf8 !important;
+  border-color: #38bdf8 !important;
 } 

@@ -6,10 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiEyeOff as FiHighContrast } from 'react-icons/fi';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { logger } from '@/lib/logger';
 import { ClientOnly } from '@/components/ClientOnly';
+import { useTheme } from '@/components/providers/ThemeProvider';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +49,7 @@ export function SignInForm(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const { login, isLoading } = useSupabaseAuth();
+  const { isHighContrast, toggleHighContrast } = useTheme();
 
   const form = useForm<FormData>({
     resolver: zodResolver(loginSchema),
@@ -104,6 +106,17 @@ export function SignInForm(): JSX.Element {
 
   return (
     <div className="mx-auto w-full max-w-md">
+      <div className="flex justify-end mb-2">
+        <button
+          type="button"
+          onClick={toggleHighContrast}
+          className="text-gray-500 hover:text-gray-700 p-2 rounded-full"
+          aria-label={isHighContrast ? 'Disable high contrast' : 'Enable high contrast'}
+        >
+          <FiHighContrast className="h-5 w-5" />
+          <span className="sr-only">{isHighContrast ? 'Disable' : 'Enable'} high contrast</span>
+        </button>
+      </div>
       <Card className="shadow-md">
         <CardHeader className="bg-primary/5 pb-6">
           <CardTitle className="text-center text-2xl font-bold">Sign In</CardTitle>

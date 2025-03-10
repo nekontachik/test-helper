@@ -1,6 +1,7 @@
+'use server';
+
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import type { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { 
   CustomError, 
@@ -13,6 +14,7 @@ import {
   InternalServerError,
   DatabaseError
 } from '@/lib/errors/ErrorFactory';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 // Re-export error classes for convenience
 export { 
@@ -27,6 +29,58 @@ export {
   DatabaseError
 };
 
+export interface ApiError extends Error {
+  code: string;
+  status: number;
+  details?: unknown;
+}
+
+/**
+ * Error codes and their user-friendly messages
+ */
+const ERROR_MESSAGES = {
+  'NOT_FOUND': 'The requested resource could not be found.',
+  'UNAUTHORIZED': 'You do not have permission to access this resource.',
+  'FORBIDDEN': 'Access to this resource is forbidden.',
+  'VALIDATION_ERROR': 'The data provided is invalid.',
+  'NETWORK_ERROR': 'There was a problem connecting to the server.',
+  'SERVER_ERROR': 'The server encountered an error while processing your request.',
+  'CONFLICT': 'The request could not be completed due to a conflict with the current state of the resource.',
+  'BAD_REQUEST': 'The request was invalid or cannot be otherwise served.',
+  'RATE_LIMIT_EXCEEDED': 'You have exceeded the rate limit. Please try again later.',
+  'DEFAULT': 'An unexpected error occurred. Our team has been notified.'
+} as const;
+
+/**
+ * Maps Prisma error codes to API error codes
+ */
+const PRISMA_ERROR_MAP: Record<string, string> = {
+  'P2001': 'NOT_FOUND', // Record does not exist
+  'P2002': 'CONFLICT',  // Unique constraint failed
+  'P2003': 'CONFLICT',  // Foreign key constraint failed
+  'P2025': 'NOT_FOUND', // Record to update not found
+};
+
+/**
+ * Creates an API error with the given code, message, and status
+ */
+export function createApiError(code: string, message: string, status = 500, details?: unknown): ApiError {
+  const error = new Error(message) as ApiError;
+  error.code = code;
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
+/**
+ * Gets a user-friendly error message based on the error code
+ */
+export function getUserFriendlyMessage(errorCode: string): string {
+  return errorCode in ERROR_MESSAGES 
+    ? ERROR_MESSAGES[errorCode as keyof typeof ERROR_MESSAGES] 
+    : ERROR_MESSAGES.DEFAULT;
+}
+
 /**
  * Unified API error handler
  * @param error - The error to handle
@@ -37,15 +91,35 @@ export function handleApiError(error: unknown): NextResponse {
 
   // Handle Zod validation errors
   if (error instanceof ZodError) {
+    const formattedErrors = error.errors.map(err => ({
+      path: err.path.join('.'),
+      message: err.message
+    }));
+    
     return NextResponse.json(
       { 
         error: 'Validation error', 
-        details: error.errors.map(e => ({
-          path: e.path.join('.'),
-          message: e.message
-        }))
+        code: 'VALIDATION_ERROR',
+        message: getUserFriendlyMessage('VALIDATION_ERROR'),
+        details: formattedErrors 
       },
       { status: 400 }
+    );
+  }
+
+  // Handle Prisma errors
+  if (error instanceof PrismaClientKnownRequestError) {
+    const errorCode = PRISMA_ERROR_MAP[error.code] || 'SERVER_ERROR';
+    const status = errorCode === 'NOT_FOUND' ? 404 : 
+                  errorCode === 'CONFLICT' ? 409 : 500;
+    
+    return NextResponse.json(
+      { 
+        error: error.message,
+        code: errorCode,
+        message: getUserFriendlyMessage(errorCode)
+      },
+      { status }
     );
   }
 
@@ -61,69 +135,16 @@ export function handleApiError(error: unknown): NextResponse {
     );
   }
 
-  // Handle Prisma errors
-  if (isPrismaError(error)) {
-    const { status, error: errorData } = handlePrismaError(error);
-    return NextResponse.json(errorData, { status });
-  }
-
   // Handle unknown errors
-  logger.error('Unhandled API error:', { error });
+  const message = error instanceof Error ? error.message : 'Unknown error';
   return NextResponse.json(
-    { error: 'Internal server error' },
+    { 
+      error: message,
+      code: 'SERVER_ERROR',
+      message: getUserFriendlyMessage('SERVER_ERROR')
+    },
     { status: 500 }
   );
-}
-
-// Helper function to check if an error is a Prisma error
-function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    'clientVersion' in error &&
-    typeof (error as Prisma.PrismaClientKnownRequestError).code === 'string' &&
-    (error as Prisma.PrismaClientKnownRequestError).code.startsWith('P')
-  );
-}
-
-// Helper function to handle Prisma errors
-function handlePrismaError(error: Prisma.PrismaClientKnownRequestError): {
-  error: Record<string, unknown>;
-  status: number;
-} {
-  switch (error.code) {
-    case 'P2002': // Unique constraint violation
-      return {
-        error: {
-          code: 'UNIQUE_CONSTRAINT_VIOLATION',
-          error: 'A record with this value already exists',
-          details: error.meta,
-        },
-        status: 409,
-      };
-
-    case 'P2025': // Record not found
-      return {
-        error: {
-          code: 'NOT_FOUND',
-          error: 'Record not found',
-          details: error.meta,
-        },
-        status: 404,
-      };
-
-    // Add other Prisma error codes as needed
-
-    default:
-      return {
-        error: {
-          code: 'DATABASE_ERROR',
-          error: 'Database operation failed',
-        },
-        status: 500,
-      };
-  }
 }
 
 interface ErrorResponseData {

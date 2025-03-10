@@ -1,0 +1,354 @@
+/* Default Theme with Enhanced Visibility */
+:root {
+  /* Base colors - increased contrast */
+  --background: #ffffff;
+  --foreground: #000000;
+  
+  /* Card colors */
+  --card-background: #f8f8f8;
+  --card-foreground: #000000;
+  
+  /* Primary colors - more vibrant */
+  --primary: #0055cc;
+  --primary-foreground: #ffffff;
+  
+  /* Secondary colors - more vibrant */
+  --secondary: #006644;
+  --secondary-foreground: #ffffff;
+  
+  /* Accent colors - more vibrant */
+  --accent: #6600cc;
+  --accent-foreground: #ffffff;
+  
+  /* Muted colors - increased contrast */
+  --muted: #e0e0e0;
+  --muted-foreground: #333333;
+  
+  /* Border colors - more visible */
+  --border: #666666;
+  
+  /* Input colors */
+  --input: #ffffff;
+  --input-foreground: #000000;
+  
+  /* Ring color for focus states */
+  --ring: #0055cc;
+  
+  /* Destructive colors - more visible */
+  --destructive: #cc0000;
+  --destructive-foreground: #ffffff;
+  
+  /* Success colors - more visible */
+  --success: #008800;
+  --success-foreground: #ffffff;
+  
+  /* Warning colors - more visible */
+  --warning: #cc6600;
+  --warning-foreground: #ffffff;
+  
+  /* Radius - clearer shapes */
+  --radius: 0.25rem;
+  
+  /* Font sizes - increased for better readability */
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  
+  /* Line heights - increased for better readability */
+  --line-height-base: 1.5;
+  --line-height-lg: 1.6;
+  --line-height-xl: 1.8;
+}
+
+/* Increase focus visibility */
+*:focus {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* Increase text contrast */
+p, h1, h2, h3, h4, h5, h6, span, a, label, button {
+  color: var(--foreground);
+}
+
+/* Increase button contrast */
+button {
+  border: 1px solid var(--border);
+  font-weight: 500;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Increase form element contrast */
+input, textarea, select {
+  background-color: var(--input) !important;
+  color: var(--input-foreground) !important;
+  border: 2px solid var(--border) !important;
+}
+
+/* Increase table contrast */
+table {
+  border-collapse: collapse;
+  border: 2px solid var(--border);
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: bold;
+}
+
+/* Increase card contrast */
+.card {
+  border: 1px solid var(--border);
+  background-color: var(--card-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--secondary);
+  text-decoration-thickness: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.2s;
+  font-weight: bold;
+  border: 2px solid var(--foreground);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Component-specific styles */
+
+/* Buttons */
+button, .button {
+  border: 1px solid var(--border);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+button:hover, .button:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:focus, .button:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Form elements */
+input, textarea, select {
+  border: 2px solid var(--border);
+  background-color: var(--input);
+  color: var(--input-foreground);
+  padding: 0.5rem;
+  border-radius: var(--radius);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--secondary);
+  text-decoration-thickness: 2px;
+}
+
+a:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Tables */
+table {
+  border: 2px solid var(--border);
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: bold;
+}
+
+/* Cards */
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus indicators for interactive elements */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Navigation menu items */
+nav a, .nav-item {
+  color: var(--foreground);
+  border: 1px solid transparent;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+nav a:hover, .nav-item:hover {
+  border-color: var(--border);
+  background-color: var(--muted);
+}
+
+nav a.active, .nav-item.active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--border);
+  font-weight: 500;
+}
+
+/* Dashboard cards and stats */
+.stat-card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  margin: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius);
+}
+
+.stat-value {
+  color: var(--foreground);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+/* Icons */
+svg {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+  width: 1.25em;
+  height: 1.25em;
+}
+
+button svg, a svg {
+  color: inherit;
+}
+
+/* Dashboard stats */
+.dashboard-stat {
+  border: 1px solid var(--border);
+  padding: 1rem;
+  margin: 0.5rem;
+  background-color: var(--card-background);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Badges */
+.badge {
+  border: 1px solid var(--border);
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+/* Tooltips */
+[role="tooltip"] {
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-weight: 500;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Alerts and notifications */
+.alert, .notification {
+  border: 1px solid var(--border);
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-weight: 500;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: var(--radius);
+}
+
+/* Menus and dropdowns */
+.menu, .dropdown {
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.menu-item, .dropdown-item {
+  color: var(--foreground);
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.menu-item:hover, .dropdown-item:hover {
+  border-color: var(--border);
+  background-color: var(--muted);
+}
+
+/* Dividers */
+hr, .divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+} 

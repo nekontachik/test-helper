@@ -18,38 +18,56 @@ import {
   MenuDivider,
   useColorModeValue,
   useDisclosure,
-  useColorMode,
 } from '@chakra-ui/react';
 import {
   HamburgerIcon,
   CloseIcon,
   ChevronDownIcon,
 } from '@chakra-ui/icons';
-import { FiMoon, FiSun } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/components/providers/ThemeProvider';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { getChakraStyleProps } from '@/lib/ui-utils';
 
 export function Header(): JSX.Element {
   const { isOpen, onToggle } = useDisclosure();
-  const { colorMode, toggleColorMode } = useColorMode();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+  
+  // Call hooks unconditionally at the top level
+  const defaultBgColor = useColorModeValue('white', 'gray.800');
+  const defaultTextColor = useColorModeValue('gray.600', 'white');
+  const defaultBorderColor = useColorModeValue('gray.200', 'gray.700');
+  const defaultHeadingColor = useColorModeValue('gray.800', 'white');
+  
+  // Determine colors based on theme
+  const bgColor = isDarkMode ? '#1e293b' : defaultBgColor;
+  const textColor = isDarkMode ? '#f8fafc' : defaultTextColor;
+  const borderColor = isDarkMode ? '#38bdf8' : defaultBorderColor;
+  const headingColor = isDarkMode ? '#f8fafc' : defaultHeadingColor;
+  
+  // Get consistent style props for Chakra UI components
+  const _darkModeProps = getChakraStyleProps(isDarkMode);
 
   return (
-    <Box>
+    <Box className={isDarkMode ? 'dark-mode' : ''} as="header">
       <Flex
-        bg={useColorModeValue('white', 'gray.800')}
-        color={useColorModeValue('gray.600', 'white')}
+        bg={bgColor}
+        color={textColor}
         minH={'60px'}
         py={{ base: 2 }}
         px={{ base: 4, md: 6 }}
-        borderBottom={1}
+        borderBottom={isDarkMode ? '2px' : '1px'}
         borderStyle={'solid'}
-        borderColor={useColorModeValue('gray.200', 'gray.700')}
+        borderColor={borderColor}
         align={'center'}
         position="fixed"
         top={0}
+        left={0}
         right={0}
-        left={{ base: 0, md: '16rem' }}
         zIndex={10}
+        boxShadow={isDarkMode ? '0 0 10px rgba(56, 189, 248, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)'}
       >
         <Flex
           flex={{ base: 1, md: 'auto' }}
@@ -63,6 +81,12 @@ export function Header(): JSX.Element {
             }
             variant={'ghost'}
             aria-label={'Toggle Navigation'}
+            color={isDarkMode ? '#ffffff' : 'inherit'}
+            _hover={{
+              bg: isDarkMode ? '#333333' : 'gray.100',
+            }}
+            borderWidth={isDarkMode ? '2px' : '1px'}
+            borderColor={isDarkMode ? '#ffffff' : 'transparent'}
           />
         </Flex>
         
@@ -70,9 +94,10 @@ export function Header(): JSX.Element {
           <Text
             textAlign={{ base: 'center', md: 'left' }}
             fontFamily={'heading'}
-            color={useColorModeValue('gray.800', 'white')}
+            color={headingColor}
             display={{ base: 'flex', md: 'none' }}
             fontWeight="bold"
+            fontSize={isDarkMode ? 'lg' : 'md'}
           >
             Test Manager
           </Text>
@@ -84,9 +109,7 @@ export function Header(): JSX.Element {
           direction={'row'}
           spacing={6}
         >
-          <Button onClick={toggleColorMode} size="sm">
-            {colorMode === 'light' ? <Icon as={FiMoon} /> : <Icon as={FiSun} />}
-          </Button>
+          <ThemeToggle />
           
           <Menu>
             <MenuButton
@@ -100,17 +123,53 @@ export function Header(): JSX.Element {
                 <Avatar
                   size={'sm'}
                   name={user?.name || user?.email || 'User'}
-                  bg="blue.500"
-                  color="white"
+                  bg={isDarkMode ? '#000000' : 'blue.500'}
+                  color={isDarkMode ? '#ffffff' : 'white'}
+                  borderWidth={isDarkMode ? '2px' : '1px'}
+                  borderColor={isDarkMode ? '#ffffff' : 'gray.200'}
                 />
-                <Icon as={ChevronDownIcon} ml={1} />
+                <Icon 
+                  as={ChevronDownIcon} 
+                  ml={1} 
+                  color={isDarkMode ? '#ffffff' : 'inherit'}
+                />
               </Flex>
             </MenuButton>
-            <MenuList>
-              <MenuItem>Profile</MenuItem>
-              <MenuItem>Settings</MenuItem>
-              <MenuDivider />
-              <MenuItem onClick={() => logout()}>Sign Out</MenuItem>
+            <MenuList
+              bg={isDarkMode ? '#000000' : defaultBgColor}
+              borderColor={isDarkMode ? '#ffffff' : defaultBorderColor}
+              borderWidth={isDarkMode ? '2px' : '1px'}
+              boxShadow={isDarkMode ? '0 0 10px rgba(255, 255, 255, 0.3)' : '0 2px 10px rgba(0, 0, 0, 0.1)'}
+            >
+              <MenuItem 
+                _hover={{
+                  bg: isDarkMode ? '#333333' : 'gray.100',
+                }}
+                color={isDarkMode ? '#ffffff' : 'inherit'}
+                fontWeight={isDarkMode ? 'bold' : 'medium'}
+              >
+                Profile
+              </MenuItem>
+              <MenuItem 
+                _hover={{
+                  bg: isDarkMode ? '#333333' : 'gray.100',
+                }}
+                color={isDarkMode ? '#ffffff' : 'inherit'}
+                fontWeight={isDarkMode ? 'bold' : 'medium'}
+              >
+                Settings
+              </MenuItem>
+              <MenuDivider borderColor={isDarkMode ? '#ffffff' : defaultBorderColor} />
+              <MenuItem 
+                onClick={() => logout()}
+                _hover={{
+                  bg: isDarkMode ? '#333333' : 'gray.100',
+                }}
+                color={isDarkMode ? '#ffffff' : 'inherit'}
+                fontWeight={isDarkMode ? 'bold' : 'medium'}
+              >
+                Sign Out
+              </MenuItem>
             </MenuList>
           </Menu>
         </Stack>
@@ -124,18 +183,30 @@ export function Header(): JSX.Element {
 }
 
 const MobileNav = (): JSX.Element => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+  
+  // Call hooks unconditionally at the top level
+  const defaultBgColor = useColorModeValue('white', 'gray.800');
+  const defaultBorderColor = useColorModeValue('gray.200', 'gray.700');
+  
+  // Determine colors based on theme
+  const bgColor = isDarkMode ? '#000000' : defaultBgColor;
+  const borderColor = isDarkMode ? '#ffffff' : defaultBorderColor;
+  
   return (
     <Stack
-      bg={useColorModeValue('white', 'gray.800')}
+      bg={bgColor}
       p={4}
       display={{ md: 'none' }}
       position="fixed"
       top="60px"
       width="100%"
       zIndex={9}
-      borderBottom={1}
+      borderBottom={isDarkMode ? '3px' : '1px'}
       borderStyle={'solid'}
-      borderColor={useColorModeValue('gray.200', 'gray.700')}
+      borderColor={borderColor}
+      boxShadow={isDarkMode ? '0 0 10px rgba(255, 255, 255, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)'}
     >
       {NAV_ITEMS.map((navItem) => (
         <MobileNavItem key={navItem.label} {...navItem} />
@@ -145,6 +216,15 @@ const MobileNav = (): JSX.Element => {
 };
 
 const MobileNavItem = ({ label, href }: NavItem): JSX.Element => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+  
+  // Call hooks unconditionally at the top level
+  const defaultTextColor = useColorModeValue('gray.600', 'gray.200');
+  
+  // Determine colors based on theme
+  const textColor = isDarkMode ? '#ffffff' : defaultTextColor;
+  
   return (
     <Stack spacing={4}>
       <Box
@@ -155,11 +235,18 @@ const MobileNavItem = ({ label, href }: NavItem): JSX.Element => {
         alignItems="center"
         _hover={{
           textDecoration: 'none',
+          bg: isDarkMode ? '#333333' : 'gray.100',
         }}
+        borderRadius="md"
+        px={2}
+        borderWidth={isDarkMode ? '1px' : '0'}
+        borderColor={isDarkMode ? '#ffffff' : 'transparent'}
+        boxShadow={isDarkMode ? '0 0 5px rgba(255, 255, 255, 0.3)' : 'none'}
       >
         <Text
-          fontWeight={600}
-          color={useColorModeValue('gray.600', 'gray.200')}
+          fontWeight={isDarkMode ? 'bold' : 'medium'}
+          color={textColor}
+          fontSize={isDarkMode ? 'md' : 'sm'}
         >
           {label}
         </Text>

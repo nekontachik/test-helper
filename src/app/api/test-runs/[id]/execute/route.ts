@@ -1,49 +1,64 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
-import { executeTestRun } from '@/lib/services/testRunService';
-import { TEST_RESULT_STATUS } from '@/lib/services/report/constants';
+import { prisma } from '@/lib/prisma';
 import { protect } from '@/lib/auth/protect';
+import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/api/errorHandler';
-
-// Define schema but mark as unused with underscore prefix
-const _executeTestRunSchema = z.object({
-  results: z.array(z.object({
-    testCaseId: z.string(),
-    status: z.enum([
-      TEST_RESULT_STATUS.PASSED,
-      TEST_RESULT_STATUS.FAILED,
-      TEST_RESULT_STATUS.SKIPPED
-    ]),
-    notes: z.string().max(1000).optional() })).optional() });
-
-interface RouteParams {
-  params: { id: string };
-}
+import type { AuthenticatedRequest } from '@/lib/auth/withAuth';
 
 // @ts-expect-error - The protect function expects NextRequest but we're using AuthenticatedRequest
-export const POST = protect(async (req: AuthenticatedRequest, { params }: RouteParams) => {
+export const POST = protect(async (req: AuthenticatedRequest, { params }: { params: { id: string } }) => {
   try {
-    const { id } = params;
-    if (!id) {
+    const testRunId = params.id;
+    
+    // Check if the test run exists
+    const testRun = await prisma.testRun.findUnique({
+      where: { id: testRunId },
+    });
+    
+    if (!testRun) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'Test run ID is required' } },
+        { error: 'Test run not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if the test run is already in progress or completed
+    if (testRun.status === 'IN_PROGRESS') {
+      return NextResponse.json(
+        { error: 'Test run is already in progress' },
         { status: 400 }
       );
     }
-
-    // For now, we're just executing the test run without results
-    // The results will be added in a separate API call
-    const result = await executeTestRun(id);
-
-    if (!result.success) {
+    
+    if (testRun.status === 'COMPLETED') {
       return NextResponse.json(
-        { error: result.error?.message || 'Unknown error' },
+        { error: 'Test run is already completed' },
         { status: 400 }
       );
     }
-
-    return NextResponse.json(result.data);
+    
+    // Update the test run status to IN_PROGRESS
+    const updatedTestRun = await prisma.testRun.update({
+      where: { id: testRunId },
+      data: {
+        status: 'IN_PROGRESS',
+        startTime: new Date(),
+      },
+      include: {
+        testRunCases: {
+          include: {
+            testCase: true,
+          },
+        },
+      },
+    });
+    
+    logger.info(`Test run ${testRunId} execution started by user ${req.user.id}`, {
+      userId: req.user.id,
+      testRunId,
+    });
+    
+    return NextResponse.json(updatedTestRun);
   } catch (error) {
     return handleApiError(error);
   }

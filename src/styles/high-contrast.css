@@ -1,0 +1,359 @@
+/* High Contrast Theme */
+:root[data-theme="high-contrast"] {
+  /* Base colors */
+  --background: #000000;
+  --foreground: #ffffff;
+  
+  /* Card colors */
+  --card-background: #000000;
+  --card-foreground: #ffffff;
+  
+  /* Primary colors */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  
+  /* Secondary colors */
+  --secondary: #ffffff;
+  --secondary-foreground: #000000;
+  
+  /* Accent colors */
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+  
+  /* Muted colors - increased contrast */
+  --muted: #444444;
+  --muted-foreground: #ffffff;
+  
+  /* Border colors - thicker and more visible */
+  --border: #ffffff;
+  
+  /* Input colors */
+  --input: #000000;
+  --input-foreground: #ffffff;
+  
+  /* Ring color for focus states */
+  --ring: #ffffff;
+  
+  /* Destructive colors */
+  --destructive: #ffffff;
+  --destructive-foreground: #000000;
+  
+  /* Success colors */
+  --success: #ffffff;
+  --success-foreground: #000000;
+  
+  /* Warning colors */
+  --warning: #ffffff;
+  --warning-foreground: #000000;
+  
+  /* Radius - reduced for clearer shapes */
+  --radius: 0.25rem;
+  
+  /* Font sizes - increased for better readability */
+  --font-size-base: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  
+  /* Line heights - increased for better readability */
+  --line-height-base: 1.6;
+  --line-height-lg: 1.8;
+  --line-height-xl: 2;
+}
+
+/* Increase focus visibility */
+:root[data-theme="high-contrast"] *:focus {
+  outline: 4px solid var(--ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* Increase text contrast */
+:root[data-theme="high-contrast"] p,
+:root[data-theme="high-contrast"] h1,
+:root[data-theme="high-contrast"] h2,
+:root[data-theme="high-contrast"] h3,
+:root[data-theme="high-contrast"] h4,
+:root[data-theme="high-contrast"] h5,
+:root[data-theme="high-contrast"] h6,
+:root[data-theme="high-contrast"] span,
+:root[data-theme="high-contrast"] a,
+:root[data-theme="high-contrast"] label,
+:root[data-theme="high-contrast"] button {
+  color: var(--foreground);
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Increase button contrast */
+:root[data-theme="high-contrast"] button {
+  border: 3px solid var(--border);
+  font-weight: bold;
+  background-color: #000000;
+}
+
+/* Increase form element contrast */
+:root[data-theme="high-contrast"] input,
+:root[data-theme="high-contrast"] textarea,
+:root[data-theme="high-contrast"] select {
+  background-color: var(--input) !important;
+  color: var(--input-foreground) !important;
+  border: 3px solid var(--border) !important;
+  -webkit-text-fill-color: var(--input-foreground) !important;
+}
+
+/* Increase table contrast */
+:root[data-theme="high-contrast"] table {
+  border-collapse: collapse;
+  border: 3px solid var(--border);
+}
+
+:root[data-theme="high-contrast"] th,
+:root[data-theme="high-contrast"] td {
+  border: 2px solid var(--border);
+  padding: 0.75rem;
+}
+
+:root[data-theme="high-contrast"] th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: bold;
+}
+
+/* Increase card contrast */
+:root[data-theme="high-contrast"] .card {
+  border: 3px solid var(--border);
+  background-color: var(--card-background);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Links */
+:root[data-theme="high-contrast"] a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: bold;
+  text-decoration-thickness: 2px;
+}
+
+:root[data-theme="high-contrast"] a:hover {
+  color: var(--secondary);
+  text-decoration-thickness: 3px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.2s;
+  font-weight: bold;
+  border: 3px solid #000000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Component-specific high contrast styles */
+
+/* Buttons */
+.high-contrast button,
+.high-contrast .button {
+  border: 3px solid var(--border);
+  font-weight: bold;
+  background-color: #000000;
+}
+
+.high-contrast button:focus,
+.high-contrast .button:focus {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Form elements */
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  border: 3px solid var(--border);
+  background-color: var(--input);
+  color: var(--input-foreground);
+}
+
+.high-contrast input:focus,
+.high-contrast textarea:focus,
+.high-contrast select:focus {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Links */
+.high-contrast a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: bold;
+  text-decoration-thickness: 2px;
+}
+
+.high-contrast a:hover {
+  color: var(--secondary);
+  text-decoration-thickness: 3px;
+}
+
+.high-contrast a:focus {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Tables */
+.high-contrast table {
+  border: 3px solid var(--border);
+}
+
+.high-contrast th,
+.high-contrast td {
+  border: 2px solid var(--border);
+}
+
+.high-contrast th {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: bold;
+}
+
+/* Cards */
+.high-contrast .card {
+  border: 3px solid var(--border);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Focus indicators for interactive elements */
+.high-contrast *:focus-visible {
+  outline: 4px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Navigation menu items */
+.high-contrast nav a,
+.high-contrast .nav-item {
+  color: var(--primary);
+  border: 2px solid var(--border);
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  background-color: #000000;
+}
+
+.high-contrast nav a:hover,
+.high-contrast .nav-item:hover {
+  border-color: var(--border);
+  background-color: #333333;
+}
+
+.high-contrast nav a.active,
+.high-contrast .nav-item.active {
+  background-color: #333333;
+  color: var(--primary-foreground);
+  border-color: var(--border);
+  border-width: 3px;
+}
+
+/* Dashboard cards and stats */
+.high-contrast .stat-card {
+  background-color: var(--card-background);
+  border: 3px solid var(--border);
+  padding: 1rem;
+  margin: 0.5rem;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast .stat-value {
+  color: var(--primary);
+  font-size: 1.75rem;
+  font-weight: bold;
+}
+
+.high-contrast .stat-label {
+  color: var(--foreground);
+  font-weight: bold;
+}
+
+/* Icons */
+.high-contrast svg {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1;
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.high-contrast button svg,
+.high-contrast a svg {
+  color: inherit;
+}
+
+/* Dashboard stats */
+.high-contrast .dashboard-stat {
+  border: 3px solid var(--border);
+  padding: 1rem;
+  margin: 0.5rem;
+  background-color: #000000;
+}
+
+/* Badges */
+.high-contrast .badge {
+  border: 2px solid var(--border);
+  background-color: #000000;
+  color: var(--foreground);
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Tooltips */
+.high-contrast [role="tooltip"] {
+  border: 2px solid var(--border);
+  background-color: #000000;
+  color: var(--foreground);
+  font-weight: bold;
+  padding: 0.5rem;
+}
+
+/* Alerts and notifications */
+.high-contrast .alert,
+.high-contrast .notification {
+  border: 3px solid var(--border);
+  background-color: #000000;
+  color: var(--foreground);
+  font-weight: bold;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+/* Menus and dropdowns */
+.high-contrast .menu,
+.high-contrast .dropdown {
+  border: 3px solid var(--border);
+  background-color: #000000;
+  padding: 0.5rem;
+}
+
+.high-contrast .menu-item,
+.high-contrast .dropdown-item {
+  color: var(--foreground);
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border: 1px solid transparent;
+}
+
+.high-contrast .menu-item:hover,
+.high-contrast .dropdown-item:hover {
+  border-color: var(--border);
+  background-color: #333333;
+}
+
+/* Dividers */
+.high-contrast hr,
+.high-contrast .divider {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 1rem 0;
+} 
