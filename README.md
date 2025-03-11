@@ -1,6 +1,7 @@
 # Testing Buddy
 
 ## Overview
+![testing buddy](https://github.com/user-attachments/assets/7337eb61-80c9-417d-989a-2bebc051de2c)
 
 Testing Buddy is a comprehensive tool designed to streamline the process of creating, managing, and executing test cases and test suites. It provides a user-friendly interface for testers and QA professionals to efficiently organize their testing efforts.
 
