@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export function handleApiError(error: unknown): NextResponse {
   logger.error('API Error:', error);

@@ -1,10 +1,10 @@
 # Project Structure
 
-This document outlines the agreed-upon structure for our Test Management Application. All team members should follow this structure when creating new files or modifying existing ones.
+This document outlines the agreed-upon structure for our Testing Buddy application. All team members should follow this structure when creating new files or modifying existing ones.
 
 ## Directory Structure
 
-test-helper/
+testing-buddy/
 ├── src/
 │ ├── components/
 │ │ └── ... (React components)

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Action, Resource } from '@/types/rbac';
 import type { UserRole } from '@/types/auth';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface PermissionCheck {
   action: Action;

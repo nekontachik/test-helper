@@ -1,7 +1,7 @@
 import { compare, hash } from 'bcryptjs';
 import crypto from 'crypto';
 import { promisify } from 'util';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const randomBytesAsync = promisify(crypto.randomBytes);
 

@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { RBACService } from '@/lib/auth/rbac/service';
 import { Action, Resource } from '@/types/rbac';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const checkSchema = z.object({
   action: z.nativeEnum(Action),

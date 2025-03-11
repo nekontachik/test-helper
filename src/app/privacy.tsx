@@ -12,7 +12,7 @@ const PrivacyPolicy: React.FC = () => {
           </Heading>
           <Text>
             This privacy policy outlines how we collect, use, and protect your
-            personal information when you use our Test Management Application.
+            personal information when you use our Testing Buddy.
           </Text>
           {/* Add more sections as needed */}
         </VStack>

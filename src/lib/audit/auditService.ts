@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import type { AuditLogType} from '@/types/audit';
 import type { AuditLogData } from '@/types/audit';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export class AuditService {
   static async log(data: AuditLogData): Promise<void> {

@@ -6,10 +6,13 @@
 /dist
 /.pnp
 .pnp.js
+.vercel
 
 # Testing & Coverage
 /tests/coverage
 /tests/results
+/coverage
+/.nyc_output
 
 # Environment
 .env*
@@ -20,6 +23,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+combined.log
+error.log
+/logs
 
 # IDE & OS
 .idea/
@@ -27,6 +33,7 @@ yarn-error.log*
 *.swp
 .DS_Store
 Thumbs.db
+.directory
 
 # Prisma
 /prisma/migrations/
@@ -39,3 +46,29 @@ swagger.*
 .eslintcache
 .tsbuildinfo
 *storybook.log
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*~
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# Storybook
+/storybook-static
+
+# PWA
+**/public/workbox-*.js
+**/public/sw.js
+**/public/service-worker.js
+**/public/fallback-*.js
+
+# Sentry
+.sentryclirc

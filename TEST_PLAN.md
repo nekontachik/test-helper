@@ -1,8 +1,8 @@
-# Test Plan for Test Helper Project
+# Test Plan for Testing Buddy Project
 
 ## 1. Introduction
 
-This test plan outlines the strategy for improving test coverage and ensuring the quality of the Test Helper application. Our goal is to systematically increase test coverage, focusing on critical components and functionality first.
+This test plan outlines the strategy for improving test coverage and ensuring the quality of the Testing Buddy application. Our goal is to systematically increase test coverage, focusing on critical components and functionality first.
 
 ## 2. Test Objectives
 

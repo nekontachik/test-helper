@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface TestCaseResponse {
   success: boolean;

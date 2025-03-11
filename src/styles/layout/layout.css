@@ -1,0 +1,60 @@
+/* Layout styles */
+
+/* Layout container */
+.authenticated-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.authenticated-main {
+  transition: margin-left 0.2s ease-in-out;
+  padding-top: 60px; /* Height of navbar */
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  .authenticated-main {
+    margin-left: 240px; /* Width of sidebar */
+  }
+}
+
+/* Main content area */
+main, #main-content {
+  margin-top: 60px !important;
+  margin-left: 240px !important;
+  padding: 1.5rem !important;
+  min-height: calc(100vh - 60px) !important;
+  width: calc(100% - 240px) !important;
+  transition: margin-left 0.2s ease-in-out, width 0.2s ease-in-out !important;
+}
+
+@media (max-width: 768px) {
+  main, #main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* When sidebar is collapsed */
+.sidebar-collapsed main, .sidebar-collapsed #main-content {
+  margin-left: 60px !important;
+  width: calc(100% - 60px) !important;
+}
+
+/* Ensure content doesn't overlap with fixed elements */
+.content-container {
+  padding-top: 1rem !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+/* Transitions for layout elements */
+html.transitions-enabled .sidebar,
+html.transitions-enabled main,
+html.transitions-enabled #main-content {
+  transition: margin-left 0.2s ease-in-out, width 0.2s ease-in-out !important;
+} 

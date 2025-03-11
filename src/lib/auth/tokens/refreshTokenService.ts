@@ -1,7 +1,7 @@
 import { sign, verify, JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { SecurityError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { TokenService } from './tokenService';
 import { prisma } from '@/lib/prisma';
 

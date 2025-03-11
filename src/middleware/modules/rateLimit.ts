@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { securityLogger } from '@/lib/utils/securityLogger';
 import { createErrorResponse, ErrorType } from '@/lib/utils/errorResponse';
 import { MIDDLEWARE_CONFIG } from '../config';

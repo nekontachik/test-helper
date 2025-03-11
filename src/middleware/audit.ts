@@ -1,6 +1,6 @@
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditLogType } from '@/types/audit';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import type { Session } from 'next-auth';
 
 interface AuditParams {

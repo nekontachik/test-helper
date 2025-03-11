@@ -41,7 +41,7 @@ export function AuthFooter(): React.ReactElement {
           </HStack>
           
           <Text fontSize="sm" color="gray.600">
-            © {new Date().getFullYear()} Test Management System. All rights reserved.
+            © {new Date().getFullYear()} Testing Buddy. All rights reserved.
           </Text>
         </VStack>
       </Container>

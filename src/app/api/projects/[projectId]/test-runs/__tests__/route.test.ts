@@ -3,7 +3,7 @@ import { GET, POST } from '../route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { TestRunStatus } from '@/types';
-import type { ApiResponse } from '@/types/api';
+import type { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
 
 jest.mock('@/lib/prisma', () => ({
   testRun: {
@@ -43,12 +43,14 @@ describe('Test Runs API', () => {
       let data;
       if ('success' in response) {
         // It's an ApiResponse
-        data = response.data;
+        const apiResponse = response as unknown as ApiSuccessResponse<any>;
+        data = apiResponse.data;
         expect(response.success).toBe(true);
       } else {
-        // It's a Response
-        data = await response.json();
-        expect(response.status).toBe(200);
+        // It's a Response object from Next.js
+        const responseObj = response as Response;
+        data = await responseObj.json();
+        expect(responseObj.status).toBe(200);
       }
 
       expect(data).toEqual({
@@ -77,10 +79,12 @@ describe('Test Runs API', () => {
       if ('success' in response) {
         // It's an ApiResponse
         expect(response.success).toBe(false);
-        expect(response.statusCode).toBe(401);
+        const apiResponse = response as unknown as ApiErrorResponse;
+        expect(apiResponse.status).toBe(401);
       } else {
-        // It's a Response
-        expect(response.status).toBe(401);
+        // It's a Response object from Next.js
+        const responseObj = response as Response;
+        expect(responseObj.status).toBe(401);
       }
     });
   });
@@ -100,18 +104,20 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request, { params: { projectId: '1' } });
+      const response = await handler(request);
 
       // Check if response is an ApiResponse or a Response
       let data;
       if ('success' in response) {
         // It's an ApiResponse
-        data = response.data;
+        const apiResponse = response as unknown as ApiSuccessResponse<any>;
+        data = apiResponse.data;
         expect(response.success).toBe(true);
       } else {
-        // It's a Response
-        data = await response.json();
-        expect(response.status).toBe(201);
+        // It's a Response object from Next.js
+        const responseObj = response as Response;
+        data = await responseObj.json();
+        expect(responseObj.status).toBe(201);
       }
 
       expect(data).toEqual({ id: '1', name: 'New Test Run' });
@@ -137,16 +143,18 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request, { params: { projectId: '1' } });
+      const response = await handler(request);
 
       // Check if response is an ApiResponse or a Response
       if ('success' in response) {
         // It's an ApiResponse
         expect(response.success).toBe(false);
-        expect(response.statusCode).toBe(401);
+        const apiResponse = response as unknown as ApiErrorResponse;
+        expect(apiResponse.status).toBe(401);
       } else {
-        // It's a Response
-        expect(response.status).toBe(401);
+        // It's a Response object from Next.js
+        const responseObj = response as Response;
+        expect(responseObj.status).toBe(401);
       }
     });
 
@@ -163,16 +171,18 @@ describe('Test Runs API', () => {
       });
 
       const handler = await POST;
-      const response = await handler(request, { params: { projectId: '1' } });
+      const response = await handler(request);
 
       // Check if response is an ApiResponse or a Response
       if ('success' in response) {
         // It's an ApiResponse
         expect(response.success).toBe(false);
-        expect(response.statusCode).toBe(400);
+        const apiResponse = response as unknown as ApiErrorResponse;
+        expect(apiResponse.status).toBe(400);
       } else {
-        // It's a Response
-        expect(response.status).toBe(400);
+        // It's a Response object from Next.js
+        const responseObj = response as Response;
+        expect(responseObj.status).toBe(400);
       }
     });
   });

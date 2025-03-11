@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { Session } from '@prisma/client';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface SessionTrackingData {
   sessionId: string;

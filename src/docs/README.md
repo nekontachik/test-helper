@@ -1,7 +1,7 @@
-# Test Management System Documentation
+# Testing Buddy Documentation
 
 ## Overview
-A comprehensive test management system with offline-first capabilities, real-time synchronization, and advanced reporting features.
+A comprehensive testing buddy with offline-first capabilities, real-time synchronization, and advanced reporting features.
 
 ## Key Features
 - Offline-First Architecture

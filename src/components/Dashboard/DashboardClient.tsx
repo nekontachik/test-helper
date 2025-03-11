@@ -4,7 +4,7 @@ import React from 'react';
 import Dashboard from '../Dashboard';
 import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface DashboardClientProps {
   user: Session['user'];

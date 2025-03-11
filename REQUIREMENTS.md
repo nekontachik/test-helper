@@ -1,4 +1,4 @@
-# Test Management Tool: Detailed Requirements
+# Testing Buddy: Detailed Requirements
 
 ## Implementation Status
 

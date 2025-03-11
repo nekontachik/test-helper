@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const securitySettingsSchema = z.object({
   twoFactorEnabled: z.boolean().optional(),

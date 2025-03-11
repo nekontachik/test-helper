@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { AuditLogType } from '@/types/audit';
 import { AuditService } from '@/lib/audit/auditService';
 import { AUTH_CONSTANTS } from '@/constants/auth';

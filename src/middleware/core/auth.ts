@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 import type { UserRole } from '@/types/auth';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface AuthOptions {
   requireAuth?: boolean;

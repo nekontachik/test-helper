@@ -1,5 +1,5 @@
 import type { NextResponse } from 'next/server';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Security middleware module

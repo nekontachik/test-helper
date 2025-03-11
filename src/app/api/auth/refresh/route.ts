@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { RefreshTokenService } from '@/lib/auth/tokens/refreshTokenService';
 import { ErrorHandler } from '@/lib/errors/errorHandler';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 
 // Rate limit configuration for token refresh attempts

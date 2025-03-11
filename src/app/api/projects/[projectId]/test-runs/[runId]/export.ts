@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Define our own TestCase interface instead of importing from @prisma/client
 interface TestCase {

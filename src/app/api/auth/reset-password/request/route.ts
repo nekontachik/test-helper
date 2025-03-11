@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { generatePasswordResetToken } from '@/lib/auth/tokens';
 import { sendPasswordResetEmail } from '@/lib/emailService';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const requestSchema = z.object({
   email: z.string().email() });

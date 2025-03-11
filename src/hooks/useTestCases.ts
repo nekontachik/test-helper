@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useApiState } from './useApiState';
-import type { TestCase, TestCaseFormData, PaginatedResponse, TestCaseStatus, TestCasePriority } from '@/types';
+import type { TestCase, TestCaseFormData, TestCaseStatus, TestCasePriority } from '@/types';
+import type { PaginatedResponse } from '@/types/api';
 
 interface UseTestCasesOptions {
   projectId: string;
@@ -26,6 +27,14 @@ interface UseTestCasesReturn {
   restoreTestCaseVersion: (testCaseId: string, versionNumber: number) => Promise<TestCase>;
   invalidateCache: (key?: string) => void;
   setTestCases: (data: PaginatedResponse<TestCase> | undefined) => void;
+}
+
+// Helper type guard to check if PaginatedResponse has items
+function hasPaginatedItems<T>(obj: unknown): obj is PaginatedResponse<T> {
+  return obj !== null && 
+         typeof obj === 'object' && 
+         'items' in obj && 
+         Array.isArray((obj as Record<string, unknown>).items);
 }
 
 export function useTestCases({ projectId, initialData }: UseTestCasesOptions): UseTestCasesReturn {
@@ -59,6 +68,7 @@ export function useTestCases({ projectId, initialData }: UseTestCasesOptions): U
       description: data.description,
       steps: data.steps,
       expectedResult: data.expectedResult,
+      actualResult: '',
       priority: data.priority,
       status: 'DRAFT' as TestCaseStatus,
       createdAt: new Date(),
@@ -66,11 +76,13 @@ export function useTestCases({ projectId, initialData }: UseTestCasesOptions): U
       version: 1
     };
 
-    if (testCases?.items) {
-      const optimisticData = {
+    if (testCases && hasPaginatedItems<TestCase>(testCases)) {
+      const optimisticData: PaginatedResponse<TestCase> = {
         ...testCases,
         items: [optimisticTestCase, ...testCases.items],
-        total: testCases.total + 1
+        totalItems: testCases.totalItems + 1,
+        currentPage: testCases.currentPage,
+        totalPages: testCases.totalPages
       };
 
       return request<TestCase>(
@@ -85,20 +97,40 @@ export function useTestCases({ projectId, initialData }: UseTestCasesOptions): U
   }, [projectId, request, testCases]);
 
   const updateTestCase = useCallback(async (testCaseId: string, data: Partial<TestCaseFormData>) => {
-    if (!testCases?.items) return;
+    if (!testCases || !hasPaginatedItems<TestCase>(testCases)) return;
+    
+    if (testCases.items.length === 0) return;
 
     // Find the test case to update
     const testCaseIndex = testCases.items.findIndex((tc: TestCase) => tc.id === testCaseId);
     if (testCaseIndex === -1) return;
 
-    // Create optimistic update
-    const updatedTestCase = {
-      ...testCases.items[testCaseIndex],
-      ...data,
-      updatedAt: new Date()
+    // Get the original test case - we know it exists because we checked the index above
+    const originalTestCase = testCases.items[testCaseIndex];
+    
+    // Since we've checked that testCaseIndex is valid, originalTestCase must exist
+    if (!originalTestCase) {
+      // This should never happen, but TypeScript needs this check
+      return;
+    }
+    
+    // Create optimistic update with explicit properties to ensure type safety
+    const updatedTestCase: TestCase = {
+      id: originalTestCase.id,
+      projectId: originalTestCase.projectId,
+      title: data.title || originalTestCase.title,
+      description: data.description || originalTestCase.description,
+      steps: data.steps || originalTestCase.steps,
+      expectedResult: data.expectedResult || originalTestCase.expectedResult,
+      actualResult: originalTestCase.actualResult || '',
+      priority: data.priority || originalTestCase.priority,
+      status: originalTestCase.status,
+      createdAt: originalTestCase.createdAt,
+      updatedAt: new Date(),
+      version: originalTestCase.version
     };
 
-    const optimisticData = {
+    const optimisticData: PaginatedResponse<TestCase> = {
       ...testCases,
       items: [
         ...testCases.items.slice(0, testCaseIndex),
@@ -116,13 +148,13 @@ export function useTestCases({ projectId, initialData }: UseTestCasesOptions): U
   }, [projectId, request, testCases]);
 
   const deleteTestCase = useCallback(async (testCaseId: string) => {
-    if (!testCases?.items) return;
-
+    if (!testCases || !hasPaginatedItems<TestCase>(testCases)) return;
+    
     // Optimistic update - remove from list
-    const optimisticData = {
+    const optimisticData: PaginatedResponse<TestCase> = {
       ...testCases,
       items: testCases.items.filter((tc: TestCase) => tc.id !== testCaseId),
-      total: testCases.total - 1
+      totalItems: testCases.totalItems - 1
     };
 
     return request<void>(

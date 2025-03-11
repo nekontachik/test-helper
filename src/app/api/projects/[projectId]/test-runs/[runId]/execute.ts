@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { authorizeMiddleware } from '@/lib/authorize';
 import { withMiddleware } from '@/lib/withMiddleware';
 import { TestRunStatus } from '@/types';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export default withMiddleware(
   async (req: NextApiRequest, res: NextApiResponse) => {

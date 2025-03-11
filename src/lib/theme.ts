@@ -172,6 +172,62 @@ const theme = extendTheme({
       body: {
         bg: props.colorMode === 'dark' ? 'dark.background' : 'light.background',
         color: props.colorMode === 'dark' ? 'dark.foreground' : 'light.foreground',
+        transition: 'none !important',
+      },
+      // Force consistent header styling
+      'header, .chakra-header': {
+        height: '60px !important',
+        width: '100% !important',
+        position: 'fixed !important',
+        top: '0 !important',
+        left: '0 !important',
+        right: '0 !important',
+        zIndex: '1000 !important',
+        bg: props.colorMode === 'dark' ? 'dark.background' : 'light.background',
+        borderBottomWidth: props.colorMode === 'dark' ? '2px' : '1px',
+        borderBottomColor: props.colorMode === 'dark' ? 'primary.500' : 'secondary.200',
+        boxShadow: props.colorMode === 'dark' 
+          ? '0 0 10px rgba(56, 189, 248, 0.3) !important' 
+          : '0 2px 5px rgba(0, 0, 0, 0.1) !important',
+      },
+      // Force consistent sidebar styling
+      '.sidebar': {
+        width: '240px !important',
+        minHeight: 'calc(100vh - 60px) !important',
+        overflowY: 'auto !important',
+        display: 'block !important',
+        position: 'fixed !important',
+        top: '60px !important',
+        left: '0 !important',
+        bottom: '0 !important',
+        bg: props.colorMode === 'dark' ? 'dark.background' : 'light.background',
+        borderRightWidth: props.colorMode === 'dark' ? '2px' : '1px',
+        borderRightColor: props.colorMode === 'dark' ? 'primary.500' : 'secondary.200',
+        boxShadow: props.colorMode === 'dark' 
+          ? '0 0 10px rgba(56, 189, 248, 0.3) !important' 
+          : '0 2px 10px rgba(0, 0, 0, 0.05) !important',
+      },
+      // Force consistent avatar styling
+      '.chakra-avatar': {
+        borderRadius: '50% !important',
+        borderWidth: props.colorMode === 'dark' ? '2px' : '1px',
+        borderColor: props.colorMode === 'dark' ? 'primary.500' : 'transparent',
+        borderStyle: 'solid',
+      },
+      // Force consistent menu button styling
+      '.chakra-menu__menu-button': {
+        padding: '0 !important',
+        height: 'auto !important',
+      },
+      // Force consistent menu list styling
+      '.chakra-menu__menu-list': {
+        zIndex: '1001 !important',
+        bg: props.colorMode === 'dark' ? 'dark.background' : 'light.background',
+        borderColor: props.colorMode === 'dark' ? 'primary.500' : 'secondary.200',
+        borderWidth: props.colorMode === 'dark' ? '2px' : '1px',
+        boxShadow: props.colorMode === 'dark' 
+          ? '0 0 10px rgba(56, 189, 248, 0.3) !important' 
+          : '0 2px 10px rgba(0, 0, 0, 0.05) !important',
       },
     }),
   },

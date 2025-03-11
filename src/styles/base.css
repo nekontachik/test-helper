@@ -1,0 +1,85 @@
+/* Base styles for the application */
+
+/* Ensure visibility of all elements by default */
+html, body, #__next, main, div, span, a, button, input, textarea, select, form, label, p, h1, h2, h3, h4, h5, h6 {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color-scheme: light dark;
+}
+
+/* Prevent FOUC (Flash of Unstyled Content) */
+html {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+html.js-enabled {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Default styles for all elements */
+* {
+  transition: none !important; /* Disable transitions during initial load */
+}
+
+/* Re-enable transitions after page load */
+html.js-enabled * {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Accessibility improvements */
+:focus-visible {
+  outline: 2px solid #0055cc;
+  outline-offset: 2px;
+}
+
+/* Skip to content link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background-color: #0055cc;
+  color: white;
+  z-index: 9999;
+  border: 2px solid black;
+  outline: none;
+  font-weight: bold;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+}
+
+/* Re-enable transitions after page load */
+html.transitions-enabled * {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Styles for fully loaded page */
+html.page-loaded {
+  visibility: visible !important;
+  opacity: 1 !important;
+} 

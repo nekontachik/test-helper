@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Action, Resource } from '@/lib/auth/rbac/types';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import type { AuthUser } from '@/lib/auth/types';
 import { profileSchema } from './schemas';
 import type { ProfileFormData } from './types';

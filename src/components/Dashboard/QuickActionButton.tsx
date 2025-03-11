@@ -18,7 +18,9 @@ export function QuickActionButton({
   href, 
   colorScheme = 'blue' 
 }: QuickActionButtonProps): JSX.Element {
-  const bgColor = useColorModeValue('white', 'gray.700');
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBg = useColorModeValue(`${colorScheme}.50`, `${colorScheme}.900`);
   
   return (
     <Link href={href} passHref style={{ textDecoration: 'none', width: '100%' }}>
@@ -28,14 +30,15 @@ export function QuickActionButton({
         width="100%"
         p={6}
         bg={bgColor}
-        boxShadow="sm"
+        boxShadow="md"
         borderRadius="lg"
         variant="outline"
-        borderColor={useColorModeValue('gray.200', 'gray.600')}
+        borderColor={borderColor}
         _hover={{
           transform: 'translateY(-2px)',
-          boxShadow: 'md',
+          boxShadow: 'lg',
           borderColor: `${colorScheme}.400`,
+          bg: hoverBg
         }}
         transition="all 0.3s"
       >

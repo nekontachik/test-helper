@@ -1,0 +1,71 @@
+/* Form styles */
+
+/* Form input styling - enhanced for better visibility */
+input, textarea, select {
+  background-color: white !important;
+  color: black !important;
+  -webkit-text-fill-color: black !important;
+  opacity: 1 !important;
+  border: 2px solid #666666 !important;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid #0055cc !important;
+  outline-offset: 2px !important;
+  border-color: #0055cc !important;
+}
+
+/* Dark mode overrides */
+.dark input, 
+.dark textarea, 
+.dark select {
+  background-color: white !important;
+  color: black !important;
+  -webkit-text-fill-color: black !important;
+  border-color: #888888 !important;
+}
+
+/* Page-specific styles */
+.signin-page input {
+  background-color: white !important;
+  color: black !important;
+  border: 2px solid #666666 !important;
+}
+
+/* Button styling - enhanced for better visibility */
+button, .button {
+  border: 1px solid #666666;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+button:hover, .button:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Consistent styling for UI components */
+.chakra-ui-light button, .chakra-ui-dark button {
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+/* Ensure consistent styling between Chakra and Shadcn */
+.chakra-ui-light [data-theme="light"] button,
+.chakra-ui-dark [data-theme="dark"] button {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 1px solid var(--border);
+}
+
+/* Transitions for buttons */
+html.transitions-enabled button,
+html.transitions-enabled .chakra-button {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
+} 

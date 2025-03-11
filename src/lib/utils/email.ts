@@ -1,5 +1,5 @@
 import { createTransport } from 'nodemailer';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const transporter = createTransport({
   host: process.env.SMTP_HOST,

@@ -1,5 +1,7 @@
 import type { UserRole } from './auth';
 
+export type { UserRole };
+
 export enum Action {
   CREATE = 'create',
   READ = 'read',

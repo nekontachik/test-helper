@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { SessionService } from '@/lib/auth/sessionService';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface RouteParams {
   params: {

@@ -101,7 +101,7 @@ function DashboardPage({ onError }: DashboardProps = {}): JSX.Element {
         <Alert status="info" mb={6} borderRadius="md">
           <AlertIcon as={FiInfo} />
           <Box>
-            <AlertTitle>Welcome to the Test Management Tool!</AlertTitle>
+            <AlertTitle>Welcome to the Testing Buddy!</AlertTitle>
             <AlertDescription>
               Get started by creating your first project. Projects help you organize test cases and runs.
             </AlertDescription>

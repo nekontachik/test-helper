@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { nanoid } from 'nanoid';
 import { prisma } from '@/lib/prisma';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 const TOKEN_EXPIRY = '1h';

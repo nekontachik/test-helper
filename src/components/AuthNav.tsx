@@ -66,7 +66,7 @@ export function AuthNav(): JSX.Element {
           fontWeight="bold"
           onClick={() => router.push('/')}
         >
-          Test Management System
+          Testing Buddy
         </Box>
         <NavContent />
       </Flex>

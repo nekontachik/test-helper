@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ServerSessionManager } from '@/lib/auth/session/serverSessionManager';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { AuditService } from '@/lib/audit/auditService';
 import { AuditAction, AuditLogType } from '@/types/audit';
 import { RefreshTokenService } from '@/lib/auth/tokens/refreshTokenService';

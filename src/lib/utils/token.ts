@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const randomBytesAsync = promisify(randomBytes);
 

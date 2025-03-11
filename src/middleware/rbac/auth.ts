@@ -1,5 +1,5 @@
 import { getToken } from 'next-auth/jwt';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { createErrorResponse, ErrorType } from '@/lib/utils/errorResponse';
 import type { AuthResult, AuthErrorResult } from './types';
 import { isAccessTokenPayload } from './guards';

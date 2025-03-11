@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SecurityService } from '@/lib/auth/securityService';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export async function POST(_req: NextRequest): Promise<ApiResponse<unknown>> {
   try {

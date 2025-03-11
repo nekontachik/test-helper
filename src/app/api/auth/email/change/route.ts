@@ -9,7 +9,7 @@ import { sendEmailChangeVerification } from '@/lib/utils/email';
 import { generateToken } from '@/lib/utils/token';
 import { ActivityEventType } from '@/types/activity';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Define request schema using Zod
 const EmailChangeSchema = z.object({

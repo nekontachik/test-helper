@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { createSuccessResponse, type ApiResponse, createErrorResponse } from '@/types/api';
 import { prisma } from '@/lib/prisma';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 
 const rateLimiter = new RateLimiter();

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { AuthService } from '@/lib/auth/authService';
 import { ErrorHandler } from '@/lib/errors/errorHandler';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';

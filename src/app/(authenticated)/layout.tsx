@@ -2,9 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { Header } from '@/components/navigation/Header';
+import { Header } from '@/components/navigation/header/Header';
+import { Sidebar } from '@/components/navigation/sidebar/Sidebar';
 import { useProjectCheck } from '@/lib/withProjectCheck';
-import { Sidebar } from '@/components/navigation/Sidebar';
 import { LayoutProvider } from '@/contexts/LayoutContext';
 import { useSynchronizedTheme } from '@/lib/ui-utils';
 import { useTheme } from '@/components/providers/ThemeProvider';

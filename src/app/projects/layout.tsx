@@ -1,9 +1,9 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export const metadata: Metadata = {
-  title: 'Projects | Test Management System',
+  title: 'Projects | Testing Buddy',
   description: 'Create and manage your testing projects',
 };
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/apiErrorHandler';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request): Promise<Response> {
   try {

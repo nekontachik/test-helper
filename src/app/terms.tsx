@@ -11,7 +11,7 @@ const TermsOfService: React.FC = () => {
             Terms of Service
           </Heading>
           <Text>
-            By using our Test Management Application, you agree to comply with
+            By using our Testing Buddy, you agree to comply with
             and be bound by the following terms and conditions of use.
           </Text>
           {/* Add more sections as needed */}

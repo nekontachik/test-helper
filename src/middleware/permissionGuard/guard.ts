@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import type { NextRequest } from 'next/server';
 import { securityLogger } from '@/lib/utils/securityLogger';
 import type { UserRole } from '@/types/auth';

@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { SecurityService } from '@/lib/auth/securityService';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),

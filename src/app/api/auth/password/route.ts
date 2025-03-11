@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PasswordResetService } from '@/lib/auth/passwordReset';
 import { withRateLimit } from '@/middleware/rateLimit';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Schema for password reset request
 const requestSchema = z.object({

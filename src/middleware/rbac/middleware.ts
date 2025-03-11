@@ -1,4 +1,4 @@
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { securityLogger } from '@/lib/utils/securityLogger';
 import { ROLE_CONFIG } from '@/constants/auth';
 import type { UserRole } from '@/types/auth/roles';

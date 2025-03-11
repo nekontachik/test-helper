@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { ActivityService } from '@/lib/auth/activityService';
 import { ActivityEventType } from '@/types/activity';
 import { TokenType } from '@/types/token';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const recoverySchema = z.object({
   email: z.string().email()

@@ -7,7 +7,7 @@ import type { Action } from '@/types/rbac';
 import { Resource } from '@/types/rbac';
 import type { UserRole } from '@/types/auth';
 import { AuthorizationError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface AuthorizeOptions {
   action: Action;

@@ -1,6 +1,6 @@
 import { sign, verify, JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { SecurityError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { TokenType } from '@/types/token';
 
 export interface TokenPayload {

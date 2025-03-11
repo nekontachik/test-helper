@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { TestRun } from '@/types/testRuns';
 import { fetchTestRuns, fetchTestRun, fetchProjectTestRuns, createTestRun } from '@/utils/mockApi';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface UseTestRunsDataReturn {
   testRuns: TestRun[] | null;

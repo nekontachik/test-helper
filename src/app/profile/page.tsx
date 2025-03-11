@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { ProfileManagement } from '@/components/profile/ProfileManagement';
 import type { AuthUser, UserRole, AccountStatus, Permission } from '@/types/auth';
 import { cache } from 'react';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 /**
  * Cached database query for user data with optimized field selection

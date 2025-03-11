@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AppError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export async function POST(_req: NextRequest, { params }: { params: { projectId: string, testCaseId: string } }): Promise<NextResponse> {
   try {

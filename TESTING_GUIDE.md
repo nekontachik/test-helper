@@ -1,4 +1,4 @@
-# Testing Guide for Test Helper Project
+# Testing Guide for Testing Buddy Project
 
 ## General Testing Principles
 

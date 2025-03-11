@@ -1,0 +1,27 @@
+/* Card styles */
+
+/* Card styling - enhanced for better visibility */
+.card {
+  border: 1px solid #666666;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling - enhanced for better visibility */
+table {
+  border-collapse: collapse;
+  border: 2px solid #666666;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #666666;
+  padding: 0.75rem;
+}
+
+th {
+  background-color: #e0e0e0;
+  color: #333333;
+  font-weight: bold;
+} 

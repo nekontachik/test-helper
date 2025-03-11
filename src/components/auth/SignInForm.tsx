@@ -6,11 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiEye, FiEyeOff, FiEyeOff as FiHighContrast } from 'react-icons/fi';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { logger } from '@/lib/logger';
 import { ClientOnly } from '@/components/ClientOnly';
-import { useTheme } from '@/components/providers/ThemeProvider';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -49,7 +48,6 @@ export function SignInForm(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const { login, isLoading } = useSupabaseAuth();
-  const { isHighContrast, toggleHighContrast } = useTheme();
 
   const form = useForm<FormData>({
     resolver: zodResolver(loginSchema),
@@ -105,111 +103,87 @@ export function SignInForm(): JSX.Element {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={toggleHighContrast}
-          className="text-gray-500 hover:text-gray-700 p-2 rounded-full"
-          aria-label={isHighContrast ? 'Disable high contrast' : 'Enable high contrast'}
-        >
-          <FiHighContrast className="h-5 w-5" />
-          <span className="sr-only">{isHighContrast ? 'Disable' : 'Enable'} high contrast</span>
-        </button>
-      </div>
-      <Card className="shadow-md">
-        <CardHeader className="bg-primary/5 pb-6">
-          <CardTitle className="text-center text-2xl font-bold">Sign In</CardTitle>
+    <ClientOnly>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
         </CardHeader>
-
-        <CardContent className="pt-6">
-          <ClientOnly fallback={
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="font-medium">Email</div>
-                <div className="h-10 w-full animate-pulse rounded-md bg-gray-100"></div>
-              </div>
-              <div className="space-y-2">
-                <div className="font-medium">Password</div>
-                <div className="h-10 w-full animate-pulse rounded-md bg-gray-100"></div>
-              </div>
-              <div className="h-10 w-full animate-pulse rounded-md bg-primary/30 mt-6"></div>
+        <CardContent>
+          {sessionError && (
+            <div className="mb-4 rounded-md bg-amber-50 p-3 text-amber-800 border border-amber-200">
+              {sessionError}
             </div>
-          }>
-            {sessionError && (
-              <div className="mb-4 rounded-md bg-amber-50 p-3 text-amber-800 border border-amber-200">
-                {sessionError}
-              </div>
-            )}
+          )}
 
-            {authError && (
-              <div className="mb-4 rounded-md bg-red-50 p-3 text-red-800 border border-red-200">
-                {authError.message}
-              </div>
-            )}
+          {authError && (
+            <div className="mb-4 rounded-md bg-red-50 p-3 text-red-800 border border-red-200">
+              {authError.message}
+            </div>
+          )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="your.email@example.com"
+                        type="email"
+                        autoComplete="email"
+                        disabled={isLoading || isRedirecting}
+                        id="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
                         <Input
-                          placeholder="your.email@example.com"
-                          type="email"
-                          autoComplete="email"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          autoComplete="current-password"
                           disabled={isLoading || isRedirecting}
+                          id="password"
                           {...field}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="••••••••"
-                            autoComplete="current-password"
-                            disabled={isLoading || isRedirecting}
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          >
-                            {showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading || isRedirecting}
-                >
-                  {isLoading || isRedirecting ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-            </Form>
-          </ClientOnly>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isRedirecting}
+              >
+                {isLoading || isRedirecting ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
 
         <CardFooter className="flex justify-center border-t p-4">
@@ -221,6 +195,6 @@ export function SignInForm(): JSX.Element {
           </p>
         </CardFooter>
       </Card>
-    </div>
+    </ClientOnly>
   );
 } 

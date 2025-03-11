@@ -5,7 +5,7 @@ import { Action, Resource } from '@/types/rbac';
 import type { SecureRouteContext, SecureRouteHandler } from '@/lib/api/createSecureRoute';
 import { createSecureRoute } from '@/lib/api/createSecureRoute';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Define request schema
 const updateTestCaseSchema = z.object({

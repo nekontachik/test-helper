@@ -5,7 +5,7 @@ import { SecurityService } from '@/lib/auth/securityService';
 import { ActivityService } from '@/lib/auth/activityService';
 import { sendPasswordResetEmail } from '@/lib/utils/email';
 import { generateToken } from '@/lib/utils/token';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { ActivityEventType } from '@/types/activity';
 
 const requestSchema = z.object({

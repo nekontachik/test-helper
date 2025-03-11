@@ -34,7 +34,7 @@ export function AuthHeader(): JSX.Element {
             cursor="pointer" 
             onClick={() => router.push('/')}
           >
-            Test Management System
+            Testing Buddy
           </Heading>
 
           <HStack spacing={4}>

@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/authOptions';
 import { TestResultStatus } from '@/types/testRun';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { isError } from '@/lib/utils/typeGuards';
 
 const executeTestCaseSchema = z.object({

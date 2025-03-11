@@ -11,7 +11,7 @@ import {
   FormLabel,
   FormErrorMessage,
 } from '@chakra-ui/react';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { PasswordInputWrapper } from './PasswordInputWrapper';
 import { passwordSchema } from './schemas';
 import type { PasswordFormData } from './types';

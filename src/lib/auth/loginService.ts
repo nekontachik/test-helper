@@ -3,7 +3,7 @@ import { SecurityService } from './securityService';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
 import { RateLimitError } from '@/lib/errors';
 import type { RateLimitConfig } from '@/lib/rate-limit/RateLimiter';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes

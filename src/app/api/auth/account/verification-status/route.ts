@@ -4,7 +4,7 @@ import type { SecureRouteContext } from '@/lib/api/createSecureRoute';
 import { createSecureRoute } from '@/lib/api/createSecureRoute';
 import { Action, Resource } from '@/types/rbac';
 import { z } from 'zod';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Define response schema using Zod
 const VerificationStatusResponse = z.object({

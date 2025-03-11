@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export async function performanceLogger(
   req: NextApiRequest,

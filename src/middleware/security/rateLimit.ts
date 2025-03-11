@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface RateLimitOptions {
   windowMs?: number;

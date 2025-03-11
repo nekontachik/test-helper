@@ -25,7 +25,7 @@ export async function sendVerificationEmail(email: string, name: string): Promis
     subject: 'Verify your email address',
     html: `
       <div>
-        <h1>Welcome to Test Management System</h1>
+        <h1>Welcome to Testing Buddy</h1>
         <p>Hello ${name},</p>
         <p>Please verify your email address by clicking the button below:</p>
         <a href="${verificationUrl}" style="

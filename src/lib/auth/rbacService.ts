@@ -11,7 +11,7 @@ import {
 } from '@/types/rbac';
 import { prisma } from '@/lib/prisma';
 import { AuthorizationError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 interface CacheEntry {
   value: boolean;

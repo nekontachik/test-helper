@@ -1,5 +1,5 @@
 import type { Project, TestRun, TestCase } from '@/types/testRuns';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Mock projects data
 const mockProjects: Project[] = [

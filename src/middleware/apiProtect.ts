@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/auth/authOptions';
 import { RBACService } from '@/lib/auth/rbac/service';
-import type { Action, Resource, UserRole } from '@/types/rbac';
+import type { Action, Resource } from '@/types/rbac';
+import type { UserRole } from '@/types/auth';
 import { RateLimitError } from '@/lib/errors/RateLimitError';
 import { RateLimiter } from '@/lib/rate-limit/RateLimiter';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import type { Session } from 'next-auth';
 
 interface ProtectConfig {

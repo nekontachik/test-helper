@@ -3,7 +3,7 @@ import { createSuccessResponse, createErrorResponse, type ApiResponse } from '@/
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { AppError, NotFoundError } from '@/lib/errors';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 // Define a type for the test case result
 interface TestCaseResultInput {

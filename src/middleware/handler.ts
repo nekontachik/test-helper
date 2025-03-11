@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { createErrorResponse, ErrorType } from '@/lib/utils/errorResponse';
 import { 
   AuthMiddleware, 

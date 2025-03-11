@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import type { UserRole } from '@/types/auth';
 import type { Action, Resource } from '@/types/rbac';
 import { authOptions } from '@/lib/auth';
-import logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 type ApiHandlerFunction = (
   req: NextApiRequest,

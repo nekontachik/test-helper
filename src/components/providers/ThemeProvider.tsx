@@ -14,6 +14,13 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Add type declaration for the __THEME_INITIALIZED__ property
+declare global {
+  interface Window {
+    __THEME_INITIALIZED__?: boolean;
+  }
+}
+
 // Add a script to prevent flash of unstyled content
 function createNoFlashScript(): string {
   return `
@@ -21,6 +28,9 @@ function createNoFlashScript(): string {
       try {
         // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof document === 'undefined') return;
+        
+        // Set the initialization flag to prevent duplicate initialization
+        window.__THEME_INITIALIZED__ = true;
         
         var storedTheme = null;
         try {
@@ -39,12 +49,19 @@ function createNoFlashScript(): string {
         
         // Add a class to indicate JS is enabled
         document.documentElement.classList.add('js-enabled');
+        
+        // Force immediate visibility to prevent FOUC
+        document.documentElement.style.visibility = 'visible';
+        document.documentElement.style.opacity = '1';
       } catch (e) {
         console.warn('Error in theme initialization script:', e);
         // Default to light theme in case of error
         if (document && document.documentElement) {
           document.documentElement.setAttribute('data-theme', 'light');
           document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('js-enabled');
+          document.documentElement.style.visibility = 'visible';
+          document.documentElement.style.opacity = '1';
         }
       }
     })();
@@ -84,6 +101,17 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
       // Check if we're in a browser environment
       if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
       
+      // Check if theme has already been initialized by the script
+      if (window.__THEME_INITIALIZED__) {
+        // Just sync the state with what's already applied
+        const isDarkTheme = document.documentElement.classList.contains('dark');
+        setThemeState(isDarkTheme ? 'dark' : 'light');
+        return;
+      }
+      
+      // Set the initialization flag
+      window.__THEME_INITIALIZED__ = true;
+      
       // Check if theme is stored in localStorage
       const storedTheme = localStorage.getItem('theme') as Theme | null;
       
@@ -103,12 +131,17 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
       // Enable transitions after initial load
       setTimeout(() => {
         document.documentElement.classList.add('js-enabled');
-      }, 100);
+        document.documentElement.style.visibility = 'visible';
+        document.documentElement.style.opacity = '1';
+      }, 0);
     } catch (error) {
       // Handle localStorage errors (e.g., in incognito mode)
       console.warn('Error accessing localStorage:', error);
       // Apply default theme in case of error
       applyThemeSettings('light');
+      document.documentElement.classList.add('js-enabled');
+      document.documentElement.style.visibility = 'visible';
+      document.documentElement.style.opacity = '1';
     }
   }, [applyThemeSettings]);
 
@@ -182,7 +215,7 @@ export function useTheme(): ThemeContextType {
     // Return a fallback context with default values
     return {
       theme: 'light',
-      setTheme: () => {},
+      setTheme: () => {}
     };
   }
   return context;
